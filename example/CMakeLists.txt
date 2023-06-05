@@ -49,3 +49,14 @@ if(NOT "${PROJECT_DOXYGEN_OUTPUT_DIR}" MATCHES "${PROJECT_BINARY_DIR}/doxygen-ou
   message(FATAL_ERROR "[${PROJECT_NAME}] - Doxygen output path ${PROJECT_DOXYGEN_OUTPUT_DIR} is invalid")
 endif()
 ##======================================================================================================================
+
+##======================================================================================================================
+## Activate standalone target
+copa_setup_standalone(FILE example.hpp SOURCE src DESTINATION include ROOT libexample TARGET standalone-example)
+
+## Testing copa_setup_standalone
+if(NOT "${PROJECT_STANDALONE_TARGET}" MATCHES "standalone-example")
+  message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target ${PROJECT_STANDALONE_TARGET} is invalid")
+endif()
+##======================================================================================================================
+
