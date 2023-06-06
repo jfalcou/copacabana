@@ -8,5 +8,5 @@
 namespace example
 {
   template<typename T>
-  inline constexpr auto value = T{1337.42};
+  inline constexpr auto value = T(1337.42);
 }

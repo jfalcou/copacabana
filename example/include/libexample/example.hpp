@@ -8,7 +8,7 @@
 namespace example
 {
   template<typename T>
-  inline constexpr auto value = T{1337.42};
+  inline constexpr auto value = T(1337.42);
 }
 #include <vector>
 namespace example
@@ -19,8 +19,9 @@ namespace example
     std::vector<T*> data;
   };
 }
+#include <string>
 namespace example
 {
-  inline constexpr auto version = "1.0.1";
+  inline const std::string version = "1.0.1";
 }
 #endif
