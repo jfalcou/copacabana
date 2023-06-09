@@ -4,8 +4,8 @@
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
 
-include( ${COPACABANA_SOURCE_DIR}/cmake/version.cmake    )
-include( ${COPACABANA_SOURCE_DIR}/cmake/standalone.cmake )
-include( ${COPACABANA_SOURCE_DIR}/cmake/make_unit.cmake  )
-include( ${COPACABANA_SOURCE_DIR}/cmake/doxygen.cmake    )
-include( ${COPACABANA_SOURCE_DIR}/cmake/install.cmake    )
+##==================================================================================================
+## Reuse install.cmake to preapre package properly
+##==================================================================================================
+include("${CMAKE_CURRENT_LIST_DIR}/example-targets.cmake")
+set(EXAMPLE_LIBRARIES example::example)
