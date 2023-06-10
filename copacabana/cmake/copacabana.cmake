@@ -4,8 +4,8 @@
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
 
-include( ${COPACABANA_SOURCE_DIR}/cmake/version.cmake    )
-include( ${COPACABANA_SOURCE_DIR}/cmake/standalone.cmake )
-include( ${COPACABANA_SOURCE_DIR}/cmake/make_unit.cmake  )
-include( ${COPACABANA_SOURCE_DIR}/cmake/doxygen.cmake    )
-include( ${COPACABANA_SOURCE_DIR}/cmake/install.cmake    )
+include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/version.cmake    )
+include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/standalone.cmake )
+include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/make_unit.cmake  )
+include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/doxygen.cmake    )
+include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/install.cmake    )

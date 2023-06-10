@@ -10,8 +10,8 @@ cmake_minimum_required(VERSION 3.25)
 ##======================================================================================================================
 project(EXAMPLE LANGUAGES CXX)
 include(${PROJECT_SOURCE_DIR}/cmake/dependencies.cmake)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake ${COPACABANA_SOURCE_DIR}/cmake)
-include(${COPACABANA_SOURCE_DIR}/cmake/copacabana.cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake ${COPACABANA_SOURCE_DIR}/copacabana/cmake)
+include(${COPACABANA_SOURCE_DIR}/copacabana/cmake/copacabana.cmake)
 
 ##======================================================================================================================
 ## copa_project_version Setup a project version to be used in other functions and user defined code

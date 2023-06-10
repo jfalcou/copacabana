@@ -38,7 +38,7 @@ function(COPA_SETUP_STANDALONE)
     set(DST_FILE "${OPT_DESTINATION}/${OPT_ROOT}/${OPT_FILE}")
     add_custom_command(OUTPUT ${OPT_FILE}
       COMMAND "${Python_EXECUTABLE}"
-              ${COPACABANA_SOURCE_DIR}/cmake/asset/embed.py
+              ${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/embed.py
               ${CMAKE_CURRENT_SOURCE_DIR}/${OPT_SOURCE}/${OPT_ROOT}/${OPT_FILE}
               -I ${OPT_SOURCE}
               -o ${CMAKE_CURRENT_SOURCE_DIR}/${DST_FILE}
