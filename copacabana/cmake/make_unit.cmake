@@ -64,7 +64,6 @@ function(COPA_MAKE_UNIT interface extension destination dependencies pch)
     target_link_libraries(${test} PUBLIC ${interface})
 
     if( NOT ${pch} EQUAL "")
-      message(STATUS "PCH using ${pch}")
       target_precompile_headers(${test} REUSE_FROM ${pch})
       add_dependencies(${test} ${pch})
     endif()

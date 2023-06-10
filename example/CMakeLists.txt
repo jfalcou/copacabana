@@ -82,7 +82,10 @@ target_include_directories( example_test INTERFACE
 ##======================================================================================================================
 ## Setup PCH
 ##======================================================================================================================
-copa_setup_pch(TARGET example INTERFACES example_test HEADERS ${PROJECT_SOURCE_DIR}/include/libexample/example.hpp)
+copa_setup_pch( TARGET      example
+                INTERFACES  example_test
+                HEADERS     include/libexample/example.hpp
+              )
 
 if(NOT "${PROJECT_PCH_TARGET}" MATCHES "example_pch")
   message(FATAL_ERROR "[${PROJECT_NAME}] - PCH Target ${PROJECT_PCH_TARGET} is invalid")

@@ -14,8 +14,8 @@ function(COPA_SETUP_PCH)
 
   set(PCH_LIB   "${OPT_TARGET}_pch")
   set(PCH_FILE  "${OPT_TARGET}_pch.cpp")
-  file(TOUCH "${PROJECT_BINARY_DIR}/${PCH_FILE}" )
-  add_library( ${PCH_LIB}   "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/${PCH_FILE}>" )
+  file(WRITE "${PROJECT_BINARY_DIR}/${PCH_FILE}" "int main() {}" )
+  add_executable( ${PCH_LIB}   "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/${PCH_FILE}>" )
 
   foreach(interface ${OPT_INTERFACES})
     target_link_libraries(${PCH_LIB} PUBLIC ${interface})
@@ -30,7 +30,7 @@ function(COPA_SETUP_PCH)
                         )
 
   foreach(header ${OPT_HEADERS})
-    target_precompile_headers(${PCH_LIB} PRIVATE ${header})
+    target_precompile_headers(${PCH_LIB} PRIVATE "${PROJECT_SOURCE_DIR}/${header}")
   endforeach( )
 
   set(PROJECT_PCH_TARGET ${PCH_LIB} PARENT_SCOPE)
