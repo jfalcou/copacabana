@@ -1,0 +1,96 @@
+##==================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##==================================================================================================
+name: Copacabana - Unit Tests
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: unit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  linux:
+    runs-on: [ubuntu-latest]
+    container:
+      image: ghcr.io/jfalcou/compilers:v6
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - { compiler: g++-12  }
+        - { compiler: clang++ }
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v3
+      - name: Running CMake for ${{ matrix.cfg.compiler }}
+        run: |
+          mkdir build && cd build
+          cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }}"
+      - name: Compiling Unit Tests
+        run:  cd build && make unit
+      - name: Running Unit Tests
+        run: cd build && ctest --output-on-failure
+
+  macosx:
+    runs-on: [macos-12]
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - { compiler: clang++ }
+        - { compiler: g++-11  }
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v3
+      - name: Running CMake for ${{ matrix.cfg.compiler }}
+        run: |
+          mkdir build && cd build
+          cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }}"
+      - name: Compiling Unit Tests
+        run:  cd build && make unit
+      - name: Running Unit Tests
+        run: cd build && ctest --output-on-failure
+
+  android:
+    runs-on: [macos-12]
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v3
+      - name: Running CMake for Android NDK
+        run: |
+          mkdir build && cd build
+          cmake ../example -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a
+      - name: Compiling Unit Tests
+        run:  cd build && make unit
+
+  msvc:
+    runs-on: [windows-2022]
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - { mode: Debug  }
+        - { mode: Release}
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v3
+      - name: Running CMake for MSVC ${{ matrix.cfg.mode }}
+        run: |
+          mkdir build && cd build
+          cmake -G "Visual Studio 17 2022" -A x64 ../example
+      - name: Compiling Unit Tests
+        run:  |
+          cd build
+          cmake --build . --target unit --config ${{ matrix.cfg.mode }} --parallel 2
+      - name: Running Tests
+        run: |
+          cd build
+          ctest -C ${{ matrix.cfg.mode }} --output-on-failure
