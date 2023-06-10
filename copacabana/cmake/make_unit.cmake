@@ -4,6 +4,8 @@
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
 
+add_custom_target(unit)
+
 ##======================================================================================================================
 ## For any target of the form XXX.YYY.ZZZ, generates all the intermediate XX and XXX.YY targets that include
 ## allt he ones under them.

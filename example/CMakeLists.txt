@@ -72,5 +72,4 @@ copa_setup_install( LIBRARY example FEATURES cxx_std_20
 ## Setup Testing
 ##======================================================================================================================
 enable_testing()
-add_custom_target(unit)
 add_subdirectory(test)
