@@ -64,6 +64,31 @@ endif()
 ##======================================================================================================================
 
 ##======================================================================================================================
+# Unit test Configuration
+##======================================================================================================================
+add_library(example_test INTERFACE)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  target_compile_options( example_test INTERFACE /W3 /EHsc /bigobj /std:c++20)
+else()
+  target_compile_options( example_test INTERFACE -std=c++20 -Werror -Wall -Wextra -Wconversion -Wunused-variable)
+endif()
+
+target_include_directories( example_test INTERFACE
+                            ${PROJECT_SOURCE_DIR}/test
+                            ${PROJECT_SOURCE_DIR}/include
+                          )
+
+##======================================================================================================================
+## Setup PCH
+##======================================================================================================================
+copa_setup_pch(TARGET example INTERFACES example_test HEADERS ${PROJECT_SOURCE_DIR}/include/libexample/example.hpp)
+
+if(NOT "${PROJECT_PCH_TARGET}" MATCHES "example_pch")
+  message(FATAL_ERROR "[${PROJECT_NAME}] - PCH Target ${PROJECT_PCH_TARGET} is invalid")
+endif()
+
+##======================================================================================================================
 ## Setup Install
 ##======================================================================================================================
 copa_setup_install( LIBRARY example FEATURES cxx_std_20
