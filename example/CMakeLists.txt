@@ -3,7 +3,7 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.22)
 
 ##======================================================================================================================
 ## Setup project
@@ -40,12 +40,14 @@ endif()
 copa_setup_doxygen(QUIET DESTINATION "${PROJECT_BINARY_DIR}/doxygen-output")
 
 ## Testing: copa_setup_doxygen
-if(NOT "${PROJECT_DOXYGEN_SOURCE_DIR}" MATCHES "${PROJECT_SOURCE_DIR}/doc")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - Doxygen input path ${PROJECT_DOXYGEN_SOURCE_DIR} is invalid")
-endif()
+if (DOXYGEN_FOUND)
+  if(NOT "${PROJECT_DOXYGEN_SOURCE_DIR}" MATCHES "${PROJECT_SOURCE_DIR}/doc")
+    message(FATAL_ERROR "[${PROJECT_NAME}] - Doxygen input path ${PROJECT_DOXYGEN_SOURCE_DIR} is invalid")
+  endif()
 
-if(NOT "${PROJECT_DOXYGEN_OUTPUT_DIR}" MATCHES "${PROJECT_BINARY_DIR}/doxygen-output")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - Doxygen output path ${PROJECT_DOXYGEN_OUTPUT_DIR} is invalid")
+  if(NOT "${PROJECT_DOXYGEN_OUTPUT_DIR}" MATCHES "${PROJECT_BINARY_DIR}/doxygen-output")
+    message(FATAL_ERROR "[${PROJECT_NAME}] - Doxygen output path ${PROJECT_DOXYGEN_OUTPUT_DIR} is invalid")
+  endif()
 endif()
 ##======================================================================================================================
 
@@ -54,8 +56,10 @@ endif()
 copa_setup_standalone(FILE example.hpp SOURCE src DESTINATION include ROOT libexample TARGET standalone-example)
 
 ## Testing copa_setup_standalone
-if(NOT "${PROJECT_STANDALONE_TARGET}" MATCHES "standalone-example")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target ${PROJECT_STANDALONE_TARGET} is invalid")
+if(Python_FOUND)
+  if(NOT "${PROJECT_STANDALONE_TARGET}" MATCHES "standalone-example")
+    message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target ${PROJECT_STANDALONE_TARGET} is invalid")
+  endif()
 endif()
 ##======================================================================================================================
 
