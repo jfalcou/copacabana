@@ -17,6 +17,10 @@ function(COPA_SETUP_PCH)
   file(WRITE "${PROJECT_BINARY_DIR}/${PCH_FILE}" "int main() {}" )
   add_executable( ${PCH_LIB}   "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/${PCH_FILE}>" )
 
+  if(DEFINED PROJECT_STANDALONE_TARGET)
+    add_dependencies(${PCH_LIB} ${PROJECT_STANDALONE_TARGET} )
+  endif()
+
   foreach(interface ${OPT_INTERFACES})
     target_link_libraries(${PCH_LIB} PUBLIC ${interface})
   endforeach( )
