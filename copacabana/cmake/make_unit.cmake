@@ -63,21 +63,28 @@ endfunction()
 ##==================================================================================================
 ## Process a list of source files to generate corresponding test target
 ##==================================================================================================
-function(COPA_MAKE_UNIT interface extension destination dependencies pch)
-  foreach(file ${ARGN})
-    copa_source_to_target( ${extension} ${file} test)
+function(COPA_MAKE_UNIT)
+  set(oneValueArgs    INTERFACE EXTENSION DESTINATION PCH)
+  set(multiValueArgs  DEPENDENCIES FILES)
+  cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+  foreach(file ${OPT_FILES})
+    copa_source_to_target( "${OPT_EXTENSION}" "${file}" test)
     add_executable(${test} ${file})
 
     copa_add_target_parent(${test})
     add_dependencies(unit ${test})
-    add_dependencies(${test} ${dependencies})
 
-    copa_setup_test( ${test} ${destination})
-    target_link_libraries(${test} PUBLIC ${interface})
+    if(DEFINED OPT_DEPENDENCIES)
+      add_dependencies(${test} ${OPT_DEPENDENCIES})
+    endif()
 
-    if( NOT ${pch} EQUAL "")
-      target_precompile_headers(${test} REUSE_FROM ${pch})
-      add_dependencies(${test} ${pch})
+    copa_setup_test( ${test} "${OPT_DESTINATION}")
+    target_link_libraries(${test} PUBLIC ${OPT_INTERFACE})
+
+    if( DEFINED OPT_PCH)
+      target_precompile_headers(${test} REUSE_FROM ${OPT_PCH})
+      add_dependencies(${test} ${OPT_PCH})
     endif()
 
   endforeach()
@@ -115,6 +122,13 @@ function(COPA_GLOB_UNIT)
     set(OPT_PATTERN "*.cpp")
   endif()
 
-  file(GLOB FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
-  copa_make_unit(${OPT_INTERFACE} ${OPT_EXTENSION} ${OPT_DESTINATION} ${OPT_DEPENDENCIES} ${OPT_PCH} ${FILES})
+  file(GLOB FOUND_FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
+
+  copa_make_unit( INTERFACE     "${OPT_INTERFACE}"
+                  EXTENSION     "${OPT_EXTENSION}"
+                  DESTINATION   "${OPT_DESTINATION}"
+                  DEPENDENCIES  "${OPT_DEPENDENCIES}"
+                  PCH           "${OPT_PCH}"
+                  FILES         "${FOUND_FILES}"
+                )
 endfunction()
