@@ -38,7 +38,7 @@ function(COPA_SETUP_DOXYGEN)
                         COMMAND DOXYGEN_OUPUT=${OPT_DESTINATION}
                                 DOXYGEN_PROJECT_NAME=${PROJECT_NAME}
                                 DOXYGEN_PROJECT_VERSION=${PROJECT_VERSION}
-                                DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/cmake/asset
+                                DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset
                                 DOXYGEN_STRIP=${PROJECT_SOURCE_DIR}
                                 ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG}
 
