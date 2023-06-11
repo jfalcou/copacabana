@@ -3,8 +3,12 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-
-add_custom_target(unit)
+##==================================================================================================
+## Setup our tests main tests targets
+##==================================================================================================
+add_custom_target(tests   )
+add_custom_target(unit    )
+add_dependencies(tests unit)
 
 ##======================================================================================================================
 ## For any target of the form XXX.YYY.ZZZ, generates all the intermediate XX and XXX.YY targets that include
@@ -39,13 +43,21 @@ endfunction()
 ## Select a test target build location
 ##======================================================================================================================
 function(COPA_SETUP_TEST test location)
-set_property( TARGET ${test}
-              PROPERTY RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
+  set_property ( TARGET ${test}
+                PROPERTY RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
+               )
+
+  if(DEFINED CMAKE_CROSSCOMPILING_CMD)
+    add_test( NAME ${test}
+              WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
+              COMMAND "${CMAKE_CROSSCOMPILING_CMD}" $<TARGET_FILE:${test}>
             )
-add_test( NAME ${test}
-          WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
-          COMMAND $<TARGET_FILE:${test}>
-        )
+  else()
+    add_test( NAME ${test}
+              WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/unit"
+              COMMAND $<TARGET_FILE:${test}>
+            )
+  endif()
 endfunction()
 
 ##==================================================================================================
