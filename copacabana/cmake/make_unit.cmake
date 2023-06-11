@@ -3,9 +3,6 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-##==================================================================================================
-## Setup our tests main tests targets
-##==================================================================================================
 add_custom_target(tests   )
 add_custom_target(unit    )
 add_dependencies(tests unit)
@@ -60,13 +57,19 @@ function(COPA_SETUP_TEST test location)
   endif()
 endfunction()
 
-##==================================================================================================
+##======================================================================================================================
 ## Process a list of source files to generate corresponding test target
-##==================================================================================================
+##======================================================================================================================
 function(COPA_MAKE_UNIT)
-  set(oneValueArgs    INTERFACE EXTENSION DESTINATION PCH)
+  set(options         QUIET)
+  set(oneValueArgs    INTERFACE EXTENSION ROOT DESTINATION PCH)
   set(multiValueArgs  DEPENDENCIES FILES)
-  cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+  if(NOT ${OPT_QUIET})
+    list(LENGTH OPT_FILES NB_TARGETS)
+    message(STATUS "[${PROJECT_NAME}] - ${NB_TARGETS} targets generated for ${OPT_ROOT}")
+  endif()
 
   foreach(file ${OPT_FILES})
     copa_source_to_target( "${OPT_EXTENSION}" "${file}" test)
@@ -94,9 +97,10 @@ endfunction()
 ## Generate tests from a GLOB
 ##==================================================================================================
 function(COPA_GLOB_UNIT)
-  set(oneValueArgs  RELATIVE PATTERN INTERFACE PCH EXTENSION DESTINATION)
+  set(options         QUIET)
+  set(oneValueArgs    RELATIVE PATTERN INTERFACE PCH EXTENSION DESTINATION)
   set(multiValueArgs  DEPENDENCIES)
-  cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
   if(NOT DEFINED OPT_INTERFACE)
     set(OPT_INTERFACE "")
@@ -124,11 +128,24 @@ function(COPA_GLOB_UNIT)
 
   file(GLOB FOUND_FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
 
+  if(${OPT_QUIET})
   copa_make_unit( INTERFACE     "${OPT_INTERFACE}"
                   EXTENSION     "${OPT_EXTENSION}"
                   DESTINATION   "${OPT_DESTINATION}"
                   DEPENDENCIES  "${OPT_DEPENDENCIES}"
                   PCH           "${OPT_PCH}"
                   FILES         "${FOUND_FILES}"
+                  ROOT          "${OPT_PATTERN}"
+                  QUIET
                 )
+  else()
+    copa_make_unit( INTERFACE     "${OPT_INTERFACE}"
+                    EXTENSION     "${OPT_EXTENSION}"
+                    DESTINATION   "${OPT_DESTINATION}"
+                    DEPENDENCIES  "${OPT_DEPENDENCIES}"
+                    PCH           "${OPT_PCH}"
+                    FILES         "${FOUND_FILES}"
+                    ROOT          "${OPT_PATTERN}"
+                  )
+  endif()
 endfunction()
