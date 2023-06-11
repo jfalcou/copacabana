@@ -8,14 +8,23 @@
 ## Setup PCH
 ##======================================================================================================================
 function(COPA_SETUP_PCH)
-  set(oneValueArgs    TARGET )
+  set(options         AUTONOMOUS        )
+  set(oneValueArgs    TARGET            )
   set(multiValueArgs  INTERFACES HEADERS)
-  cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
   set(PCH_LIB   "${OPT_TARGET}_pch")
   set(PCH_FILE  "${OPT_TARGET}_pch.cpp")
-  file(WRITE "${PROJECT_BINARY_DIR}/${PCH_FILE}" "int main() {}" )
+
+  if(NOT DEFINED OPT_AUTONOMOUS)
+    file(WRITE "${PROJECT_BINARY_DIR}/${PCH_FILE}" "int main() {}" )
+  else()
+    file(TOUCH "${PROJECT_BINARY_DIR}/${PCH_FILE}"  )
+  endif()
+
   add_executable( ${PCH_LIB}   "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/${PCH_FILE}>" )
+
+
 
   if(DEFINED PROJECT_STANDALONE_TARGET)
     add_dependencies(${PCH_LIB} ${PROJECT_STANDALONE_TARGET} )
