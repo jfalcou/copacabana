@@ -31,7 +31,9 @@ function(COPA_SETUP_DOXYGEN)
   endif()
 
   if (DOXYGEN_FOUND)
-    message( STATUS "[${PROJECT_NAME}] - Doxygen available via the ${OPT_TARGET} target")
+    if(NOT ${OPT_QUIET})
+      message( STATUS "[${PROJECT_NAME}] - Doxygen available via the ${OPT_TARGET} target")
+    endif()
     set(DOXYGEN_CONFIG ${OPT_SOURCE}/Doxyfile)
 
     add_custom_target ( ${OPT_TARGET}
