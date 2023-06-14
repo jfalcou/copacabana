@@ -149,3 +149,40 @@ function(COPA_GLOB_UNIT)
                   )
   endif()
 endfunction()
+
+
+##======================================================================================================================
+## Process a list of source files to generate a single test target
+##======================================================================================================================
+function(COPA_MAKE_SINGLE_UNIT)
+  set(oneValueArgs    NAME INTERFACE EXTENSION ROOT DESTINATION PCH)
+  set(multiValueArgs  DEPENDENCIES FILES)
+  cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+  if(NOT DEFINED OPT_EXTENSION)
+    set(OPT_EXTENSION "exe")
+  endif()
+
+  if(NOT DEFINED OPT_DESTINATION)
+    set(OPT_DESTINATION "unit")
+  endif()
+
+  copa_source_to_target( "${OPT_EXTENSION}" "${OPT_NAME}" test)
+  add_executable(${test} ${OPT_FILES})
+
+  copa_add_target_parent(${test})
+  add_dependencies(unit ${test})
+
+  if(DEFINED OPT_DEPENDENCIES)
+    add_dependencies(${test} ${OPT_DEPENDENCIES})
+  endif()
+
+  copa_setup_test( ${test} "${OPT_DESTINATION}")
+  target_link_libraries(${test} PUBLIC ${OPT_INTERFACE})
+
+  if( DEFINED OPT_PCH)
+    target_precompile_headers(${test} REUSE_FROM ${OPT_PCH})
+    add_dependencies(${test} ${OPT_PCH})
+  endif()
+
+endfunction()
