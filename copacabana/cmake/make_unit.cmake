@@ -62,7 +62,7 @@ endfunction()
 ##======================================================================================================================
 function(COPA_MAKE_UNIT)
   set(options         QUIET)
-  set(oneValueArgs    INTERFACE EXTENSION ROOT DESTINATION PCH)
+  set(oneValueArgs    INTERFACE EXTENSION ROOT DESTINATION PCH IMPLICIT)
   set(multiValueArgs  DEPENDENCIES FILES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -85,9 +85,17 @@ function(COPA_MAKE_UNIT)
     copa_setup_test( ${test} "${OPT_DESTINATION}")
     target_link_libraries(${test} PUBLIC ${OPT_INTERFACE})
 
-    if( DEFINED OPT_PCH)
+    if(DEFINED OPT_PCH)
       target_precompile_headers(${test} REUSE_FROM ${OPT_PCH})
       add_dependencies(${test} ${OPT_PCH})
+    endif()
+
+    if(NOT ${OPT_IMPLICIT})
+      set_target_properties ( ${test} PROPERTIES
+                              EXCLUDE_FROM_DEFAULT_BUILD TRUE
+                              EXCLUDE_FROM_ALL TRUE
+                              ${MAKE_UNIT_TARGET_PROPERTIES}
+                            )
     endif()
 
   endforeach()
@@ -97,7 +105,7 @@ endfunction()
 ## Generate tests from a GLOB
 ##==================================================================================================
 function(COPA_GLOB_UNIT)
-  set(options         QUIET)
+  set(options         QUIET IMPLICIT)
   set(oneValueArgs    RELATIVE PATTERN INTERFACE PCH EXTENSION DESTINATION)
   set(multiValueArgs  DEPENDENCIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
@@ -126,6 +134,12 @@ function(COPA_GLOB_UNIT)
     set(OPT_PATTERN "*.cpp")
   endif()
 
+  if(${OPT_IMPLICIT})
+    set(MAKE_IMPLICIT 1)
+  else()
+    set(MAKE_IMPLICIT 0)
+  endif()
+
   file(GLOB FOUND_FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
 
   if(${OPT_QUIET})
@@ -136,6 +150,7 @@ function(COPA_GLOB_UNIT)
                   PCH           "${OPT_PCH}"
                   FILES         "${FOUND_FILES}"
                   ROOT          "${OPT_PATTERN}"
+                  IMPLICIT      "${MAKE_IMPLICIT}"
                   QUIET
                 )
   else()
@@ -146,6 +161,7 @@ function(COPA_GLOB_UNIT)
                     PCH           "${OPT_PCH}"
                     FILES         "${FOUND_FILES}"
                     ROOT          "${OPT_PATTERN}"
+                    IMPLICIT      "${MAKE_IMPLICIT}"
                   )
   endif()
 endfunction()
