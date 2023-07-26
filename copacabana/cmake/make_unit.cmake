@@ -3,9 +3,14 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-add_custom_target(tests   )
-add_custom_target(unit    )
-add_dependencies(tests unit)
+function(COPA_SETUP_TEST_TARGETS)
+  string(TOLOWER ${PROJECT_NAME} NAME)
+  set(PROJECT_TEST_TARGET "${NAME}-test")
+  if(NOT TARGET ${PROJECT_TEST_TARGET})
+    add_custom_target(${PROJECT_TEST_TARGET})
+    set(PROJECT_TEST_TARGET "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
+  endif()
+endfunction()
 
 ##======================================================================================================================
 ## For any target of the form XXX.YYY.ZZZ, generates all the intermediate XX and XXX.YY targets that include
@@ -76,7 +81,7 @@ function(COPA_MAKE_UNIT)
     add_executable(${test} ${file})
 
     copa_add_target_parent(${test})
-    add_dependencies(unit ${test})
+    add_dependencies(${PROJECT_TEST_TARGET} ${test})
 
     if(DEFINED OPT_DEPENDENCIES)
       add_dependencies(${test} ${OPT_DEPENDENCIES})
