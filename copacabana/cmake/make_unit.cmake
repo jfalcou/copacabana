@@ -192,7 +192,7 @@ function(COPA_MAKE_SINGLE_UNIT)
   add_executable(${test} ${OPT_FILES})
 
   copa_add_target_parent(${test})
-  add_dependencies(unit ${test})
+  add_dependencies(${PROJECT_TEST_TARGET} ${test})
 
   if(DEFINED OPT_DEPENDENCIES)
     add_dependencies(${test} ${OPT_DEPENDENCIES})
