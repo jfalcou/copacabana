@@ -34,9 +34,9 @@ jobs:
       - name: Running CMake for ${{ matrix.cfg.compiler }}
         run: |
           mkdir build && cd build
-          cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }}
+          cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }} -DCPM_COPACABANA_SOURCE=../
       - name: Running Unit Tests
-        run:  cd build && make unit && ctest --output-on-failure
+        run:  cd build && make example-test && ctest --output-on-failure
 
   macosx:
     runs-on: [macos-12]
@@ -52,9 +52,9 @@ jobs:
       - name: Running CMake for ${{ matrix.cfg.compiler }}
         run: |
           mkdir build && cd build
-          cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }}
+          cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }} -DCPM_COPACABANA_SOURCE=../
       - name: Running Unit Tests
-        run:  cd build && make unit && ctest --output-on-failure
+        run:  cd build && make example-test && ctest --output-on-failure
 
   android:
     runs-on: [macos-12]
@@ -66,9 +66,9 @@ jobs:
       - name: Running CMake for Android NDK
         run: |
           mkdir build && cd build
-          cmake ../example -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a
+          cmake ../example -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DCPM_COPACABANA_SOURCE=../
       - name: Compiling Unit Tests
-        run:  cd build && make unit
+        run:  cd build && make example-test
 
   msvc:
     runs-on: [windows-2022]
@@ -84,11 +84,11 @@ jobs:
       - name: Running CMake for MSVC ${{ matrix.cfg.mode }}
         run: |
           mkdir build && cd build
-          cmake -G "Visual Studio 17 2022" -A x64 ../example
+          cmake -G "Visual Studio 17 2022"  -A x64 ../example -DCPM_COPACABANA_SOURCE="../"
       - name: Compiling Unit Tests
         run:  |
           cd build
-          cmake --build . --target unit --config ${{ matrix.cfg.mode }} --parallel 2
+          cmake --build . --target example-test --config ${{ matrix.cfg.mode }} --parallel 2
       - name: Running Tests
         run: |
           cd build

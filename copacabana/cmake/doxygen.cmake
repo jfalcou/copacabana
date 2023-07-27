@@ -19,7 +19,8 @@ function(COPA_SETUP_DOXYGEN)
   endif()
 
   if(NOT DEFINED OPT_TARGET)
-    set(OPT_TARGET "doxygen")
+    string(TOLOWER ${PROJECT_NAME} NAME)
+    set(OPT_TARGET "${NAME}-doxygen")
   endif()
 
   if(NOT DEFINED OPT_SOURCE)
