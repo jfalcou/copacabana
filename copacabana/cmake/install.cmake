@@ -4,12 +4,13 @@
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 ##======================================================================================================================
 ## Prepare install target
 ##======================================================================================================================
 function(COPA_SETUP_INSTALL)
-  set(oneValueArgs    LIBRARY NAMESPACE )
+  set(oneValueArgs    LIBRARY NAMESPACE COMPATIBILITY)
   set(multiValueArgs  LIB INCLUDE DOC FEATURES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -20,6 +21,11 @@ function(COPA_SETUP_INSTALL)
   if(NOT DEFINED OPT_NAMESPACE)
     set(OPT_NAMESPACE "${OPT_LIBRARY}")
   endif()
+
+  if(NOT DEFINED OPT_COMPATIBILITY)
+    set(OPT_COMPATIBILITY "ExactVersion")
+  endif()
+
 
   set(EXT_NAME      "${OPT_LIBRARY}_lib")
   set(TARGETS_NAME  "${OPT_LIBRARY}-targets")
@@ -54,7 +60,14 @@ function(COPA_SETUP_INSTALL)
     install(FILES  ${file}    DESTINATION "${DOC_DEST}" )
   endforeach()
 
-  install(FILES     "${PROJECT_SOURCE_DIR}/cmake/${OPT_LIBRARY}-config.cmake" DESTINATION "${MAIN_DEST}"  )
-  install(EXPORT    ${TARGETS_NAME} NAMESPACE "${OPT_NAMESPACE}::"            DESTINATION "${MAIN_DEST}"  )
+  write_basic_package_version_file( "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake"
+                                    VERSION "${PROJECT_VERSION}"
+                                    COMPATIBILITY "${OPT_COMPATIBILITY}"
+                                    ARCH_INDEPENDENT
+                                  )
+
+  install(FILES     "${PROJECT_SOURCE_DIR}/cmake/${OPT_LIBRARY}-config.cmake"         DESTINATION "${MAIN_DEST}"  )
+  install(FILES     "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake"  DESTINATION "${MAIN_DEST}"  )
+  install(EXPORT    ${TARGETS_NAME} NAMESPACE "${OPT_NAMESPACE}::"                    DESTINATION "${MAIN_DEST}"  )
 
 endfunction()
