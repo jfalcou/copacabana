@@ -39,13 +39,13 @@ jobs:
         run:  cd build && make example-test && ctest --output-on-failure
 
   macosx:
-    runs-on: [macos-12]
+    runs-on: [macos-14]
     strategy:
       fail-fast: false
       matrix:
         cfg:
         - { compiler: clang++ }
-        - { compiler: g++-11  }
+
     steps:
       - name: Fetch current branch
         uses: actions/checkout@v3
@@ -57,7 +57,7 @@ jobs:
         run:  cd build && make example-test && ctest --output-on-failure
 
   android:
-    runs-on: [macos-12]
+    runs-on: [macos-14]
     strategy:
       fail-fast: false
     steps:
