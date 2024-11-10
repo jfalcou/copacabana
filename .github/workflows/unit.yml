@@ -21,7 +21,7 @@ jobs:
   linux:
     runs-on: [ubuntu-latest]
     container:
-      image: ghcr.io/jfalcou/compilers:v6
+      image: ghcr.io/jfalcou/compilers:v8
     strategy:
       fail-fast: false
       matrix:
