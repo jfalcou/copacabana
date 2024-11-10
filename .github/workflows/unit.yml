@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-        - { compiler: g++-12  }
+        - { compiler: g++     }
         - { compiler: clang++ }
     steps:
       - name: Fetch current branch
