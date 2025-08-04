@@ -9,15 +9,19 @@
 ##======================================================================================================================
 function(COPA_SETUP_STANDALONE)
   set(options       QUIET )
-  set(oneValueArgs  SOURCE DESTINATION FILE ROOT TARGET)
+  set(oneValueArgs  SOURCE DESTINATION FILE ROOT TARGET OUTPUT)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN} )
 
   if(NOT DEFINED OPT_SOURCE)
     message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target setup header: Missing SOURCE folder")
   endif()
 
-  if(NOT DEFINED OPT_DESTINATION)
-    message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target setup header: Missing DESTINATION folder")
+  if(NOT DEFINED OPT_OUTPUT)
+    if(NOT DEFINED OPT_DESTINATION)
+      message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target setup header: Missing DESTINATION folder")
+    endif()
+
+    set(OPT_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${OPT_DESTINATION}/${OPT_ROOT}")
   endif()
 
   if(NOT DEFINED OPT_FILE)
@@ -35,13 +39,12 @@ function(COPA_SETUP_STANDALONE)
   endif()
 
   if(Python_FOUND)
-    set(DST_FILE "${OPT_DESTINATION}/${OPT_ROOT}/${OPT_FILE}")
     add_custom_command(OUTPUT ${OPT_FILE}
       COMMAND "${Python_EXECUTABLE}"
               ${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/embed.py
               ${CMAKE_CURRENT_SOURCE_DIR}/${OPT_SOURCE}/${OPT_ROOT}/${OPT_FILE}
               -I ${OPT_SOURCE}
-              -o ${CMAKE_CURRENT_SOURCE_DIR}/${DST_FILE}
+              -o ${OPT_OUTPUT}/${OPT_FILE}
               --include-match ${OPT_ROOT}/*
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
       COMMENT "[${PROJECT_NAME}] - Generating standalone header: ${DST_FILE}"
