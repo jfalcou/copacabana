@@ -39,6 +39,8 @@ function(COPA_SETUP_STANDALONE)
   endif()
 
   if(Python_FOUND)
+  set(DST_FILE "${OPT_OUTPUT}/${OPT_FILE}")
+
     add_custom_command(OUTPUT ${OPT_FILE}
       COMMAND "${Python_EXECUTABLE}"
               ${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/embed.py
@@ -54,7 +56,7 @@ function(COPA_SETUP_STANDALONE)
   add_custom_target( ${OPT_TARGET} DEPENDS ${OPT_FILE})
 
   set_property( TARGET ${OPT_TARGET} APPEND PROPERTY
-                ADDITIONAL_CLEAN_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${DST_FILE}
+                ADDITIONAL_CLEAN_FILES ${DST_FILE}
               )
 
   if(NOT ${OPT_QUIET})
