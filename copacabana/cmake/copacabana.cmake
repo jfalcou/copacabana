@@ -15,6 +15,7 @@ endif()
 ## Sub-package
 ##======================================================================================================================
 include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/version.cmake    )
+include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/precommit.cmake  )
 include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/doxygen.cmake    )
 include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/install.cmake    )
 include( ${COPACABANA_SOURCE_DIR}/copacabana/cmake/make_unit.cmake  )

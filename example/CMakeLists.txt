@@ -19,21 +19,25 @@ copa_project_version(MAJOR 1 MINOR 2 PATCH 3a)
 
 ## Testing: copa_project_version
 if(NOT "${PROJECT_MAJOR_VERSION}" MATCHES "1")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - Major version ${PROJECT_MAJOR_VERSION} is invalid")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Major version ${PROJECT_MAJOR_VERSION} is invalid")
 endif()
 
 if(NOT "${PROJECT_MINOR_VERSION}" MATCHES "2")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - Minor version ${PROJECT_MINOR_VERSION} is invalid")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Minor version ${PROJECT_MINOR_VERSION} is invalid")
 endif()
 
 if(NOT "${PROJECT_PATCH_VERSION}" MATCHES "3a")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - Patch ${PROJECT_PATCH_VERSION} is invalid")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Patch ${PROJECT_PATCH_VERSION} is invalid")
 endif()
 
 if(NOT "${PROJECT_VERSION}" MATCHES "1.2.3a")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - Version ${PROJECT_VERSION} is invalid")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Version ${PROJECT_VERSION} is invalid")
 endif()
 ##======================================================================================================================
+
+##======================================================================================================================
+## Setup pre-commit hooks
+copa_setup_precommit_hooks()
 
 ##======================================================================================================================
 ## Setup doxygen
