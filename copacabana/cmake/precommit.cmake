@@ -15,7 +15,11 @@ function(COPA_SETUP_PRECOMMIT_HOOKS)
     find_program(PRE_COMMIT_CMD NAMES pre-commit)
 
     if(PRE_COMMIT_CMD)
-      add_custom_target ( setup-hooks
+
+    string(TOLOWER "${PROJECT_NAME}" PROJECT_NAME_LOWER)
+    set(HOOK_TARGET "${PROJECT_NAME_LOWER}-setup-hooks")
+
+    add_custom_target ( "${HOOK_TARGET}"
                           COMMAND ${PRE_COMMIT_CMD} install
                           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                           COMMENT "Installing pre-commit git hooks to ${CMAKE_SOURCE_DIR}/.git/hooks"
@@ -47,7 +51,7 @@ function(COPA_SETUP_PRECOMMIT_HOOKS)
           message(STATUS "[${PROJECT_NAME}] -   2. Git hooks are NOT active for this repo.")
           message(STATUS "[${PROJECT_NAME}] -     Run this command to fix it:")
           message(STATUS "[${PROJECT_NAME}] -     --------------------------------------------------")
-          message(STATUS "[${PROJECT_NAME}] -     cmake --build . --target setup-hooks")
+          message(STATUS "[${PROJECT_NAME}] -     cmake --build . --target ${HOOK_TARGET}")
           message(STATUS "[${PROJECT_NAME}] -     --------------------------------------------------")
         endif()
 
