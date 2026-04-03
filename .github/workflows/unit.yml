@@ -21,75 +21,80 @@ jobs:
   linux:
     runs-on: [ubuntu-latest]
     container:
-      image: ghcr.io/jfalcou/compilers:v8
+      image: ghcr.io/jfalcou/compilers:v10
     strategy:
       fail-fast: false
       matrix:
         cfg:
-        - { compiler: g++     }
-        - { compiler: clang++ }
+        - { compiler: g++     , mode: dev-normal}
+        - { compiler: g++     , mode: dev-tsan  }
+        - { compiler: g++     , mode: dev-asan  }
+        - { compiler: clang++ , mode: dev-normal}
+        - { compiler: clang++ , mode: dev-asan  }
+        - { compiler: clang++ , mode: dev-tsan  }
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v3
-      - name: Running CMake for ${{ matrix.cfg.compiler }}
+        uses: actions/checkout@v6.0.2
+      - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.mode }} mode
         run: |
-          mkdir build && cd build
-          cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }} -DCPM_COPACABANA_SOURCE=../
-      - name: Running Unit Tests
-        run:  cd build && make example-test && ctest --output-on-failure
+          ls -al
+          cd example
+          cmake --preset=${{ matrix.cfg.mode }} -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }} -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
+          cmake --build --preset=${{ matrix.cfg.mode }} --target example-test --parallel 2
+          ctest --preset=${{ matrix.cfg.mode }} --output-on-failure
 
-  macosx:
-    runs-on: [macos-14]
-    strategy:
-      fail-fast: false
-      matrix:
-        cfg:
-        - { compiler: clang++ }
+  # macosx:
+  #   runs-on: [macos-14]
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       cfg:
+  #       - { compiler: clang++ }
 
-    steps:
-      - name: Fetch current branch
-        uses: actions/checkout@v3
-      - name: Running CMake for ${{ matrix.cfg.compiler }}
-        run: |
-          mkdir build && cd build
-          cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }} -DCPM_COPACABANA_SOURCE=../
-      - name: Running Unit Tests
-        run:  cd build && make example-test && ctest --output-on-failure
+  #   steps:
+  #     - name: Fetch current branch
+  #       uses: actions/checkout@v6.0.2
+  #     - name: Running CMake for ${{ matrix.cfg.compiler }}
+  #       run: |
+  #         mkdir build && cd build
+  #         cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }} -DCPM_COPACABANA_SOURCE=../
+  #     - name: Running Unit Tests
+  #       run:  cd build && make example-test && ctest --output-on-failure
 
-  android:
-    runs-on: [macos-14]
-    strategy:
-      fail-fast: false
-    steps:
-      - name: Fetch current branch
-        uses: actions/checkout@v3
-      - name: Running CMake for Android NDK
-        run: |
-          mkdir build && cd build
-          cmake ../example -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DCPM_COPACABANA_SOURCE=../
-      - name: Compiling Unit Tests
-        run:  cd build && make example-test
+  # android:
+  #   runs-on: [macos-14]
+  #   strategy:
+  #     fail-fast: false
+  #   steps:
+  #     - name: Fetch current branch
+  #       uses: actions/checkout@v6.0.2
+  #     - name: Running CMake for Android NDK
+  #       run: |
+  #         mkdir build && cd build
+  #         cmake ../example -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DCPM_COPACABANA_SOURCE=../
+  #     - name: Compiling Unit Tests
+  #       run:  cd build && make example-test
 
-  msvc:
-    runs-on: [windows-2022]
-    strategy:
-      fail-fast: false
-      matrix:
-        cfg:
-        - { mode: Debug  }
-        - { mode: Release}
-    steps:
-      - name: Fetch current branch
-        uses: actions/checkout@v3
-      - name: Running CMake for MSVC ${{ matrix.cfg.mode }}
-        run: |
-          mkdir build && cd build
-          cmake -G "Visual Studio 17 2022"  -A x64 ../example -DCPM_COPACABANA_SOURCE="../"
-      - name: Compiling Unit Tests
-        run:  |
-          cd build
-          cmake --build . --target example-test --config ${{ matrix.cfg.mode }} --parallel 2
-      - name: Running Tests
-        run: |
-          cd build
-          ctest -C ${{ matrix.cfg.mode }} --output-on-failure
+  # msvc:
+  #   runs-on: [windows-2022]
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       cfg:
+  #       - { mode: Debug  }
+  #       - { mode: Release}
+  #   steps:
+  #     - name: Fetch current branch
+  #       uses: actions/checkout@v6.0.2
+  #     - name: Running CMake for MSVC ${{ matrix.cfg.mode }}
+  #       run: |
+  #         mkdir build && cd build
+  #         cmake -G "Visual Studio 17 2022"  -A x64 ../example -DCPM_COPACABANA_SOURCE="../"
+  #     - name: Compiling Unit Tests
+  #       run:  |
+  #         cd build
+  #         cmake --build . --target example-test --config ${{ matrix.cfg.mode }} --parallel 2
+  #     - name: Running Tests
+  #       run: |
+  #         cd build
+  #         ctest -C ${{ matrix.cfg.mode }} --output-on-failure

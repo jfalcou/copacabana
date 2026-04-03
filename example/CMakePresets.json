@@ -1,0 +1,83 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base-dev",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "dev-normal",
+      "inherits": "base-dev",
+      "displayName": "Normal Build (No Sanitizers)"
+    },
+    {
+      "name": "dev-asan",
+      "inherits": "base-dev",
+      "displayName": "Build with Address and UB Sanitizers",
+      "cacheVariables": {
+        "EXAMPLE_USE_ASAN": "ON"
+      }
+    },
+    {
+      "name": "dev-tsan",
+      "inherits": "base-dev",
+      "displayName": "Build with Thread Sanitizer",
+      "cacheVariables": {
+        "EXAMPLE_USE_TSAN": "ON"
+      }
+    },
+    {
+      "name": "dev-msan",
+      "inherits": "base-dev",
+      "displayName": "Build with Memory Sanitizer",
+      "cacheVariables": {
+        "EXAMPLE_USE_MSAN": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev-normal",
+      "configurePreset": "dev-normal"
+    },
+    {
+      "name": "dev-asan",
+      "configurePreset": "dev-asan"
+    },
+    {
+      "name": "dev-tsan",
+      "configurePreset": "dev-tsan"
+    },
+    {
+      "name": "dev-msan",
+      "configurePreset": "dev-msan"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "dev-normal",
+      "configurePreset": "dev-normal"
+    },
+    {
+      "name": "dev-asan",
+      "configurePreset": "dev-asan"
+    },
+    {
+      "name": "dev-tsan",
+      "configurePreset": "dev-tsan"
+    },
+    {
+      "name": "dev-msan",
+      "configurePreset": "dev-msan"
+    }
+  ]
+}

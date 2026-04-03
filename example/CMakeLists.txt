@@ -70,6 +70,10 @@ endif()
 ##======================================================================================================================
 # Unit test Configuration
 ##======================================================================================================================
+option(EXAMPLE_USE_ASAN "Enable Address & Undefined Behavior Sanitizers" OFF)
+option(EXAMPLE_USE_TSAN "Enable Thread Sanitizer" OFF)
+option(EXAMPLE_USE_MSAN "Enable Memory Sanitizer" OFF)
+
 add_library(example_test INTERFACE)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -82,6 +86,15 @@ target_include_directories( example_test INTERFACE
                             ${PROJECT_SOURCE_DIR}/test
                             ${PROJECT_SOURCE_DIR}/include
                           )
+
+# Dynamically apply sanitizers based on the options
+if(EXAMPLE_USE_ASAN)
+  copa_setup_sanitizers(example_test ENABLE_ASAN ENABLE_UBSAN)
+elseif(EXAMPLE_USE_TSAN)
+  copa_setup_sanitizers(example_test ENABLE_TSAN)
+elseif(EXAMPLE_USE_MSAN)
+  copa_setup_sanitizers(example_test ENABLE_MSAN)
+endif()
 
 ##======================================================================================================================
 ## Setup PCH
