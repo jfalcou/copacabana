@@ -89,15 +89,15 @@ HTML_FILE_EXTENSION    = .html
 HTML_HEADER            = ./base.html
 HTML_FOOTER            = $(DOXYGEN_ASSETS)/footer.html
 HTML_STYLESHEET        =
-HTML_EXTRA_STYLESHEET  = color.css
-HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/custom.css
+HTML_EXTRA_STYLESHEET  = $(DOXYGEN_ASSETS)/doxygen-awesome-sidebar-only.css
 HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/doxygen-awesome.css
-HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/doxygen-awesome-sidebar-only.css
+HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/custom.css
+HTML_EXTRA_STYLESHEET += color.css
+
 HTML_EXTRA_FILES       = $(DOXYGEN_ASSETS)/godbolt.js
 HTML_EXTRA_FILES      += $(DOXYGEN_ASSETS)/fragment.js
 HTML_EXTRA_FILES      += $(DOXYGEN_ASSETS)/paragraph.js
 
-HTML_TIMESTAMP         = NO
 HTML_DYNAMIC_MENUS     = NO
 HTML_DYNAMIC_SECTIONS  = NO
 HTML_INDEX_NUM_ENTRIES = 100
@@ -107,10 +107,9 @@ DISABLE_INDEX          = YES
 GENERATE_TREEVIEW      = YES
 ENUM_VALUES_PER_LINE   = 4
 TREEVIEW_WIDTH         = 250
-
+TOC_INCLUDE_HEADINGS   = 0
 EXT_LINKS_IN_WINDOW    = NO
 FORMULA_FONTSIZE       = 10
-FORMULA_TRANSPARENT    = YES
 USE_MATHJAX            = YES
 MATHJAX_FORMAT         = HTML-CSS
 MATHJAX_RELPATH        = https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1
