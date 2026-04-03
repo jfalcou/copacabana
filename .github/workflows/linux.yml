@@ -1,0 +1,44 @@
+##==================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##==================================================================================================
+name: Copacabana - Linux Unit Tests
+on:
+  workflow_call:
+
+jobs:
+
+  linux:
+    runs-on: [ubuntu-latest]
+    container:
+      image: ghcr.io/jfalcou/compilers:v10
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - { compiler: g++         , mode: dev-normal }
+        - { compiler: g++         , mode: dev-tsan   }
+        - { compiler: g++         , mode: dev-asan   }
+        - { compiler: g++         , mode: dev-msan   }
+        - { compiler: g++-14      , mode: dev-normal }
+        - { compiler: g++-14      , mode: dev-tsan   }
+        - { compiler: g++-14      , mode: dev-asan   }
+        - { compiler: g++-14      , mode: dev-msan   }
+        - { compiler: clang++     , mode: dev-normal }
+        - { compiler: clang++     , mode: dev-asan   }
+        - { compiler: clang++     , mode: dev-tsan   }
+        - { compiler: clang++     , mode: dev-msan   }
+        - { compiler: clang++-20  , mode: dev-normal }
+        - { compiler: clang++-20  , mode: dev-asan   }
+        - { compiler: clang++-20  , mode: dev-tsan   }
+        - { compiler: clang++-20  , mode: dev-msan   }
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v6.0.2
+      - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.mode }} mode
+        run: |
+          cd example
+          cmake --preset=${{ matrix.cfg.mode }} -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }} -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
+          cmake --build --preset=${{ matrix.cfg.mode }} --target example-test --parallel 2
+          ctest --preset=${{ matrix.cfg.mode }} --output-on-failure
