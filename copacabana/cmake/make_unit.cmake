@@ -35,7 +35,8 @@ endfunction()
 ## Turn a filename to a dot-separated target name
 ##======================================================================================================================
 function(COPA_SOURCE_TO_TARGET extension filename testname)
-  string(REPLACE ".cpp" ".${extension}" base ${filename})
+  cmake_path(GET filename EXTENSION current_extension)
+  string(REPLACE "${current_extension}" ".${extension}" base ${filename})
   string(REPLACE "/"    "." base ${base})
   string(REPLACE "\\"   "." base ${base})
   set(${testname} "${base}" PARENT_SCOPE)
