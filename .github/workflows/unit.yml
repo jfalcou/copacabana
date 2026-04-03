@@ -22,23 +22,10 @@ jobs:
     name: Linux Unit Tests
     uses: ./.github/workflows/linux.yml
 
-  # macosx:
-  #   runs-on: [macos-14]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       cfg:
-  #       - { compiler: clang++ }
+  macosx:
+    name: Mac OS X Unit Tests
+    uses: ./.github/workflows/macos.yml
 
-  #   steps:
-  #     - name: Fetch current branch
-  #       uses: actions/checkout@v6.0.2
-  #     - name: Running CMake for ${{ matrix.cfg.compiler }}
-  #       run: |
-  #         mkdir build && cd build
-  #         cmake ../example -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }} -DCPM_COPACABANA_SOURCE=../
-  #     - name: Running Unit Tests
-  #       run:  cd build && make example-test && ctest --output-on-failure
 
   # android:
   #   runs-on: [macos-14]
