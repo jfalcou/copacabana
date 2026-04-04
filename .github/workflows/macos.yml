@@ -28,3 +28,17 @@ jobs:
                 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE -DCMAKE_CXX_FLAGS="${{ matrix.cfg.option }}"
           cmake --build --preset=${{ matrix.cfg.mode }} --target example-test --parallel 2
           ctest --preset=${{ matrix.cfg.mode }} --output-on-failure
+
+  android:
+    runs-on: [macos-14]
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v6.0.2
+      - name: Running CMake for Android NDK
+        run: |
+          mkdir build && cd build
+          cmake ../example -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DCPM_COPACABANA_SOURCE=../
+      - name: Compiling Unit Tests
+        run:  cd build && make example-test
