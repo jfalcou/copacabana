@@ -49,7 +49,11 @@ function(COPA_SETUP_SANITIZERS target)
 
   if(SANITIZER_FLAGS)
     target_compile_options(${target} INTERFACE ${SANITIZER_FLAGS})
-    target_link_options(${target} INTERFACE ${SANITIZER_FLAGS})
+    if(MSVC)
+      target_link_options(${target} INTERFACE "/INCREMENTAL:NO")
+    else()
+      target_link_options(${target} INTERFACE ${SANITIZER_FLAGS})
+    endif()
     message(STATUS "[${PROJECT_NAME}] - Enabled sanitizers for target '${target}': ${SANITIZER_FLAGS}")
   endif()
 
