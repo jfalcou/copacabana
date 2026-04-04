@@ -1,0 +1,33 @@
+##==================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##==================================================================================================
+name: Copacabana - Windows Unit Tests
+on:
+  workflow_call:
+
+jobs:
+
+  windows:
+    runs-on: [windows-2022]
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - { compiler: "Visual Studio 17 2022", config: Debug   , mode: dev-normal }
+        - { compiler: "Visual Studio 17 2022", config: Debug   , mode: dev-asan   }
+        - { compiler: "Visual Studio 17 2022", config: Debug   , mode: dev-tsan   }
+        - { compiler: "Visual Studio 17 2022", config: Release , mode: dev-normal }
+        - { compiler: "Visual Studio 17 2022", config: Release , mode: dev-asan   }
+        - { compiler: "Visual Studio 17 2022", config: Release , mode: dev-tsan   }
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v6.0.2
+      - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.config }} - ${{ matrix.cfg.mode }} mode
+        run: |
+          cd example
+          $local_path = "${{ github.workspace }}".Replace('\', '/')
+          cmake -G "${{ matrix.cfg.compiler }}" -A x64 --preset=${{ matrix.cfg.mode }} -DCPM_COPACABANA_SOURCE="$local_path"
+          cmake --build --preset=${{ matrix.cfg.mode }} --config ${{ matrix.cfg.config }} --target example-test --parallel 2
+          ctest --preset=${{ matrix.cfg.mode }} -C ${{ matrix.cfg.config }} --output-on-failure
