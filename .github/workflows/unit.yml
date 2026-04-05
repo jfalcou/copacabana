@@ -3,7 +3,7 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##==================================================================================================
-name: Copacabana - Unit Tests
+name: Unit Tests
 on:
   pull_request:
     branches:
@@ -19,13 +19,13 @@ concurrency:
 jobs:
 
   linux:
-    name: Linux Unit Tests
+    name: Linux
     uses: ./.github/workflows/linux.yml
 
   macosx:
-    name: Mac OS X Unit Tests
+    name: Mac OS X
     uses: ./.github/workflows/macos.yml
 
   windows:
-    name: Windows Unit Tests
+    name: Windows
     uses: ./.github/workflows/windows.yml
