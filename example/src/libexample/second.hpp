@@ -13,7 +13,7 @@ namespace example
   template<typename T>
   struct type
   {
-    std::vector<T*> data;
+    std::vector<T> data;
   };
 }
 

@@ -39,21 +39,22 @@ function(COPA_SETUP_STANDALONE)
   endif()
 
   if(Python_FOUND)
-  set(DST_FILE "${OPT_OUTPUT}/${OPT_FILE}")
+    set(DST_FILE "${OPT_OUTPUT}/${OPT_FILE}")
 
-    add_custom_command(OUTPUT ${OPT_FILE}
+    add_custom_command(OUTPUT ${DST_FILE}
       COMMAND "${Python_EXECUTABLE}"
               ${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/embed.py
               ${CMAKE_CURRENT_SOURCE_DIR}/${OPT_SOURCE}/${OPT_ROOT}/${OPT_FILE}
               -I ${OPT_SOURCE}
-              -o ${OPT_OUTPUT}/${OPT_FILE}
+              -o ${DST_FILE}
               --include-match ${OPT_ROOT}/*
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${OPT_SOURCE}/${OPT_ROOT}/${OPT_FILE}
       COMMENT "[${PROJECT_NAME}] - Generating standalone header: ${DST_FILE}"
       VERBATIM
     )
 
-  add_custom_target( ${OPT_TARGET} DEPENDS ${OPT_FILE})
+  add_custom_target( ${OPT_TARGET} DEPENDS ${DST_FILE})
 
   set_property( TARGET ${OPT_TARGET} APPEND PROPERTY
                 ADDITIONAL_CLEAN_FILES ${DST_FILE}
