@@ -68,6 +68,18 @@ endif()
 ##======================================================================================================================
 
 ##======================================================================================================================
+## System Installers Configuration
+##======================================================================================================================
+copa_setup_cpack(
+  VENDOR       "Example Team"
+  MAINTAINER   "Example Team - example@team.com"
+  DESCRIPTION  "An example library to demonstrate Copacabana tools"
+  LICENSE_FILE "${PROJECT_SOURCE_DIR}/LICENSE"
+  DEB_DEPENDENCIES  "libfmt-dev (>= 10.1.1)" "cmake (>= 3.22.0)"
+  RPM_DEPENDENCIES  "fmt-devel >= 10.1.1"    "cmake >= 3.22.0"
+)
+
+##======================================================================================================================
 # Unit test Configuration
 ##======================================================================================================================
 option(EXAMPLE_USE_ASAN "Enable Address & Undefined Behavior Sanitizers" OFF)
@@ -112,9 +124,8 @@ endif()
 ## Setup Install
 ##======================================================================================================================
 copa_setup_install( LIBRARY example FEATURES cxx_std_20
-                    LIB     ${PROJECT_SOURCE_DIR}/include/libexample/example.hpp
                     DOC     ${PROJECT_SOURCE_DIR}/LICENSE
-                    INCLUDE ${PROJECT_SOURCE_DIR}/include/libexample
+                    INCLUDE ${PROJECT_SOURCE_DIR}/src/libexample
                   )
 
 ##======================================================================================================================
