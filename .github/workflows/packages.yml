@@ -1,0 +1,59 @@
+##==================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##==================================================================================================
+name: Copacabana - Linux Unit Tests
+on:
+  workflow_call:
+
+jobs:
+
+  test-cpack:
+    name: Build and Verify System Installers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6.0.2
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+      - name: Configure Project
+        run: |
+          cd example
+          cmake -B build -S . -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
+      - name: Build Project
+        run: |
+          cd example
+          cmake --build build
+      - name: Generate CPack Installers
+        run: |
+          cd example
+          cmake --build build --target package
+      - name: Verify DEB Package Validity
+        run: |
+          cd example
+          # Find the generated .deb file
+          DEB_FILE=$(ls build/*.deb | head -n 1)
+          echo "Validating DEB Package: $DEB_FILE"
+
+          echo "--- DEB Metadata ---"
+          dpkg-deb -I "$DEB_FILE"
+
+          echo "--- DEB File Contents ---"
+          dpkg-deb -c "$DEB_FILE"
+
+      - name: Verify RPM Package Validity
+        run: |
+          cd example
+          # Find the generated .rpm file
+          RPM_FILE=$(ls build/*.rpm | head -n 1)
+          echo "Validating RPM Package: $RPM_FILE"
+
+          echo "--- RPM Metadata ---"
+          rpm -qpi "$RPM_FILE"
+
+          echo "--- RPM Dependencies ---"
+          rpm -qpR "$RPM_FILE"
+
+          echo "--- RPM File Contents ---"
+          rpm -qpl "$RPM_FILE"
