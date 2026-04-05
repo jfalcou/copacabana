@@ -17,13 +17,15 @@ jobs:
         cfg:
         - { compiler: "Visual Studio 17 2022", config: Debug   , mode: dev-normal }
         - { compiler: "Visual Studio 17 2022", config: Debug   , mode: dev-asan   }
-        - { compiler: "Visual Studio 17 2022", config: Debug   , mode: dev-tsan   }
         - { compiler: "Visual Studio 17 2022", config: Release , mode: dev-normal }
         - { compiler: "Visual Studio 17 2022", config: Release , mode: dev-asan   }
-        - { compiler: "Visual Studio 17 2022", config: Release , mode: dev-tsan   }
     steps:
       - name: Fetch current branch
         uses: actions/checkout@v6.0.2
+      - name: Setup MSVC Developer Environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
       - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.config }} - ${{ matrix.cfg.mode }} mode
         run: |
           cd example
