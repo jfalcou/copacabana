@@ -3,7 +3,7 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##==================================================================================================
-name: Copacabana - Linux Unit Tests
+name: Copacabana
 on:
   workflow_call:
 
@@ -57,3 +57,47 @@ jobs:
 
           echo "--- RPM File Contents ---"
           rpm -qpl "$RPM_FILE"
+
+  verify-hierarchy:
+    name: Verify Ninja Target Hierarchy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Configure Project
+        run: |
+          cd example
+          cmake -G Ninja -B build -S . \
+                -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE \
+                -DOPT_QUIET=ON
+
+      - name: Check Hierarchical Phony Targets
+        run: |
+          cd example/build
+          # Dump the full list of Ninja targets
+          ninja -t targets > all_targets.txt
+
+          EXPECTED=(
+            "unit.exe"
+            "unit.types.exe"
+            "unit.types.structure.exe"
+            "unit.values.exe"
+            "unit.values.value.exe"
+            "unit.values.version.exe"
+          )
+
+          STATUS=0
+          for target in "${EXPECTED[@]}"; do
+            if grep -q "^$target:" all_targets.txt; then
+              echo "✅ Found $target"
+            else
+              echo "❌ Missing $target"
+              STATUS=1
+            fi
+          done
+
+          exit $STATUS

@@ -30,6 +30,6 @@ jobs:
     name: Windows
     uses: ./.github/workflows/windows.yml
 
-  packages:
-    name: Packages
-    uses: ./.github/workflows/packages.yml
+  meta:
+    name: Meta Checks
+    uses: ./.github/workflows/meta.yml
