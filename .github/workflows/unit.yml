@@ -33,3 +33,12 @@ jobs:
   packages:
     name: Packages
     uses: ./.github/workflows/packages.yml
+
+  targets:
+    - name: Verify Ninja Target Hierarchy
+      run: |
+        ninja -C build -t targets > actual_targets.txt
+        grep -E "^unit\.exe:" actual_targets.txt
+        grep -E "^unit\.types\.exe:" actual_targets.txt
+        grep -E "^unit\.types\.structure\.exe:" actual_targets.txt
+        grep -E "^unit\.values\.exe:" actual_targets.txt
