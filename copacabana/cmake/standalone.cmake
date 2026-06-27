@@ -47,7 +47,7 @@ function(COPA_SETUP_STANDALONE)
               ${CMAKE_CURRENT_SOURCE_DIR}/${OPT_SOURCE}/${OPT_ROOT}/${OPT_FILE}
               -I ${OPT_SOURCE}
               -o ${DST_FILE}
-              --include-match ${OPT_ROOT}/*
+              --include-match ${OPT_ROOT}/.*
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${OPT_SOURCE}/${OPT_ROOT}/${OPT_FILE}
       COMMENT "[${PROJECT_NAME}] - Generating standalone header: ${DST_FILE}"
