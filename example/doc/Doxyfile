@@ -93,17 +93,18 @@ HTML_EXTRA_STYLESHEET  = $(AWESOME_ASSETS)/doxygen-awesome-sidebar-only.css
 HTML_EXTRA_STYLESHEET += $(AWESOME_ASSETS)/doxygen-awesome.css
 HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/custom.css
 HTML_EXTRA_STYLESHEET += color.css
-
 HTML_EXTRA_FILES       = $(DOXYGEN_ASSETS)/godbolt.js
-HTML_EXTRA_FILES      += $(DOXYGEN_ASSETS)/fragment.js
-HTML_EXTRA_FILES      += $(DOXYGEN_ASSETS)/paragraph.js
-
+HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-fragment-copy-button.js
+HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-paragraph-link.js
+HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-tabs.js
+DISABLE_INDEX           = YES
+PAGE_OUTLINE_PANEL      = NO
 HTML_DYNAMIC_MENUS     = NO
 HTML_DYNAMIC_SECTIONS  = NO
 HTML_INDEX_NUM_ENTRIES = 100
 GENERATE_DOCSET        = NO
 
-DISABLE_INDEX          = YES
+
 GENERATE_TREEVIEW      = YES
 ENUM_VALUES_PER_LINE   = 4
 TREEVIEW_WIDTH         = 250

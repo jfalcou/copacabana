@@ -1,6 +1,6 @@
 @page examples Some Code Examples
 
-## Sample code with Godbolt.org injection
+@section injection Sample code with Godbolt.org injection
 
 ```c++
 #include <fmt/core.h>
@@ -12,7 +12,7 @@ int main()
 }
 ```
 
-## Sample code with compilation error
+@section error Sample code with compilation error
 
 @code{cpp}
 #include <fmt/core.h>
