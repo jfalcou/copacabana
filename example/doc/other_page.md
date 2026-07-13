@@ -2,7 +2,7 @@
 
 ## Sample code with Godbolt.org injection
 
-@code
+```c++
 #include <fmt/core.h>
 
 int main()
@@ -10,11 +10,11 @@ int main()
   fmt::print("Hello World! This is the number {}\n", 77);
   return 8;
 }
-@endcode
+```
 
 ## Sample code with compilation error
 
-@code
+@code{cpp}
 #include <fmt/core.h>
 
 int main()

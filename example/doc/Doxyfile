@@ -71,7 +71,7 @@ GENERATE_TESTLIST      = NO
 GENERATE_BUGLIST       = NO
 SHOW_USED_FILES        = NO
 SHOW_FILES             = NO
-LAYOUT_FILE            = $(DOXYGEN_ASSETS)/layout.xml
+LAYOUT_FILE            =
 INPUT                  = ../src \
                          .
 
@@ -89,8 +89,8 @@ HTML_FILE_EXTENSION    = .html
 HTML_HEADER            = ./base.html
 HTML_FOOTER            = $(DOXYGEN_ASSETS)/footer.html
 HTML_STYLESHEET        =
-HTML_EXTRA_STYLESHEET  = $(DOXYGEN_ASSETS)/doxygen-awesome-sidebar-only.css
-HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/doxygen-awesome.css
+HTML_EXTRA_STYLESHEET  = $(AWESOME_ASSETS)/doxygen-awesome-sidebar-only.css
+HTML_EXTRA_STYLESHEET += $(AWESOME_ASSETS)/doxygen-awesome.css
 HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/custom.css
 HTML_EXTRA_STYLESHEET += color.css
 
