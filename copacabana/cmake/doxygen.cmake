@@ -5,6 +5,18 @@
 ##======================================================================================================================
 
 ##======================================================================================================================
+## Retrieve doxygen-awesome
+##======================================================================================================================
+include(FetchContent)
+FetchContent_Declare(
+    doxygen-awesome-css
+    URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.4.2.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(doxygen-awesome-css)
+FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
+
+##======================================================================================================================
 ## Add Doxygen building target
 ##======================================================================================================================
 function(COPA_SETUP_DOXYGEN)
@@ -42,6 +54,7 @@ function(COPA_SETUP_DOXYGEN)
                                 DOXYGEN_PROJECT_NAME=${PROJECT_NAME}
                                 DOXYGEN_PROJECT_VERSION=${PROJECT_VERSION}
                                 DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset
+                                AWESOME_ASSETS=${AWESOME_CSS_DIR}
                                 DOXYGEN_STRIP=${PROJECT_SOURCE_DIR}
                                 ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG}
 

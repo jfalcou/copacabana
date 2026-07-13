@@ -3,27 +3,9 @@
 This documentation is generated from the example/ folder for copacabana.
 If you read it, it worked!
 
-## Sample code with Godbolt.org injection
+<div class="tabbed">
 
-@code
-#include <fmt/core.h>
+- <b class="tab-title">Tab 1</b> This is the content of tab 1
+- <b class="tab-title">Tab 2</b> This is the content of tab 2
 
-int main()
-{
-  fmt::print("Hello World! This is the number {}\n", 77);
-  return 8;
-}
-@endcode
-
-## Sample code with compilation error
-
-@code
-#include <fmt/core.h>
-
-int main()
-{
-  fmt::print("Hello World! This is the number {}\n", 77);
-  erturn 0;
-}
-@endcode
-
+</div>
