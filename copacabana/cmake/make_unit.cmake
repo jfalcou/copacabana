@@ -79,7 +79,7 @@ endfunction()
 function(COPA_MAKE_UNIT)
   set(options         QUIET)
   set(oneValueArgs    INTERFACE EXTENSION ROOT DESTINATION PCH IMPLICIT)
-  set(multiValueArgs  DEPENDENCIES FILES)
+  set(multiValueArgs  DEPENDENCIES FILES EXTERNALS)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT OPT_QUIET)
@@ -102,6 +102,10 @@ function(COPA_MAKE_UNIT)
 
       copa_setup_test(${test} "${OPT_DESTINATION}")
       target_link_libraries(${test} PUBLIC ${OPT_INTERFACE})
+
+      if(OPT_EXTERNALS)
+        target_link_libraries(${test} PRIVATE ${OPT_EXTERNALS})
+      endif()
 
       if(DEFINED OPT_PCH)
         target_precompile_headers(${test} REUSE_FROM ${OPT_PCH})
@@ -126,11 +130,14 @@ endfunction()
 function(COPA_GLOB_UNIT)
   set(options         QUIET IMPLICIT)
   set(oneValueArgs    RELATIVE PATTERN INTERFACE PCH EXTENSION DESTINATION)
-  set(multiValueArgs  DEPENDENCIES)
+  set(multiValueArgs  DEPENDENCIES EXTERNALS)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT DEFINED OPT_INTERFACE)
     set(OPT_INTERFACE "")
+  endif()
+  if(NOT DEFINED OPT_EXTERNALS)
+    set(OPT_EXTERNALS "")
   endif()
   if(NOT DEFINED OPT_PCH)
     set(OPT_PCH "")
@@ -164,6 +171,7 @@ function(COPA_GLOB_UNIT)
     INTERFACE     "${OPT_INTERFACE}"
     EXTENSION     "${OPT_EXTENSION}"
     DESTINATION   "${OPT_DESTINATION}"
+    EXTERNALS     ${OPT_EXTERNALS}
     DEPENDENCIES  "${OPT_DEPENDENCIES}"
     PCH           "${OPT_PCH}"
     FILES         "${FOUND_FILES}"
@@ -178,7 +186,7 @@ endfunction()
 ##======================================================================================================================
 function(COPA_MAKE_SINGLE_UNIT)
   set(oneValueArgs    NAME INTERFACE EXTENSION ROOT DESTINATION PCH)
-  set(multiValueArgs  DEPENDENCIES FILES)
+  set(multiValueArgs  DEPENDENCIES FILES EXTERNALS)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT DEFINED OPT_EXTENSION)
@@ -202,6 +210,10 @@ function(COPA_MAKE_SINGLE_UNIT)
 
     copa_setup_test(${test} "${OPT_DESTINATION}")
     target_link_libraries(${test} PUBLIC ${OPT_INTERFACE})
+
+    if(OPT_EXTERNALS)
+      target_link_libraries(${test} PRIVATE ${OPT_EXTERNALS})
+    endif()
 
     if(DEFINED OPT_PCH)
       target_precompile_headers(${test} REUSE_FROM ${OPT_PCH})
