@@ -12,5 +12,4 @@ endif()
 
 copa_glob_unit( QUIET PATTERN "unit/*.cpp"
                 RELATIVE ${root} DEPENDENCIES standalone-example INTERFACE example_test PCH example_pch
-                EXTERNALS pthread
               )
