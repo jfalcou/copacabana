@@ -85,6 +85,7 @@ copa_setup_cpack(
 option(EXAMPLE_USE_ASAN "Enable Address & Undefined Behavior Sanitizers" OFF)
 option(EXAMPLE_USE_TSAN "Enable Thread Sanitizer" OFF)
 option(EXAMPLE_USE_MSAN "Enable Memory Sanitizer" OFF)
+option(EXAMPLE_USE_COVERAGE "Enable coverage instrumentation" OFF)
 
 add_library(example_test INTERFACE)
 
@@ -133,3 +134,14 @@ copa_setup_install( LIBRARY example FEATURES cxx_std_20
 ##======================================================================================================================
 enable_testing()
 add_subdirectory(test)
+
+##======================================================================================================================
+## Setup Coverage - after the test targets exist, as the coverage targets depend on them
+##======================================================================================================================
+if(EXAMPLE_USE_COVERAGE)
+  copa_setup_coverage( example_test
+                       PREFIX  example
+                       FILTER  "${PROJECT_SOURCE_DIR}/include/libexample/"
+                       DEPENDS example-test
+                     )
+endif()
