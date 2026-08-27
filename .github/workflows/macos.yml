@@ -20,7 +20,7 @@ jobs:
         - { compiler: clang++     , mode: dev-tsan   }
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
       - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.mode }} mode
         run: |
           cd example
@@ -35,7 +35,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
       - name: Running CMake for Android NDK
         run: |
           mkdir build && cd build

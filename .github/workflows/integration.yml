@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install ${{ inputs.project }} from checkout
         shell: bash
@@ -82,7 +82,7 @@ jobs:
 
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Compile using FetchContent
         shell: bash
@@ -113,7 +113,7 @@ jobs:
 
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Compile using CPM
         shell: bash
