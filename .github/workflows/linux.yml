@@ -41,3 +41,19 @@ jobs:
                 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE -DCMAKE_CXX_FLAGS="${{ matrix.cfg.option }}"
           cmake --build --preset=${{ matrix.cfg.mode }} --target example-test --parallel 2
           ctest --preset=${{ matrix.cfg.mode }} --output-on-failure
+
+  # gcc only: the image pairs clang 19 with llvm-cov 20, and llvm-cov reads no notes written by
+  # another major - copa_setup_coverage says so at configure time rather than letting gcovr guess.
+  coverage:
+    name: Coverage
+    runs-on: [ubuntu-latest]
+    container:
+      image: ghcr.io/jfalcou/compilers:v10
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v6.0.2
+      - name: Collecting coverage
+        run: |
+          cd example
+          cmake --preset=dev-coverage -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
+          cmake --build --preset=dev-coverage --target example-coverage-report --parallel 2

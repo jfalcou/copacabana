@@ -42,6 +42,15 @@
       "cacheVariables": {
         "EXAMPLE_USE_MSAN": "ON"
       }
+    },
+    {
+      "name": "dev-coverage",
+      "inherits": "base-dev",
+      "displayName": "Build with Coverage Instrumentation",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "EXAMPLE_USE_COVERAGE": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -60,6 +69,10 @@
     {
       "name": "dev-msan",
       "configurePreset": "dev-msan"
+    },
+    {
+      "name": "dev-coverage",
+      "configurePreset": "dev-coverage"
     }
   ],
   "testPresets": [
@@ -78,6 +91,10 @@
     {
       "name": "dev-msan",
       "configurePreset": "dev-msan"
+    },
+    {
+      "name": "dev-coverage",
+      "configurePreset": "dev-coverage"
     }
   ]
 }
