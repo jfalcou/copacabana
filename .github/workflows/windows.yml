@@ -21,7 +21,7 @@ jobs:
         - { compiler: "Visual Studio 17 2022", config: Release , mode: dev-asan   }
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
       - name: Setup MSVC Developer Environment
         uses: ilammy/msvc-dev-cmd@v1
         with:

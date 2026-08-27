@@ -33,7 +33,7 @@ jobs:
         - { compiler: clang++-20  , mode: dev-msan   , option: "-stdlib=libc++"}
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
       - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.mode }} mode
         run: |
           cd example
@@ -51,7 +51,7 @@ jobs:
       image: ghcr.io/jfalcou/compilers:v10
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
       - name: Collecting coverage
         run: |
           cd example
