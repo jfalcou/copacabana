@@ -1,0 +1,74 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Regenerates the single-header form produced by copa_setup_standalone and republishes it on the
+## project's 'standalone' branch.
+##
+##   jobs:
+##     standalone:
+##       uses: jfalcou/copacabana/.github/workflows/package-standalone.yml@v1
+##       with:
+##         project: tts
+##======================================================================================================================
+name: Standalone Generation
+on:
+  workflow_call:
+    inputs:
+      project:
+        description: 'Project name, lowercased - drives the CMake options and the generated header'
+        type: string
+        required: true
+      image:
+        description: 'Tag of ghcr.io/jfalcou/compilers to build in'
+        type: string
+        default: 'v10'
+
+jobs:
+  package-standalone:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    container:
+      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v6
+
+      - name: Configure ${{ inputs.project }}
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: |
+          # github.workspace is the checkout path itself, which spares reconstructing /__w/<x>/<x>
+          git config --global --add safe.directory "${{ github.workspace }}"
+          cmake -S . -B build -G Ninja "-D${PROJECT^^}_BUILD_TEST=OFF" "-D${PROJECT^^}_BUILD_DOCUMENTATION=OFF"
+
+      - name: Generate standalone ${{ inputs.project }} header
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: cmake --build build --target "${PROJECT}-standalone"
+
+      - name: Update standalone branch
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: |
+          git fetch origin
+          git config --global user.email "${PROJECT}@nowhere.com"
+          git config --global user.name "${PROJECT^^} Standalone Generator"
+          git checkout standalone
+          cp "build/${PROJECT}.hpp" "${PROJECT}.hpp"
+          git add "${PROJECT}.hpp"
+          git commit --allow-empty -m "Latest ${PROJECT^^} standalone"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # v1.3.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "standalone"

@@ -1,0 +1,133 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Checks the three ways a project gets consumed - installed, FetchContent and CPM - against the
+## test/integration/{install,fetch,cpm}-test directories every project carries.
+##
+##   jobs:
+##     integration:
+##       uses: jfalcou/copacabana/.github/workflows/integration.yml@v1
+##       with:
+##         project: tts
+##======================================================================================================================
+name: Integration
+on:
+  workflow_call:
+    inputs:
+      project:
+        description: 'Project name, lowercased - drives the CMake options'
+        type: string
+        required: true
+      image:
+        description: 'Tag of ghcr.io/jfalcou/compilers to build in'
+        type: string
+        default: 'v10'
+      cxx-compiler:
+        description: 'Compiler to configure with, left to CMake when empty'
+        type: string
+        default: ''
+      cxx-flags:
+        description: 'Extra flags handed to every configure step'
+        type: string
+        default: ''
+
+jobs:
+  install:
+    runs-on: [ubuntu-latest]
+    container:
+      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v6
+
+      - name: Install ${{ inputs.project }} from checkout
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+          CXX_COMPILER: ${{ inputs.cxx-compiler }}
+          CXX_FLAGS: ${{ inputs.cxx-flags }}
+        run: |
+          args=("-D${PROJECT^^}_BUILD_TEST=OFF")
+          if [ -n "$CXX_COMPILER" ]; then args+=("-DCMAKE_CXX_COMPILER=$CXX_COMPILER"); fi
+          if [ -n "$CXX_FLAGS" ];    then args+=("-DCMAKE_CXX_FLAGS=$CXX_FLAGS");       fi
+
+          cmake -S . -B build -G Ninja "${args[@]}"
+          cmake --build build --target install
+
+      - name: Run Sample CMake
+        shell: bash
+        env:
+          CXX_FLAGS: ${{ inputs.cxx-flags }}
+        run: |
+          args=()
+          if [ -n "$CXX_FLAGS" ]; then args+=("-DCMAKE_CXX_FLAGS=$CXX_FLAGS"); fi
+
+          cmake -S test/integration/install-test -B install -G Ninja "${args[@]}"
+          cmake --build install
+          ctest --test-dir install --verbose
+
+  fetch-content:
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+    runs-on: [ubuntu-latest]
+    container:
+      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v6
+
+      - name: Compile using FetchContent
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+          CXX_COMPILER: ${{ inputs.cxx-compiler }}
+          CXX_FLAGS: ${{ inputs.cxx-flags }}
+        run: |
+          # github.workspace is the checkout path itself, which spares reconstructing /__w/<x>/<x>
+          git config --global --add safe.directory "${{ github.workspace }}"
+
+          args=("-DGIT_BRANCH=${BRANCH_NAME}" "-D${PROJECT^^}_BUILD_TEST=OFF")
+          if [ -n "$CXX_COMPILER" ]; then args+=("-DCMAKE_CXX_COMPILER=$CXX_COMPILER"); fi
+          if [ -n "$CXX_FLAGS" ];    then args+=("-DCMAKE_CXX_FLAGS=$CXX_FLAGS");       fi
+
+          cmake -S test/integration/fetch-test -B install -G Ninja "${args[@]}"
+          cmake --build install
+          ctest --test-dir install --verbose
+
+  cpm:
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+    runs-on: [ubuntu-latest]
+    container:
+      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v6
+
+      - name: Compile using CPM
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+          CXX_COMPILER: ${{ inputs.cxx-compiler }}
+          CXX_FLAGS: ${{ inputs.cxx-flags }}
+        run: |
+          git config --global --add safe.directory "${{ github.workspace }}"
+
+          args=("-DGIT_BRANCH=${BRANCH_NAME}" "-D${PROJECT^^}_BUILD_TEST=OFF")
+          if [ -n "$CXX_COMPILER" ]; then args+=("-DCMAKE_CXX_COMPILER=$CXX_COMPILER"); fi
+          if [ -n "$CXX_FLAGS" ];    then args+=("-DCMAKE_CXX_FLAGS=$CXX_FLAGS");       fi
+
+          cmake -S test/integration/cpm-test -B install -G Ninja "${args[@]}"
+          cmake --build install
+          ctest --test-dir install --verbose
