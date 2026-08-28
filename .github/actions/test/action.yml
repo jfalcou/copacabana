@@ -1,0 +1,68 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Run CTest for a preset, shared by every project driving its CI from CMakePresets.json.
+##
+##   - uses: jfalcou/copacabana/.github/actions/test@<sha>
+##     with:
+##       preset: gcc
+##       config: Release
+##       targets: unit        # omit to run every registered test
+##
+##======================================================================================================================
+name: 'Test'
+description: 'Runs CTest for a specific preset'
+
+inputs:
+  preset:
+    description: 'Preset name (must exist in both configure and build presets)'
+    required: true
+
+  config:
+    description: 'Build configuration'
+    required: true
+    default: ''
+
+  memcheck:
+    description: 'Run MemCheck (valgrind)'
+    default: 'false'
+
+  targets:
+    description: 'Test subset filtering rule for ctest (-R). Empty runs every registered test.'
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run Unit Tests
+      shell: bash
+      env:
+        PRESET: ${{ inputs.preset }}
+        CONFIG: ${{ inputs.config }}
+        TARGETS: ${{ inputs.targets }}
+      run: |
+        args=(--preset "$PRESET" --build-config "$CONFIG")
+        if [ -n "$TARGETS" ]; then
+          args+=(-R "$TARGETS")
+        fi
+
+        ctest "${args[@]}" -j 2 --output-on-failure
+
+    # MemCheck puts ctest in a mode that is not compatible with how presets are
+    # currently made. This is a workaround
+    - name: Run MemCheck
+      if: inputs.memcheck == 'true'
+      shell: bash
+      env:
+        PRESET: ${{ inputs.preset }}
+        CONFIG: ${{ inputs.config }}
+        TARGETS: ${{ inputs.targets }}
+      run: |
+        args=(--test-dir "build/$PRESET" --preset "$PRESET" --build-config "$CONFIG")
+        if [ -n "$TARGETS" ]; then
+          args+=(-R "$TARGETS")
+        fi
+
+        ctest "${args[@]}" -T MemCheck -j 2 --output-on-failure
