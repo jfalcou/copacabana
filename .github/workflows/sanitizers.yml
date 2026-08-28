@@ -1,0 +1,75 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## ASan and UBSan runs on gcc and clang, shared by every project using copa_setup_sanitizers.
+##
+##   jobs:
+##     sanitizers:
+##       uses: jfalcou/copacabana/.github/workflows/sanitizers.yml@v4
+##       with:
+##         build-targets: unit.exe doc.exe
+##         test-targets: unit|doc
+##======================================================================================================================
+name: Sanitizers
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: 'Tag of ghcr.io/jfalcou/compilers to build in'
+        type: string
+        default: 'v10'
+      build-targets:
+        description: 'Space-separated build targets. Empty builds the preset default target.'
+        type: string
+        default: ''
+      test-targets:
+        description: 'Test subset filtering rule for ctest (-R). Empty runs every registered test.'
+        type: string
+        default: ''
+
+jobs:
+  sanitizers:
+    name: ${{ matrix.compiler.name }} (ASan+UBSan)
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - { name: "gcc"  , preset: "gcc-sanitize"   }
+          - { name: "clang", preset: "clang-sanitize" }
+
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v7
+
+      - name: Configure CMake and Build
+        shell: bash
+        env:
+          PRESET: ${{ matrix.compiler.preset }}
+          TARGETS: ${{ inputs.build-targets }}
+        run: |
+          cmake --preset "$PRESET"
+
+          args=(--build --preset "$PRESET" --config Debug)
+          if [ -n "$TARGETS" ]; then
+            args+=(--target $TARGETS)
+          fi
+
+          cmake "${args[@]}" --parallel 2
+
+      - name: Run Unit Tests
+        shell: bash
+        env:
+          PRESET: ${{ matrix.compiler.preset }}
+          TARGETS: ${{ inputs.test-targets }}
+        run: |
+          args=(--preset "$PRESET" --build-config Debug)
+          if [ -n "$TARGETS" ]; then
+            args+=(-R "$TARGETS")
+          fi
+
+          ctest "${args[@]}" -j 2 --output-on-failure
