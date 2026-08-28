@@ -40,8 +40,48 @@ depends on changes — `copacabana/cmake/` or the reusable workflows.
 
 ## The CMake functions
 
-Every function takes `QUIET` to silence its own `message(STATUS ...)` lines. The usual idiom is
-to derive one variable from a project-wide option and pass it everywhere:
+Thirteen functions, covering four things a library ends up needing whatever it does.
+
+**Shipping it.**
+
+| | |
+|---|---|
+| `copa_project_version` | version numbers and the version file |
+| `copa_setup_install` | interface target, install rules, package config |
+| `copa_setup_standalone` | flatten the library into one header |
+| `copa_setup_cpack` | `.deb`, `.rpm` and `.zip` packages |
+
+**Testing it.**
+
+| | |
+|---|---|
+| `copa_setup_test_targets` | declare the aggregate everything gathers under |
+| `copa_glob_unit` | one executable per source file, from a glob |
+| `copa_make_unit` | the same, from an explicit list |
+| `copa_make_single_unit` | several sources into one executable |
+
+**Checking it.**
+
+| | |
+|---|---|
+| `copa_setup_sanitizers` | ASan, UBSan, TSan, MSan |
+| `copa_setup_coverage` | instrumentation, HTML report and JSON summary |
+
+**Living with it.**
+
+| | |
+|---|---|
+| `copa_setup_doxygen` | documentation target, styled |
+| `copa_setup_pch` | precompiled header |
+| `copa_setup_precommit_hooks` | install the git hooks |
+
+None of them is mandatory and none depends on the others being used, bar the three call orders
+listed at the end. Take `copa_glob_unit` alone if that is all you want.
+
+The ones that have something to say take `QUIET` to silence their own `message(STATUS ...)`
+lines: `copa_project_version`, `copa_setup_doxygen`, `copa_setup_standalone`,
+`copa_setup_precommit_hooks`, `copa_setup_cpack`, `copa_glob_unit` and `copa_make_unit`. The
+usual idiom is to derive one variable from a project-wide option and pass it to all of them:
 
 ```cmake
 if(NOT MYLIB_QUIET)
