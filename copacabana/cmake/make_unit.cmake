@@ -13,6 +13,21 @@ function(COPA_SETUP_TEST_TARGETS)
 endfunction()
 
 ##======================================================================================================================
+## Resolve which aggregate a unit belongs to. Defaults to the project's test target, so callers that
+## say nothing keep gathering everything there; naming one keeps benchmarks or samples out of it.
+##======================================================================================================================
+function(COPA_AGGREGATE_TARGET requested out)
+  if(requested STREQUAL "")
+    set(${out} "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
+  else()
+    if(NOT TARGET ${requested})
+      add_custom_target(${requested})
+    endif()
+    set(${out} "${requested}" PARENT_SCOPE)
+  endif()
+endfunction()
+
+##======================================================================================================================
 ## For any target of the form XXX.YYY.ZZZ.exe, generates all the intermediate XXX.YYY.exe and XXX.exe targets
 ##======================================================================================================================
 function(COPA_ADD_TARGET_PARENT target extension)
@@ -78,7 +93,7 @@ endfunction()
 ##======================================================================================================================
 function(COPA_MAKE_UNIT)
   set(options         QUIET)
-  set(oneValueArgs    INTERFACE EXTENSION ROOT DESTINATION PCH IMPLICIT)
+  set(oneValueArgs    INTERFACE EXTENSION ROOT DESTINATION PCH IMPLICIT TARGET)
   set(multiValueArgs  DEPENDENCIES FILES EXTERNALS)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -94,7 +109,8 @@ function(COPA_MAKE_UNIT)
       add_executable(${test} ${file})
 
       copa_add_target_parent(${test} "${OPT_EXTENSION}")
-      add_dependencies(${PROJECT_TEST_TARGET} ${test})
+      copa_aggregate_target("${OPT_TARGET}" aggregate)
+      add_dependencies(${aggregate} ${test})
 
       if(DEFINED OPT_DEPENDENCIES)
         add_dependencies(${test} ${OPT_DEPENDENCIES})
@@ -129,7 +145,7 @@ endfunction()
 ##==================================================================================================
 function(COPA_GLOB_UNIT)
   set(options         QUIET IMPLICIT)
-  set(oneValueArgs    RELATIVE PATTERN INTERFACE PCH EXTENSION DESTINATION)
+  set(oneValueArgs    RELATIVE PATTERN INTERFACE PCH EXTENSION DESTINATION TARGET)
   set(multiValueArgs  DEPENDENCIES EXTERNALS)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -177,6 +193,7 @@ function(COPA_GLOB_UNIT)
     FILES         "${FOUND_FILES}"
     ROOT          "${OPT_PATTERN}"
     IMPLICIT      "${MAKE_IMPLICIT}"
+    TARGET        "${OPT_TARGET}"
     ${QUIET_ARG}
   )
 endfunction()
@@ -185,7 +202,7 @@ endfunction()
 ## Process a list of source files to generate a single test target
 ##======================================================================================================================
 function(COPA_MAKE_SINGLE_UNIT)
-  set(oneValueArgs    NAME INTERFACE EXTENSION ROOT DESTINATION PCH)
+  set(oneValueArgs    NAME INTERFACE EXTENSION ROOT DESTINATION PCH TARGET)
   set(multiValueArgs  DEPENDENCIES FILES EXTERNALS)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -202,7 +219,8 @@ function(COPA_MAKE_SINGLE_UNIT)
     add_executable(${test} ${OPT_FILES})
 
     copa_add_target_parent(${test} "${OPT_EXTENSION}")
-    add_dependencies(${PROJECT_TEST_TARGET} ${test})
+    copa_aggregate_target("${OPT_TARGET}" aggregate)
+    add_dependencies(${aggregate} ${test})
 
     if(DEFINED OPT_DEPENDENCIES)
       add_dependencies(${test} ${OPT_DEPENDENCIES})

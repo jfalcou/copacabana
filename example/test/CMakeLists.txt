@@ -13,3 +13,10 @@ endif()
 copa_glob_unit( QUIET PATTERN "unit/*.cpp"
                 RELATIVE ${root} DEPENDENCIES standalone-example INTERFACE example_test PCH example_pch
               )
+
+##======================================================================================================================
+## Samples gather under their own target, so example-test stays the tests alone
+##======================================================================================================================
+copa_glob_unit( QUIET PATTERN "samples/*.cpp"
+                RELATIVE ${root} INTERFACE example_test TARGET example-samples
+              )
