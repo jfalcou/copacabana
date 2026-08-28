@@ -70,8 +70,14 @@ endfunction()
 ##======================================================================================================================
 ## Select a test target build location
 ##======================================================================================================================
-function(COPA_SETUP_TEST test location)
+function(COPA_SETUP_TEST test location register)
   set_property(TARGET ${test} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${location}")
+
+  # A unit gathered under another aggregate is not a test: declaring it to ctest would ask for an
+  # executable that the test target never builds.
+  if(NOT register)
+    return()
+  endif()
 
   if(DEFINED CMAKE_CROSSCOMPILING_CMD)
     add_test(
@@ -116,7 +122,11 @@ function(COPA_MAKE_UNIT)
         add_dependencies(${test} ${OPT_DEPENDENCIES})
       endif()
 
-      copa_setup_test(${test} "${OPT_DESTINATION}")
+      set(IS_TEST FALSE)
+      if(aggregate STREQUAL "${PROJECT_TEST_TARGET}")
+        set(IS_TEST TRUE)
+      endif()
+      copa_setup_test(${test} "${OPT_DESTINATION}" ${IS_TEST})
       target_link_libraries(${test} PUBLIC ${OPT_INTERFACE})
 
       if(OPT_EXTERNALS)
@@ -226,7 +236,11 @@ function(COPA_MAKE_SINGLE_UNIT)
       add_dependencies(${test} ${OPT_DEPENDENCIES})
     endif()
 
-    copa_setup_test(${test} "${OPT_DESTINATION}")
+    set(IS_TEST FALSE)
+    if(aggregate STREQUAL "${PROJECT_TEST_TARGET}")
+      set(IS_TEST TRUE)
+    endif()
+    copa_setup_test(${test} "${OPT_DESTINATION}" ${IS_TEST})
     target_link_libraries(${test} PUBLIC ${OPT_INTERFACE})
 
     if(OPT_EXTERNALS)
