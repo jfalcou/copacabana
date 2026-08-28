@@ -1,0 +1,107 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Coverage run and job summary, shared by every project using copa_setup_coverage.
+##
+##   jobs:
+##     coverage:
+##       uses: jfalcou/copacabana/.github/workflows/coverage.yml@v4
+##       with:
+##         project: kumi
+##         build-targets: kumi-test
+##======================================================================================================================
+name: Coverage
+on:
+  workflow_call:
+    inputs:
+      project:
+        description: 'Project name, lowercased - drives the report target and the header path'
+        type: string
+        required: true
+      image:
+        description: 'Container image to build in'
+        type: string
+        default: 'ghcr.io/jfalcou/compilers:v10'
+      build-targets:
+        description: 'Space-separated build targets. Empty builds the preset default target.'
+        type: string
+        default: ''
+
+jobs:
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.image }}
+
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v7
+
+      - name: Configure CMake and Build
+        shell: bash
+        env:
+          TARGETS: ${{ inputs.build-targets }}
+        run: |
+          cmake --preset gcc-coverage
+
+          args=(--build --preset gcc-coverage --config Debug)
+          if [ -n "$TARGETS" ]; then
+            args+=(--target $TARGETS)
+          fi
+
+          cmake "${args[@]}" --parallel 2
+
+      - name: Run Unit Tests and Collect Coverage
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: cmake --build build/gcc-coverage --config Debug --target "${PROJECT}-coverage-report"
+
+      - name: Report Coverage
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: |
+          python3 - "build/gcc-coverage/coverage/summary.json" "$PROJECT" >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          import json, sys
+
+          report = json.load(open(sys.argv[1]))
+          project = sys.argv[2]
+
+          # gcovr reports no rate at all for a metric a header has no instance of - a branchless
+          # header is not 0% covered, it simply has nothing to say on that metric.
+          def rate(percent):
+            return "n/a" if percent is None else f"{percent:.1f}%"
+
+          def bar(percent):
+            filled = 0 if percent is None else round(percent / 5)
+            return "#" * filled + "." * (20 - filled)
+
+          print(f"## Coverage of `include/{project}`\n")
+          print("| Metric | Covered | Total | Rate | |")
+          print("|---|---:|---:|---:|---|")
+          for name, key in [("Lines", "line"), ("Functions", "function"), ("Branches", "branch")]:
+            percent = report[f"{key}_percent"]
+            print(f"| {name} | {report[f'{key}_covered']} | {report[f'{key}_total']} "
+                  f"| {rate(percent)} | `{bar(percent)}` |")
+
+          print("\n<details><summary>Per-header breakdown</summary>\n")
+          print("| Header | Lines | Functions | Branches |")
+          print("|---|---:|---:|---:|")
+
+          # Worst first: the headers needing attention are the point of the table.
+          for entry in sorted(report["files"], key=lambda f: (f["line_percent"] is None, f["line_percent"])):
+            print(f"| `{entry['filename']}` | {rate(entry['line_percent'])} "
+                  f"| {rate(entry['function_percent'])} | {rate(entry['branch_percent'])} |")
+
+          print("\n</details>")
+          EOF
+
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: build/gcc-coverage/coverage/

@@ -21,9 +21,9 @@ on:
         type: string
         required: true
       image:
-        description: 'Tag of ghcr.io/jfalcou/compilers to build in'
+        description: 'Container image to build in'
         type: string
-        default: 'v10'
+        default: 'ghcr.io/jfalcou/compilers:v10'
 
 jobs:
   package-standalone:
@@ -32,7 +32,7 @@ jobs:
       contents: write
       pull-requests: write
     container:
-      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+      image: ${{ inputs.image }}
     strategy:
       fail-fast: false
     steps:
@@ -44,8 +44,6 @@ jobs:
         env:
           PROJECT: ${{ inputs.project }}
         run: |
-          # GITHUB_WORKSPACE, not github.workspace: the expression is evaluated on the host and
-          # yields /home/runner/work/<x>/<x>, which is not where the repository is inside a container.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           cmake -S . -B build -G Ninja "-D${PROJECT^^}_BUILD_TEST=OFF" "-D${PROJECT^^}_BUILD_DOCUMENTATION=OFF"
 

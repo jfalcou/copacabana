@@ -20,9 +20,9 @@ on:
         type: string
         required: true
       image:
-        description: 'Tag of ghcr.io/jfalcou/compilers to build in'
+        description: 'Container image to build in'
         type: string
-        default: 'v10'
+        default: 'ghcr.io/jfalcou/compilers:v10'
       coverage:
         description: 'Ship a coverage report alongside the documentation'
         type: boolean
@@ -35,7 +35,7 @@ jobs:
   generate-doc:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+      image: ${{ inputs.image }}
     strategy:
       fail-fast: false
     steps:
@@ -55,10 +55,7 @@ jobs:
           PROJECT: ${{ inputs.project }}
         run: cmake --build build --target "${PROJECT}-doxygen"
 
-      ##################################################################################################
-      ## Coverage rides along with the documentation so both reach gh-pages in a single deployment,
-      ## which is what keeps one from wiping the other out.
-      ##################################################################################################
+      ## Both must reach gh-pages in a single deployment, or one wipes the other out.
       - name: Generate Coverage Report
         if: inputs.coverage
         shell: bash
@@ -79,7 +76,6 @@ jobs:
 
           percent = json.load(open(sys.argv[1]))["line_percent"]
 
-          # Shields paints whatever colour it is handed, so the thresholds belong here.
           for floor, colour in [(90, "brightgreen"), (75, "green"), (60, "yellow"), (40, "orange")]:
             if percent >= floor:
               break

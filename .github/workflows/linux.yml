@@ -43,7 +43,7 @@ jobs:
           ctest --preset=${{ matrix.cfg.mode }} --output-on-failure
 
   # gcc only: the image pairs clang 19 with llvm-cov 20, and llvm-cov reads no notes written by
-  # another major - copa_setup_coverage says so at configure time rather than letting gcovr guess.
+  # another major.
   coverage:
     name: Coverage
     runs-on: [ubuntu-latest]

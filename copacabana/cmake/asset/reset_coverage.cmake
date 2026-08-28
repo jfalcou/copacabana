@@ -4,9 +4,7 @@
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
 ## Drops the counters left by a previous run. Run via 'cmake -DCOVERAGE_BUILD_DIR=<dir> -P'.
-##
-## Counters accumulate across runs, and a rebuild leaves them stamped for object files that no
-## longer match, which gcov reports as an error rather than ignoring.
+## Counters stamped for object files a rebuild replaced are an error to gcov, not a thing it skips.
 ##======================================================================================================================
 file(GLOB_RECURSE COPA_STALE_COUNTERS "${COVERAGE_BUILD_DIR}/*.gcda")
 

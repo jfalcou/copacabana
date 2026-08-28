@@ -1,0 +1,71 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Configure and build a CMake preset, shared by every project driving its CI from CMakePresets.json.
+##
+##   - uses: jfalcou/copacabana/.github/actions/config@<sha>
+##     with:
+##       preset: gcc
+##       config: Release
+##       targets: kumi-test    # omit to build the preset default target
+##
+##======================================================================================================================
+name: 'Configure & Build'
+description: 'Configure and build using CMake presets'
+
+inputs:
+  preset:
+    description: 'Preset name (must exist in both configure and build presets)'
+    required: true
+
+  config:
+    description: 'Build configuration'
+    required: true
+    default: ''
+
+  wrapper:
+    description: 'Compiler wrapper (e.g., emcmake)'
+    default: ''
+
+  setup-script:
+    description: 'Path to environment setup script (e.g., oneAPI setvars.sh)'
+    default: ''
+
+  targets:
+    description: 'Space-separated list of build targets. Empty builds the preset default target.'
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure
+      shell: bash
+      env:
+        PRESET: ${{ inputs.preset }}
+        WRAP: ${{ inputs.wrapper }}
+        CONFIG: ${{ inputs.config }}
+        SETUP_SCRIPT: ${{ inputs.setup-script }}
+        TARGETS: ${{ inputs.targets }}
+      run: |
+        if [ -n "$SETUP_SCRIPT" ]; then
+          if [ ! -f "$SETUP_SCRIPT" ]; then
+            echo "Setup script not found: $SETUP_SCRIPT"
+            exit 1
+          fi
+          source "$SETUP_SCRIPT"
+        fi
+
+        if [ -n "$WRAP" ]; then
+          "$WRAP" cmake --preset "$PRESET"
+        else
+          cmake --preset "$PRESET"
+        fi
+
+        args=(--build --preset "$PRESET" --config "$CONFIG")
+        if [ -n "$TARGETS" ]; then
+          args+=(--target $TARGETS)
+        fi
+
+        cmake "${args[@]}" --parallel 2

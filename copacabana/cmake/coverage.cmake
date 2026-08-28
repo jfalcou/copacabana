@@ -66,8 +66,7 @@ function(COPA_SETUP_COVERAGE target)
   endif()
 
   # Notes carry the format version of the compiler that wrote them, and a reader from another major
-  # release accepts none of them. gcovr reports that as "could not infer a working directory", which
-  # names neither the tool nor the version - so the pairing is checked here, where it can be said.
+  # release accepts none of them. gcovr calls that "could not infer a working directory".
   string(REGEX MATCH "^[0-9]+" COMPILER_MAJOR "${CMAKE_CXX_COMPILER_VERSION}")
 
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
