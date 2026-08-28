@@ -21,9 +21,9 @@ on:
         type: string
         required: true
       image:
-        description: 'Tag of ghcr.io/jfalcou/compilers to build in'
+        description: 'Container image to build in'
         type: string
-        default: 'v10'
+        default: 'ghcr.io/jfalcou/compilers:v10'
       build-targets:
         description: 'Space-separated build targets. Empty builds the preset default target.'
         type: string
@@ -34,7 +34,7 @@ jobs:
     name: Coverage
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+      image: ${{ inputs.image }}
 
     steps:
       - name: Fetch current branch

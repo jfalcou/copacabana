@@ -21,9 +21,9 @@ on:
         type: string
         required: true
       image:
-        description: 'Tag of ghcr.io/jfalcou/compilers to build in'
+        description: 'Container image to build in'
         type: string
-        default: 'v10'
+        default: 'ghcr.io/jfalcou/compilers:v10'
 
 jobs:
   package-standalone:
@@ -32,7 +32,7 @@ jobs:
       contents: write
       pull-requests: write
     container:
-      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+      image: ${{ inputs.image }}
     strategy:
       fail-fast: false
     steps:

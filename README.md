@@ -1,20 +1,27 @@
 # Copacabana
 
-Recurring CMake tools and CI pieces, shared by a family of header-only C++ libraries so that
-none of them has to write the same install rules, Doxygen setup, unit-test globbing or GitHub
-Actions workflow twice.
+Recurring CMake and CI plumbing for C++ projects — install rules and package config, Doxygen,
+unit-test generation, sanitizers, coverage, single-header packaging — so you write it once and
+never again.
 
-Copacabana gives you two things:
+Copacabana gives you two independent halves:
 
 - **CMake functions**, named `copa_*`, that you call from your own `CMakeLists.txt`.
 - **Reusable GitHub workflows and composite actions**, that you reference from your own
   `.github/workflows/`.
 
-You can adopt either half on its own.
+Take either on its own. The CMake half needs nothing but CMake 3.22 and works with any CI, or
+none. The CI half assumes your project builds through CMake presets, and nothing else about it.
+
+**What it assumes about your project.** Copacabana grew around header-only libraries and still
+carries that shape in two places: `copa_setup_install` creates an `INTERFACE` target and expects
+your headers under `<source>/include`, and `copa_setup_standalone` only makes sense for a library
+that can be flattened into one header. Everything else — the test generator, sanitizers,
+coverage, Doxygen, pre-commit, CPack — is indifferent to how your project is built.
 
 ## Getting it
 
-Copacabana is pulled in with CPM, before anything else:
+Anything that puts the repository on disk works. With CPM:
 
 ```cmake
 CPMAddPackage(NAME COPACABANA GITHUB_REPOSITORY jfalcou/copacabana GIT_TAG v3)
@@ -23,14 +30,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COPACABANA_SOURCE_DIR}/copacabana/c
 include(${COPACABANA_SOURCE_DIR}/copacabana/cmake/copacabana.cmake)
 ```
 
-`copacabana.cmake` includes every module, so a single `include` makes all the functions below
-available. It also refuses an in-source build outright. Pin a tag rather than tracking `main`:
-`main` also carries Copacabana's own CI and example, which are none of your business and change
-far more often than the parts you use.
+With `FetchContent`, or a vendored copy, set `COPACABANA_SOURCE_DIR` to wherever it landed and
+include the same file. `copacabana.cmake` includes every module, so one `include` makes all the
+functions below available. It also refuses an in-source build outright.
 
-**Which tag?** Copacabana is retagged only when something a consumer depends on changes, that is
-`copacabana/cmake/` or the reusable workflows. Its own CI, its example and its Dependabot
-configuration land on `main` without a new tag.
+Pin a tag rather than tracking `main`: `main` also carries Copacabana's own CI and example, which
+change far more often than the parts you use. It is retagged only when something a consumer
+depends on changes — `copacabana/cmake/` or the reusable workflows.
 
 ## The CMake functions
 
@@ -48,7 +54,7 @@ endif()
 ### `copa_project_version`
 
 ```cmake
-copa_project_version(MAJOR 3 MINOR 0 PATCH 0)
+copa_project_version(MAJOR 1 MINOR 2 PATCH 0)
 ```
 
 Sets `PROJECT_VERSION` and friends, and defines the version file the install rules ship. Missing
@@ -57,16 +63,16 @@ components default to `0.1.0`.
 ### `copa_setup_install`
 
 ```cmake
-copa_setup_install( LIBRARY tts
+copa_setup_install( LIBRARY mylib
                     FEATURES cxx_std_20
                     DOC     ${PROJECT_SOURCE_DIR}/LICENSE.md
-                    INCLUDE ${PROJECT_SOURCE_DIR}/include/tts
+                    INCLUDE ${PROJECT_SOURCE_DIR}/include/mylib
                   )
 ```
 
-Creates the interface target `<LIBRARY>_lib`, its `NAMESPACE::LIBRARY` alias — `tts::tts` here,
-which is the name everyone links against — the install rules, and the CMake package config that
-makes `find_package(tts CONFIG REQUIRED)` work downstream.
+Creates the interface target `<LIBRARY>_lib`, its `NAMESPACE::LIBRARY` alias — `mylib::mylib`
+here, which is the name everyone links against — the install rules, and the CMake package config
+that makes `find_package(mylib CONFIG REQUIRED)` work downstream.
 
 | argument | | |
 |---|---|---|
@@ -76,23 +82,36 @@ makes `find_package(tts CONFIG REQUIRED)` work downstream.
 | `INCLUDE` | | header directories to install |
 | `DOC` | | files installed next to the headers, typically the licence |
 | `FEATURES` | | compile features carried by the interface target |
-| `LIB` | | binary artefacts, for the non header-only case |
+| `LIB` | | extra files dropped in the library directory |
+
+Two things it needs from you, and neither complains until install time:
+
+- Your headers must sit under `<source>/include`, which is what the build interface points at.
+- You must provide `<source>/cmake/<LIBRARY>-config.cmake`. Two lines are enough:
+
+  ```cmake
+  include("${CMAKE_CURRENT_LIST_DIR}/mylib-targets.cmake")
+  set(MYLIB_LIBRARIES mylib::mylib)
+  ```
+
+The target is always an `INTERFACE` library and the version file is written `ARCH_INDEPENDENT`,
+so this is the header-only path. A compiled library wants its own `install(TARGETS ...)`.
 
 ### `copa_setup_doxygen`
 
 ```cmake
-copa_setup_doxygen(${QUIET_OPTION} TARGET tts-doxygen DESTINATION "${PROJECT_BINARY_DIR}/doc")
+copa_setup_doxygen(${QUIET_OPTION} DESTINATION "${PROJECT_BINARY_DIR}/doc")
 ```
 
 Adds the Doxygen target, wired to doxygen-awesome-css and to the styling assets Copacabana
 carries. `TARGET` defaults to `<project>-doxygen`, which is the name the shared documentation
-workflow expects — leave it alone unless you have a reason.
+workflow expects — leave it alone unless you have a reason. `SOURCE` says what to document.
 
 ### `copa_setup_standalone`
 
 ```cmake
 copa_setup_standalone( QUIET
-                       FILE tts.hpp SOURCE include ROOT tts TARGET tts-standalone
+                       FILE mylib.hpp SOURCE include ROOT mylib TARGET mylib-standalone
                        OUTPUT "${PROJECT_BINARY_DIR}"
                      )
 ```
@@ -104,7 +123,7 @@ Give either `OUTPUT` (an absolute directory) or `DESTINATION` (relative to the s
 ### `copa_setup_pch`
 
 ```cmake
-copa_setup_pch(TARGET kyosu INTERFACES kyosu_test HEADERS include/kyosu/kyosu.hpp)
+copa_setup_pch(TARGET mylib INTERFACES mylib_test HEADERS include/mylib/mylib.hpp)
 ```
 
 Builds a precompiled header from `HEADERS` and attaches it to every interface listed in
@@ -134,7 +153,7 @@ exist yet.
 
 ```cmake
 copa_glob_unit( QUIET
-                PATTERN "unit/*.cpp" INTERFACE kumi_test
+                PATTERN "unit/*.cpp" INTERFACE mylib_test
                 RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
               )
 ```
@@ -158,12 +177,15 @@ aggregate.
 | `EXTERNALS` | | extra libraries to link |
 | `IMPLICIT` | | one executable per source, without a `main` of its own |
 
+This is test-framework agnostic: it compiles and registers executables, and does not care what
+they are written against. `INTERFACE` is where you hang your framework of choice.
+
 **`TARGET` is what keeps benchmarks and samples out of the test run.** A unit gathered under
 another aggregate is not registered with CTest, because the test target never builds it and
 `ctest` would then ask for an executable that does not exist:
 
 ```cmake
-copa_glob_unit(QUIET PATTERN "benchmarks/*.cpp" INTERFACE kyosu_bench TARGET kyosu-bench ...)
+copa_glob_unit(QUIET PATTERN "benchmarks/*.cpp" INTERFACE mylib_bench TARGET mylib-bench ...)
 ```
 
 ### `copa_make_unit` and `copa_make_single_unit`
@@ -179,27 +201,26 @@ copa_setup_sanitizers(mylib_test ENABLE_ASAN ENABLE_UBSAN)
 ```
 
 Adds the sanitizer flags to an **interface** target, so everything linking against it is
-instrumented. Options are `ENABLE_ASAN`, `ENABLE_UBSAN`, `ENABLE_TSAN`, `ENABLE_MSAN`. Attach it
-to the interface your test units already link against, and call it *before* `add_subdirectory`
-so the units are created with the flags in place.
+instrumented. Options are `ENABLE_ASAN`, `ENABLE_UBSAN`, `ENABLE_TSAN`, `ENABLE_MSAN`. GCC and
+Clang only; another compiler gets nothing rather than an error. Attach it to the interface your
+test units already link against, and call it *before* `add_subdirectory` so the units are created
+with the flags in place.
 
 ### `copa_setup_coverage`
 
 ```cmake
-copa_setup_coverage(mylib_docs)
+copa_setup_coverage(mylib_test)
 ```
 
 Instruments a target and adds `<prefix>-coverage`, which runs the suite under instrumentation,
 and `<prefix>-coverage-report`, which turns the counters into an HTML report and a JSON summary.
+Needs `gcovr`, and `gcov` or `llvm-cov`.
 
 | argument | | |
 |---|---|---|
 | `PREFIX` | | target name prefix, defaults to the lowercased project name |
 | `FILTER` | | what to report on, defaults to `<source>/include/<prefix>/` |
 | `DEPENDS` | | target building the tests, defaults to `<prefix>-test` |
-
-**Call it after `add_subdirectory`**, once the test targets exist — the coverage targets depend
-on them.
 
 Two constraints it enforces for you, rather than letting them fail obscurely later:
 
@@ -228,19 +249,24 @@ matrices.
 ```yaml
 jobs:
   documentation:
-    uses: jfalcou/copacabana/.github/workflows/documentation.yml@<sha> # v3
+    uses: jfalcou/copacabana/.github/workflows/documentation.yml@<sha> # v4
     with:
-      project: tts
+      project: mylib
 ```
 
-**Pin by full commit SHA with the tag in a trailing comment**, not by tag. SonarCloud's
-`githubactions:S7637` fails the quality gate on a `uses:` pinned to a tag from outside a trusted
-organisation, and `jfalcou/copacabana` counts as outside. Add a `.github/dependabot.yml` for the
-`github-actions` ecosystem so the SHA and its comment get maintained; pinning by SHA then costs
-no more than pinning by tag.
+Every one of them takes `image`, the **full container reference** to run in, defaulting to
+`ghcr.io/jfalcou/compilers:v10`. Point it at your own image and nothing here cares:
 
-Every one of them takes `image`, the tag of `ghcr.io/jfalcou/compilers` to run in, defaulting to
-`v10`. `project` is always the **lowercased** project name: options are derived from it in upper
+```yaml
+    with:
+      project: mylib
+      image: ghcr.io/acme/toolchain:2026.03
+```
+
+That image has to carry what the job needs — a compiler and CMake for all of them, Doxygen for
+the documentation one, `gcovr` for coverage.
+
+`project` is always the **lowercased** project name: CMake options are derived from it in upper
 case, targets and paths in lower case.
 
 | workflow | inputs | what it does |
@@ -251,18 +277,28 @@ case, targets and paths in lower case.
 | `sanitizers.yml` | `build-targets`, `test-targets` | ASan and UBSan, on gcc and clang |
 | `coverage.yml` | `project`, `build-targets` | runs the coverage target and writes a job summary |
 
-`documentation.yml` also ships the coverage report when `coverage: true`. Both have to reach
-gh-pages in a single deployment, or one wipes the other out — which is why coverage rides along
-there rather than deploying on its own.
+What each expects of your repository:
 
-`integration.yml` expects `test/integration/{install,fetch,cpm}-test/` in your repository. Pin
-what your dependencies read inside those `CMakeLists.txt`: `CPMAddPackage` carries `OPTIONS`,
-`FetchContent` carries nothing, so a bare `FetchContent_MakeAvailable(dep)` leaves the
-dependency's own test suite registered in your CTest and the integration run turns into a full
-test run of everything you depend on.
+- **`documentation.yml`** — the `<PROJECT>_BUILD_DOCUMENTATION` option and the `<project>-doxygen`
+  target, both of which `copa_setup_doxygen` gives you. With `coverage: true` it ships the
+  coverage report alongside. Both have to reach gh-pages in a single deployment, or one wipes the
+  other out, which is why coverage rides along here rather than deploying on its own.
+- **`integration.yml`** — `test/integration/{install,fetch,cpm}-test/`, each a small project
+  consuming yours that way.
+- **`package-standalone.yml`** — a `<project>-standalone` target and a `standalone` branch.
+- **`sanitizers.yml`** — the presets `gcc-sanitize` and `clang-sanitize`.
+- **`coverage.yml`** — the preset `gcc-coverage` and the targets `copa_setup_coverage` generates.
 
-`sanitizers.yml` and `coverage.yml` expect the presets `gcc-sanitize`, `clang-sanitize` and
-`gcc-coverage`, and the targets `copa_setup_coverage` generates.
+**Pin by full commit SHA with the tag in a trailing comment**, not by tag. SonarCloud's
+`githubactions:S7637` fails the quality gate on a `uses:` pinned to a tag from outside a trusted
+organisation, and any external repository counts as outside. Add a `.github/dependabot.yml` for
+the `github-actions` ecosystem so the SHA and its comment get maintained; pinning by SHA then
+costs no more than pinning by tag.
+
+**One trap when writing the integration tests.** Pin what your dependencies read inside those
+`CMakeLists.txt`: `CPMAddPackage` carries `OPTIONS`, `FetchContent` carries nothing, so a bare
+`FetchContent_MakeAvailable(dep)` leaves the dependency's own test suite registered in your
+CTest, and the integration run turns into a full test run of everything you depend on.
 
 ## The composite actions
 
@@ -285,7 +321,7 @@ For the workflows you keep yourself — the platform matrices — two actions wr
 `config` also takes `wrapper`, for a compiler wrapper such as `emcmake`, and `setup-script`, for
 an environment script to source such as oneAPI's `setvars.sh`. `targets` is a space-separated
 build target list on `config`, and a ctest `-R` filtering rule on `test`; both run everything
-when left out.
+when left out. Neither assumes a container, so they work on any runner.
 
 These are not used by the reusable workflows above, which inline their steps: a `uses: ./...`
 reference resolves inside the checked-out tree, which belongs to the calling project rather than
@@ -329,8 +365,8 @@ with `test/CMakeLists.txt` reduced to:
 copa_glob_unit(QUIET PATTERN "unit/*.cpp" INTERFACE mylib_test RELATIVE ${CMAKE_CURRENT_SOURCE_DIR})
 ```
 
-The `example/` directory in this repository is the same thing, kept building by Copacabana's own
-CI.
+plus `cmake/mylib-config.cmake` as shown under `copa_setup_install`. The `example/` directory in
+this repository is the same thing, kept building by Copacabana's own CI.
 
 ## Ordering, in one place
 

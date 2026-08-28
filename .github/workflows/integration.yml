@@ -21,9 +21,9 @@ on:
         type: string
         required: true
       image:
-        description: 'Tag of ghcr.io/jfalcou/compilers to build in'
+        description: 'Container image to build in'
         type: string
-        default: 'v10'
+        default: 'ghcr.io/jfalcou/compilers:v10'
       cxx-compiler:
         description: 'Compiler to configure with, left to CMake when empty'
         type: string
@@ -37,7 +37,7 @@ jobs:
   install:
     runs-on: [ubuntu-latest]
     container:
-      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+      image: ${{ inputs.image }}
     strategy:
       fail-fast: false
 
@@ -76,7 +76,7 @@ jobs:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: [ubuntu-latest]
     container:
-      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+      image: ${{ inputs.image }}
     strategy:
       fail-fast: false
 
@@ -106,7 +106,7 @@ jobs:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: [ubuntu-latest]
     container:
-      image: ghcr.io/jfalcou/compilers:${{ inputs.image }}
+      image: ${{ inputs.image }}
     strategy:
       fail-fast: false
 
