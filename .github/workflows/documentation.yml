@@ -55,10 +55,7 @@ jobs:
           PROJECT: ${{ inputs.project }}
         run: cmake --build build --target "${PROJECT}-doxygen"
 
-      ##################################################################################################
-      ## Coverage rides along with the documentation so both reach gh-pages in a single deployment,
-      ## which is what keeps one from wiping the other out.
-      ##################################################################################################
+      ## Both must reach gh-pages in a single deployment, or one wipes the other out.
       - name: Generate Coverage Report
         if: inputs.coverage
         shell: bash
@@ -79,7 +76,6 @@ jobs:
 
           percent = json.load(open(sys.argv[1]))["line_percent"]
 
-          # Shields paints whatever colour it is handed, so the thresholds belong here.
           for floor, colour in [(90, "brightgreen"), (75, "green"), (60, "yellow"), (40, "orange")]:
             if percent >= floor:
               break

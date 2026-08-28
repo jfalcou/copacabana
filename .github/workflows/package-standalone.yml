@@ -44,8 +44,6 @@ jobs:
         env:
           PROJECT: ${{ inputs.project }}
         run: |
-          # GITHUB_WORKSPACE, not github.workspace: the expression is evaluated on the host and
-          # yields /home/runner/work/<x>/<x>, which is not where the repository is inside a container.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           cmake -S . -B build -G Ninja "-D${PROJECT^^}_BUILD_TEST=OFF" "-D${PROJECT^^}_BUILD_DOCUMENTATION=OFF"
 

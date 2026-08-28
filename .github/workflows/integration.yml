@@ -91,8 +91,6 @@ jobs:
           CXX_COMPILER: ${{ inputs.cxx-compiler }}
           CXX_FLAGS: ${{ inputs.cxx-flags }}
         run: |
-          # GITHUB_WORKSPACE, not github.workspace: the expression is evaluated on the host and
-          # yields /home/runner/work/<x>/<x>, which is not where the repository is inside a container.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
           args=("-DGIT_BRANCH=${BRANCH_NAME}" "-D${PROJECT^^}_BUILD_TEST=OFF")
