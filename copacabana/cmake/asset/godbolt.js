@@ -253,8 +253,13 @@ class SendToGodbolt extends HTMLElement {
       ]
     };
 
+    // btoa() only accepts Latin-1, so the UTF-8 bytes have to be handed to it one by one: an
+    // example using eve::π would otherwise throw InvalidCharacterError and the button would
+    // silently do nothing.
     let body = JSON.stringify(data);
-    let state = btoa(body);
+    let binary = "";
+    for (const byte of new TextEncoder().encode(body)) binary += String.fromCharCode(byte);
+    let state = btoa(binary);
     let url = "https://godbolt.org/clientstate/" + encodeURIComponent(state);
 
     window.open(url, "_blank");
