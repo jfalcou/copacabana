@@ -58,6 +58,15 @@ jobs:
           echo "--- RPM File Contents ---"
           rpm -qpl "$RPM_FILE"
 
+  test-assets:
+    name: Verify Documentation Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+      - name: Run Asset Tests
+        run: node --test test/
+
   verify-hierarchy:
     name: Verify Ninja Target Hierarchy
     runs-on: ubuntu-latest
