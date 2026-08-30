@@ -57,10 +57,12 @@ function(COPA_SETUP_CPACK)
     set(CPACK_GENERATOR "ZIP")
   endif()
 
-  # Include the native CPack module to finalize generation
-  include(CPack)
-
+  # Said before including CPack, which rewrites CPACK_GENERATOR in this scope with the list it derives on its own -
+  # the generated CPackConfig.cmake keeps ours, so the message was the only thing that lied.
   if(NOT OPT_QUIET)
     message(STATUS "[${PROJECT_NAME}] - Configured CPack for generators: ${CPACK_GENERATOR}")
   endif()
+
+  # Include the native CPack module to finalize generation
+  include(CPack)
 endfunction()
