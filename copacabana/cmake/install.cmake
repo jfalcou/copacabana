@@ -22,8 +22,10 @@ function(COPA_SETUP_INSTALL)
     set(OPT_NAMESPACE "${OPT_LIBRARY}")
   endif()
 
+  ## What semantic versioning already promises: a consumer asking for 4.0 is served by 4.0.1. ExactVersion, the
+  ## previous default, made find_package(kumi 4.0) refuse kumi 4.0.1.
   if(NOT DEFINED OPT_COMPATIBILITY)
-    set(OPT_COMPATIBILITY "ExactVersion")
+    set(OPT_COMPATIBILITY "SameMajorVersion")
   endif()
 
 
