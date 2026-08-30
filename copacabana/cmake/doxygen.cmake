@@ -12,7 +12,7 @@ include(FetchContent)
 function(COPA_SETUP_DOXYGEN)
   set(options       QUIET   )
   set(oneValueArgs  SOURCE DESTINATION TARGET)
-  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN} )
 
   if(OPT_QUIET)
     find_package(Doxygen QUIET)

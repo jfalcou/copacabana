@@ -12,7 +12,7 @@ include(CMakePackageConfigHelpers)
 function(COPA_SETUP_INSTALL)
   set(oneValueArgs    LIBRARY NAMESPACE COMPATIBILITY)
   set(multiValueArgs  LIB INCLUDE DOC FEATURES)
-  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
   if(NOT DEFINED OPT_LIBRARY)
     message(FATAL_ERROR "[${PROJECT_NAME}] - Install target setup: Missing LIBRARY name")
