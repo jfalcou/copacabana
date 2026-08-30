@@ -22,14 +22,14 @@ function(COPA_SETUP_PCH)
     file(TOUCH "${PROJECT_BINARY_DIR}/${PCH_FILE}"  )
   endif()
 
-  add_executable( ${PCH_LIB}   "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/${PCH_FILE}>" )
+  add_executable( ${PCH_LIB}   "${PROJECT_BINARY_DIR}/${PCH_FILE}" )
 
   if(DEFINED PROJECT_STANDALONE_TARGET)
     add_dependencies(${PCH_LIB} ${PROJECT_STANDALONE_TARGET} )
   endif()
 
   foreach(interface ${OPT_INTERFACES})
-    target_link_libraries(${PCH_LIB} PUBLIC ${interface})
+    target_link_libraries(${PCH_LIB} PRIVATE ${interface})
   endforeach( )
 
   set_property( TARGET ${PCH_LIB} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/unit" )
