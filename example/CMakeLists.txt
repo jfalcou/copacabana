@@ -89,10 +89,14 @@ option(EXAMPLE_USE_COVERAGE "Enable coverage instrumentation" OFF)
 
 add_library(example_test INTERFACE)
 
+## The standard through compile features, which is how the installed library asks for it too: a raw -std= flag goes
+## past CMAKE_CXX_STANDARD, past the per-compiler spelling, and past the propagation to whoever links this.
+target_compile_features( example_test INTERFACE cxx_std_20 )
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  target_compile_options( example_test INTERFACE /W3 /EHsc /bigobj /std:c++20)
+  target_compile_options( example_test INTERFACE /W3 /EHsc /bigobj)
 else()
-  target_compile_options( example_test INTERFACE -std=c++20 -Werror -Wall -Wextra -Wconversion -Wunused-variable)
+  target_compile_options( example_test INTERFACE -Werror -Wall -Wextra -Wconversion -Wunused-variable)
 endif()
 
 target_include_directories( example_test INTERFACE
