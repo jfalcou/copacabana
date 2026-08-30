@@ -88,7 +88,7 @@ function(COPA_SETUP_TEST test location register)
   else()
     add_test(
       NAME ${test}
-      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/unit"
+      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
       COMMAND $<TARGET_FILE:${test}>
     )
   endif()
