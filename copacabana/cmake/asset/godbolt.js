@@ -31,6 +31,15 @@ function removeANSIEscapeCodes(inputString) {
     return inputString.replace(ansiEscapeRegex, '');
 }
 
+// btoa() only accepts Latin-1, so the UTF-8 bytes have to be handed to it one by one: a source
+// using a character like eve::π would otherwise throw InvalidCharacterError and the Godbolt
+// button would silently do nothing.
+function base64utf8(str) {
+    let binary = "";
+    for (const byte of new TextEncoder().encode(str)) binary += String.fromCharCode(byte);
+    return btoa(binary);
+}
+
 async function postCE(url, jsonObject) {
   try {
     const response = await fetch("https://www.godbolt.org/api/compiler/" + url + "/compile", {
@@ -253,12 +262,13 @@ class SendToGodbolt extends HTMLElement {
       ]
     };
 
-    let body = JSON.stringify(data);
-    let state = btoa(body);
-    let url = "https://godbolt.org/clientstate/" + encodeURIComponent(state);
+    let url = "https://godbolt.org/clientstate/" + encodeURIComponent(base64utf8(JSON.stringify(data)));
 
     window.open(url, "_blank");
   }
 }
 
 customElements.define("doxygen-awesome-godbolt-button", SendToGodbolt);
+
+// Let the test harness reach the pure helpers. Undefined in a browser, so this is inert there.
+if (typeof module !== "undefined") module.exports = { base64utf8, escapeHtml, removeANSIEscapeCodes };
