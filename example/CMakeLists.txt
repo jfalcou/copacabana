@@ -18,16 +18,16 @@ include(${COPACABANA_SOURCE_DIR}/copacabana/cmake/copacabana.cmake)
 copa_project_version(MAJOR 1 MINOR 2 PATCH 3a)
 
 ## Testing: copa_project_version
-if(NOT "${PROJECT_MAJOR_VERSION}" MATCHES "1")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Major version ${PROJECT_MAJOR_VERSION} is invalid")
+if(NOT "${PROJECT_VERSION_MAJOR}" MATCHES "1")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Major version ${PROJECT_VERSION_MAJOR} is invalid")
 endif()
 
-if(NOT "${PROJECT_MINOR_VERSION}" MATCHES "2")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Minor version ${PROJECT_MINOR_VERSION} is invalid")
+if(NOT "${PROJECT_VERSION_MINOR}" MATCHES "2")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Minor version ${PROJECT_VERSION_MINOR} is invalid")
 endif()
 
-if(NOT "${PROJECT_PATCH_VERSION}" MATCHES "3a")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Patch ${PROJECT_PATCH_VERSION} is invalid")
+if(NOT "${PROJECT_VERSION_PATCH}" MATCHES "3a")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Patch ${PROJECT_VERSION_PATCH} is invalid")
 endif()
 
 if(NOT "${PROJECT_VERSION}" MATCHES "1.2.3a")
