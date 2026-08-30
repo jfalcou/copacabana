@@ -32,7 +32,7 @@ function(COPA_SETUP_STANDALONE)
     set(OPT_TARGET "standalone")
   endif()
 
-  if(NOT ${OPT_QUIET})
+  if(NOT OPT_QUIET)
     find_package(Python COMPONENTS Interpreter)
   else()
       find_package(Python COMPONENTS Interpreter QUIET)
@@ -60,7 +60,7 @@ function(COPA_SETUP_STANDALONE)
                 ADDITIONAL_CLEAN_FILES ${DST_FILE}
               )
 
-  if(NOT ${OPT_QUIET})
+  if(NOT OPT_QUIET)
     message(STATUS "[${PROJECT_NAME}] - Target ${OPT_TARGET} generates header ${DST_FILE}" )
   endif()
 

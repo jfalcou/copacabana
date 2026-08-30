@@ -26,7 +26,7 @@ function(COPA_PROJECT_VERSION)
 
   set(VERSION "${OPT_MAJOR}.${OPT_MINOR}.${OPT_PATCH}")
 
-  if(NOT ${OPT_QUIET})
+  if(NOT OPT_QUIET)
     message(STATUS "[${PROJECT_NAME}] - Setup for version ${VERSION}")
   endif()
 

@@ -16,7 +16,7 @@ function(COPA_SETUP_PCH)
   set(PCH_LIB   "${OPT_TARGET}_pch")
   set(PCH_FILE  "${OPT_TARGET}_pch.cpp")
 
-  if(NOT ${OPT_AUTONOMOUS})
+  if(NOT OPT_AUTONOMOUS)
     file(WRITE "${PROJECT_BINARY_DIR}/${PCH_FILE}" "int main() {}" )
   else()
     file(TOUCH "${PROJECT_BINARY_DIR}/${PCH_FILE}"  )
