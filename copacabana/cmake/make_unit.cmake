@@ -6,10 +6,14 @@
 function(COPA_SETUP_TEST_TARGETS)
   string(TOLOWER ${PROJECT_NAME} NAME)
   set(PROJECT_TEST_TARGET "${NAME}-test")
+
   if(NOT TARGET ${PROJECT_TEST_TARGET})
     add_custom_target(${PROJECT_TEST_TARGET})
-    set(PROJECT_TEST_TARGET "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
   endif()
+
+  # Named whether or not this call is the one that creates it: a second directory calling in still needs to be told
+  # what the aggregate is called.
+  set(PROJECT_TEST_TARGET "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================
