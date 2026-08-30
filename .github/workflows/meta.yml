@@ -65,7 +65,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
       - name: Run Asset Tests
-        run: node --test test/
+        run: node --test test/*.test.js
 
   verify-hierarchy:
     name: Verify Ninja Target Hierarchy
