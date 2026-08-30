@@ -104,7 +104,7 @@ endfunction()
 function(COPA_MAKE_UNIT)
   set(options         QUIET)
   set(oneValueArgs    INTERFACE EXTENSION ROOT DESTINATION PCH IMPLICIT TARGET)
-  set(multiValueArgs  DEPENDENCIES FILES EXTERNALS)
+  set(multiValueArgs  DEPENDENCIES FILES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT OPT_QUIET)
@@ -147,7 +147,7 @@ function(COPA_MAKE_UNIT)
           ${test} PROPERTIES
           EXCLUDE_FROM_DEFAULT_BUILD TRUE
           EXCLUDE_FROM_ALL TRUE
-          ${MAKE_UNIT_TARGET_PROPERTIES}
+          ${OPT_PROPERTIES}
         )
       endif()
     endif()
@@ -160,7 +160,7 @@ endfunction()
 function(COPA_GLOB_UNIT)
   set(options         QUIET IMPLICIT)
   set(oneValueArgs    RELATIVE PATTERN INTERFACE PCH EXTENSION DESTINATION TARGET)
-  set(multiValueArgs  DEPENDENCIES EXTERNALS)
+  set(multiValueArgs  DEPENDENCIES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT DEFINED OPT_INTERFACE)
@@ -208,6 +208,7 @@ function(COPA_GLOB_UNIT)
     ROOT          "${OPT_PATTERN}"
     IMPLICIT      "${MAKE_IMPLICIT}"
     TARGET        "${OPT_TARGET}"
+    PROPERTIES    ${OPT_PROPERTIES}
     ${QUIET_ARG}
   )
 endfunction()
@@ -217,7 +218,7 @@ endfunction()
 ##======================================================================================================================
 function(COPA_MAKE_SINGLE_UNIT)
   set(oneValueArgs    NAME INTERFACE EXTENSION ROOT DESTINATION PCH TARGET)
-  set(multiValueArgs  DEPENDENCIES FILES EXTERNALS)
+  set(multiValueArgs  DEPENDENCIES FILES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT DEFINED OPT_EXTENSION)
@@ -254,6 +255,10 @@ function(COPA_MAKE_SINGLE_UNIT)
     if(DEFINED OPT_PCH)
       target_precompile_headers(${test} REUSE_FROM ${OPT_PCH})
       add_dependencies(${test} ${OPT_PCH})
+    endif()
+
+    if(OPT_PROPERTIES)
+      set_target_properties(${test} PROPERTIES ${OPT_PROPERTIES})
     endif()
   endif()
 endfunction()

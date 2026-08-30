@@ -10,7 +10,7 @@
 function(COPA_SETUP_PCH)
   set(options         AUTONOMOUS        )
   set(oneValueArgs    TARGET            )
-  set(multiValueArgs  INTERFACES HEADERS)
+  set(multiValueArgs  INTERFACES HEADERS PROPERTIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
   set(PCH_LIB   "${OPT_TARGET}_pch")
@@ -37,7 +37,7 @@ function(COPA_SETUP_PCH)
   set_target_properties ( ${PCH_LIB} PROPERTIES
                           EXCLUDE_FROM_DEFAULT_BUILD TRUE
                           EXCLUDE_FROM_ALL TRUE
-                          ${MAKE_UNIT_TARGET_PROPERTIES}
+                          ${OPT_PROPERTIES}
                         )
 
   foreach(header ${OPT_HEADERS})
