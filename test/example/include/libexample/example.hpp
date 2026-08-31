@@ -13,10 +13,14 @@ namespace example
 #include <vector>
 namespace example
 {
+  namespace _
+  {
+    template<typename T> struct storage : std::vector<T> {};
+  }
   template<typename T>
   struct type
   {
-    std::vector<T> data;
+    _::storage<T> data;
   };
 }
 #include <string>

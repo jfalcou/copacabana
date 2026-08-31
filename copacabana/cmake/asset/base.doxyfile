@@ -1,0 +1,97 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## What every project in the fleet had settled on, in one place. A Doxyfile picks it up with
+##
+##   @INCLUDE = $(DOXYGEN_ASSETS)/base.doxyfile
+##
+## Position matters: values here override what comes before, so the line goes after the project's own settings, and
+## anything the project appends to a list - its own stylesheet, its extra files - goes after the line.
+##======================================================================================================================
+
+
+## What the theme requires. doxygen-awesome's sidebar-only variant does not work without these, and getting one wrong
+## shows up as a broken header rather than an error.
+##
+## Four of them - GENERATE_TREEVIEW, DISABLE_INDEX, FULL_SIDEBAR, HTML_DYNAMIC_MENUS - are doxygen's own defaults, and
+## they are stated anyway: this file is read last, so what it names is what a project's own value gets overridden by.
+## Leaving them out would let a Doxyfile that still turns the index off keep doing so, which is the whole point.
+HTML_HEADER            = $(DOXYGEN_ASSETS)/base.html
+HTML_FOOTER            = $(DOXYGEN_ASSETS)/footer.html
+HTML_EXTRA_STYLESHEET  = $(AWESOME_ASSETS)/doxygen-awesome.css $(AWESOME_ASSETS)/doxygen-awesome-sidebar-only.css
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_DYNAMIC_MENUS     = YES
+HTML_COLORSTYLE        = LIGHT
+PAGE_OUTLINE_PANEL     = NO
+
+## Where things are read from and written to, through the variables copa_setup_doxygen exports.
+PROJECT_NAME           = $(DOXYGEN_PROJECT_NAME)
+PROJECT_NUMBER         = v$(DOXYGEN_PROJECT_VERSION)
+STRIP_FROM_PATH        = $(DOXYGEN_STRIP)/src $(DOXYGEN_STRIP)/include
+STRIP_FROM_INC_PATH    = $(DOXYGEN_STRIP)/include
+RECURSIVE              = YES
+
+## What a reference page shows: the interface, not the files it happens to live in nor the graphs of who includes whom.
+HIDE_UNDOC_CLASSES     = YES
+HIDE_UNDOC_MEMBERS     = YES
+EXTRACT_LOCAL_CLASSES  = NO
+INLINE_INHERITED_MEMB  = YES
+SHOW_INCLUDE_FILES     = NO
+SHOW_USED_FILES        = NO
+SHOW_GROUPED_MEMB_INC  = YES
+VERBATIM_HEADERS       = NO
+CASE_SENSE_NAMES       = YES
+TAB_SIZE               = 2
+SORT_BRIEF_DOCS        = YES
+SORT_GROUP_NAMES       = YES
+
+## No graphs: they need graphviz, they are slow, and nothing in these libraries is read through them.
+CLASS_GRAPH            = NO
+COLLABORATION_GRAPH    = NO
+DIRECTORY_GRAPH        = NO
+GROUP_GRAPHS           = NO
+INCLUDE_GRAPH          = NO
+
+## Lists nobody publishes.
+GENERATE_BUGLIST       = NO
+GENERATE_TESTLIST      = NO
+GENERATE_TODOLIST      = NO
+
+## The aliases every project writes with. The named-requirement links were carried in four Doxyfiles with the same two
+## typos - Inputterator for InputIterator, and a missing closing parenthesis on the last one - so those links were dead
+## everywhere they were used.
+ALIASES                = "godbolt{1}=@include \1"
+ALIASES               += "groupheader{1}=<h2 class=\"groupheader\"> \1 </h2>"
+ALIASES               += "subgroupheader{1}=<h3 class=\"groupheader\"> \1 </h3>"
+ALIASES               += "nullable=[NullablePointer](https://en.cppreference.com/w/cpp/named_req/NullablePointer)"
+ALIASES               += "semiregular=<a href=\"https://en.cppreference.com/w/cpp/concepts/semiregular\">SemiRegular</a>"
+ALIASES               += "regular=<a href=\"https://en.cppreference.com/w/cpp/concepts/regular\">Regular</a>"
+ALIASES               += "swappable=<a href=\"https://en.cppreference.com/w/cpp/concepts/swappable\">Swappable</a>"
+ALIASES               += "callable=[Callable Object](https://en.cppreference.com/w/cpp/named_req/Callable)"
+ALIASES               += "container=[Container](https://en.cppreference.com/w/cpp/named_req/Container)"
+ALIASES               += "iterator=[Input Iterator](https://en.cppreference.com/w/cpp/named_req/InputIterator)"
+ALIASES               += "raiterator=[Random Access Iterator](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator)"
+ALIASES               += "callable{1}=[Callable Object\1](https://en.cppreference.com/w/cpp/named_req/Callable)"
+ALIASES               += "container{1}=[Container\1](https://en.cppreference.com/w/cpp/named_req/Container)"
+ALIASES               += "iterator{1}=[Input Iterator\1](https://en.cppreference.com/w/cpp/named_req/InputIterator)"
+ALIASES               += "raiterator{1}=[Random Access Iterator\1](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator)"
+
+## The scripts the shared header loads. A project appends its own after the @INCLUDE line.
+HTML_EXTRA_FILES       = $(DOXYGEN_ASSETS)/godbolt.js
+HTML_EXTRA_FILES      += $(DOXYGEN_ASSETS)/copacabana.js
+HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-fragment-copy-button.js
+HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-paragraph-link.js
+HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-tabs.js
+
+## Settled here rather than left to drift: the fleet had these two both ways round with nobody having chosen.
+EXPAND_ONLY_PREDEF     = YES
+SHOW_FILES             = NO
+
+## Formulas, and the macro expansion the interfaces need to read as they are written.
+USE_MATHJAX            = YES
+MATHJAX_RELPATH        = https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1
+MACRO_EXPANSION        = YES

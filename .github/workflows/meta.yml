@@ -67,6 +67,25 @@ jobs:
       - name: Run Asset Tests
         run: node --test test/*.test.js
 
+  test-doxygen-setup:
+    name: Verify the Shared Doxygen Setup
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/jfalcou/compilers:v10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Generate the example documentation
+        run: |
+          cmake -S test/example -B build/doc -G Ninja \
+                -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE \
+                -DEXAMPLE_BUILD_TEST=OFF -DEXAMPLE_BUILD_DOCUMENTATION=ON
+          cmake --build build/doc --target example-doxygen
+
+      - name: Check what it produced
+        run: python3 test/doxygen-setup.py build/doc/doxygen-output
+
   test-two-consumers:
     name: Verify Two Consumers in One Build
     runs-on: ubuntu-latest

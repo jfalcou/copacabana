@@ -23,7 +23,17 @@ copa_setup_precommit_hooks()
 
 ##======================================================================================================================
 ## Setup doxygen
-copa_setup_doxygen(QUIET DESTINATION "${PROJECT_BINARY_DIR}/doxygen-output")
+copa_setup_doxygen(
+  QUIET
+  DESTINATION
+  "${PROJECT_BINARY_DIR}/doxygen-output"
+  GODBOLT_LIBRARIES
+  fmt
+  tts
+  GODBOLT_COMPILER
+  clang1600
+  GODBOLT_OPTIONS
+  "-O3 -std=c++20 -DNDEBUG")
 
 ##======================================================================================================================
 ## Activate standalone target
