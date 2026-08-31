@@ -33,7 +33,7 @@ function(COPA_SETUP_PCH)
   endforeach( )
 
   set_property( TARGET ${PCH_LIB} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/unit" )
-
+  # cmake-lint: disable=E1120
   set_target_properties ( ${PCH_LIB} PROPERTIES
                           EXCLUDE_FROM_DEFAULT_BUILD TRUE
                           EXCLUDE_FROM_ALL TRUE

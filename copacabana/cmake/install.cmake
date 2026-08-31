@@ -28,7 +28,6 @@ function(COPA_SETUP_INSTALL)
     set(OPT_COMPATIBILITY "SameMajorVersion")
   endif()
 
-
   set(EXT_NAME      "${OPT_LIBRARY}_lib")
   set(TARGETS_NAME  "${OPT_LIBRARY}-targets")
   set(MAIN_DEST     "${CMAKE_INSTALL_LIBDIR}/${OPT_LIBRARY}")

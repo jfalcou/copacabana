@@ -143,6 +143,7 @@ function(COPA_MAKE_UNIT)
       endif()
 
       if(NOT OPT_IMPLICIT)
+        # cmake-lint: disable=E1120
         set_target_properties(
           ${test} PROPERTIES
           EXCLUDE_FROM_DEFAULT_BUILD TRUE

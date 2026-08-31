@@ -42,7 +42,7 @@ function(COPA_SETUP_PRECOMMIT_HOOKS)
 
         if(NOT PRE_COMMIT_CMD)
           message(STATUS "[${PROJECT_NAME}] -   1. 'pre-commit' tool is NOT found on your system.")
-          message(STATUS "[${PROJECT_NAME}] -     Please install it: 'pip install pre-commit' or 'brew install pre-commit'")
+          message(STATUS "[${PROJECT_NAME}] -     Install it: 'pip install pre-commit' or 'brew install pre-commit'")
         else()
           message(STATUS "[${PROJECT_NAME}] -   1. 'pre-commit' tool is found.")
         endif()
