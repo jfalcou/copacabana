@@ -4,17 +4,7 @@
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
 
-##======================================================================================================================
-## Retrieve doxygen-awesome
-##======================================================================================================================
 include(FetchContent)
-FetchContent_Declare(
-    doxygen-awesome-css
-    URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.4.2.zip
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-FetchContent_MakeAvailable(doxygen-awesome-css)
-FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
 
 ##======================================================================================================================
 ## Add Doxygen building target
@@ -22,9 +12,9 @@ FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
 function(COPA_SETUP_DOXYGEN)
   set(options       QUIET   )
   set(oneValueArgs  SOURCE DESTINATION TARGET)
-  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN} )
 
-  if(NOT ${OPT_QUIET})
+  if(OPT_QUIET)
     find_package(Doxygen QUIET)
   else()
     find_package(Doxygen)
@@ -44,9 +34,19 @@ function(COPA_SETUP_DOXYGEN)
   endif()
 
   if (DOXYGEN_FOUND)
-    if(NOT ${OPT_QUIET})
+    if(NOT OPT_QUIET)
       message( STATUS "[${PROJECT_NAME}] - Doxygen available via the ${OPT_TARGET} target")
     endif()
+
+    ## The stylesheet is of no use without doxygen, and this is the only place that reads it, so a project that never
+    ## asks for documentation - or that has no doxygen to run - downloads nothing.
+    FetchContent_Declare( doxygen-awesome-css
+                          URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.4.2.zip
+                          DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+                        )
+    FetchContent_MakeAvailable(doxygen-awesome-css)
+    FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
+
     set(DOXYGEN_CONFIG ${OPT_SOURCE}/Doxyfile)
 
     add_custom_target ( ${OPT_TARGET}

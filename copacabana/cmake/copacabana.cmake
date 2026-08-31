@@ -3,11 +3,18 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
+include_guard(GLOBAL)
 
 ##======================================================================================================================
 ## Prevent in-source build
 ##======================================================================================================================
-if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
+## Against the top level rather than the current project, and through REALPATH so that a build directory symlinked
+## into the source tree is caught as well. The CMAKE_ pair is set before project() runs, where the PROJECT_ pair is
+## still empty and would compare equal.
+get_filename_component(COPA_SOURCE_PATH "${CMAKE_SOURCE_DIR}" REALPATH)
+get_filename_component(COPA_BINARY_PATH "${CMAKE_BINARY_DIR}" REALPATH)
+
+if(COPA_SOURCE_PATH STREQUAL COPA_BINARY_PATH)
   message(FATAL_ERROR "[${PROJECT_NAME}]: In-source build is not supported")
 endif()
 

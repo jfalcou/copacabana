@@ -3,7 +3,7 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.24)
 
 ##======================================================================================================================
 ## Setup project
@@ -18,16 +18,16 @@ include(${COPACABANA_SOURCE_DIR}/copacabana/cmake/copacabana.cmake)
 copa_project_version(MAJOR 1 MINOR 2 PATCH 3a)
 
 ## Testing: copa_project_version
-if(NOT "${PROJECT_MAJOR_VERSION}" MATCHES "1")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Major version ${PROJECT_MAJOR_VERSION} is invalid")
+if(NOT "${PROJECT_VERSION_MAJOR}" MATCHES "1")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Major version ${PROJECT_VERSION_MAJOR} is invalid")
 endif()
 
-if(NOT "${PROJECT_MINOR_VERSION}" MATCHES "2")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Minor version ${PROJECT_MINOR_VERSION} is invalid")
+if(NOT "${PROJECT_VERSION_MINOR}" MATCHES "2")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Minor version ${PROJECT_VERSION_MINOR} is invalid")
 endif()
 
-if(NOT "${PROJECT_PATCH_VERSION}" MATCHES "3a")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Patch ${PROJECT_PATCH_VERSION} is invalid")
+if(NOT "${PROJECT_VERSION_PATCH}" MATCHES "3a")
+message(FATAL_ERROR "[${PROJECT_NAME}] - Patch ${PROJECT_VERSION_PATCH} is invalid")
 endif()
 
 if(NOT "${PROJECT_VERSION}" MATCHES "1.2.3a")
@@ -89,10 +89,14 @@ option(EXAMPLE_USE_COVERAGE "Enable coverage instrumentation" OFF)
 
 add_library(example_test INTERFACE)
 
+## The standard through compile features, which is how the installed library asks for it too: a raw -std= flag goes
+## past CMAKE_CXX_STANDARD, past the per-compiler spelling, and past the propagation to whoever links this.
+target_compile_features( example_test INTERFACE cxx_std_20 )
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  target_compile_options( example_test INTERFACE /W3 /EHsc /bigobj /std:c++20)
+  target_compile_options( example_test INTERFACE /W3 /EHsc /bigobj)
 else()
-  target_compile_options( example_test INTERFACE -std=c++20 -Werror -Wall -Wextra -Wconversion -Wunused-variable)
+  target_compile_options( example_test INTERFACE -Werror -Wall -Wextra -Wconversion -Wunused-variable)
 endif()
 
 target_include_directories( example_test INTERFACE

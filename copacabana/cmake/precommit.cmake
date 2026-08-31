@@ -33,7 +33,7 @@ function(COPA_SETUP_PRECOMMIT_HOOKS)
       set(PRE_COMMIT_HOOKS_INSTALLED FALSE)
     endif()
 
-    if(NOT ${OPT_QUIET})
+    if(NOT OPT_QUIET)
       if(NOT PRE_COMMIT_CMD OR NOT PRE_COMMIT_HOOKS_INSTALLED)
         message(STATUS "[${PROJECT_NAME}] -")
         message(STATUS "[${PROJECT_NAME}] - ==================================================================")

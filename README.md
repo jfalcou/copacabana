@@ -228,6 +228,16 @@ another aggregate is not registered with CTest, because the test target never bu
 copa_glob_unit(QUIET PATTERN "benchmarks/*.cpp" INTERFACE mylib_bench TARGET mylib-bench ...)
 ```
 
+### `PROPERTIES`
+
+`copa_glob_unit`, `copa_make_unit`, `copa_make_single_unit` and `copa_setup_pch` all take a
+`PROPERTIES` list, passed straight to `set_target_properties` on every target they generate:
+
+```cmake
+copa_glob_unit(QUIET PATTERN "unit/*.cpp" INTERFACE mylib_test
+               PROPERTIES FOLDER "tests" CXX_SCAN_FOR_MODULES OFF)
+```
+
 ### `copa_make_unit` and `copa_make_single_unit`
 
 The same machinery driven by an explicit `FILES` list rather than a glob. `copa_make_single_unit`

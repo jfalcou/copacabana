@@ -38,9 +38,9 @@ function(COPA_SETUP_CPACK)
   set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
   set(CPACK_PACKAGE_VENDOR "${OPT_VENDOR}")
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${OPT_DESCRIPTION}")
-  set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_MAJOR_VERSION}")
-  set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_MINOR_VERSION}")
-  set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_PATCH_VERSION}")
+  set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+  set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+  set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
   set(CPACK_PACKAGE_CONTACT "${OPT_MAINTAINER}")
 
   if(OPT_LICENSE_FILE)
@@ -57,10 +57,12 @@ function(COPA_SETUP_CPACK)
     set(CPACK_GENERATOR "ZIP")
   endif()
 
-  # Include the native CPack module to finalize generation
-  include(CPack)
-
+  # Said before including CPack, which rewrites CPACK_GENERATOR in this scope with the list it derives on its own -
+  # the generated CPackConfig.cmake keeps ours, so the message was the only thing that lied.
   if(NOT OPT_QUIET)
     message(STATUS "[${PROJECT_NAME}] - Configured CPack for generators: ${CPACK_GENERATOR}")
   endif()
+
+  # Include the native CPack module to finalize generation
+  include(CPack)
 endfunction()
