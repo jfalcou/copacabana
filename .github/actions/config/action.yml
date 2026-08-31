@@ -37,6 +37,10 @@ inputs:
     description: 'Space-separated list of build targets. Empty builds the preset default target.'
     default: ''
 
+  cmake-args:
+    description: 'Extra configure arguments, e.g. -DCMAKE_CXX_COMPILER=g++-14. They override the preset.'
+    default: ''
+
 runs:
   using: "composite"
   steps:
@@ -48,6 +52,7 @@ runs:
         CONFIG: ${{ inputs.config }}
         SETUP_SCRIPT: ${{ inputs.setup-script }}
         TARGETS: ${{ inputs.targets }}
+        CMAKE_ARGS: ${{ inputs.cmake-args }}
       run: |
         if [ -n "$SETUP_SCRIPT" ]; then
           if [ ! -f "$SETUP_SCRIPT" ]; then
@@ -57,10 +62,11 @@ runs:
           source "$SETUP_SCRIPT"
         fi
 
+        # Unquoted on purpose: the caller passes a whole argument list, not a single argument.
         if [ -n "$WRAP" ]; then
-          "$WRAP" cmake --preset "$PRESET"
+          "$WRAP" cmake --preset "$PRESET" $CMAKE_ARGS
         else
-          cmake --preset "$PRESET"
+          cmake --preset "$PRESET" $CMAKE_ARGS
         fi
 
         args=(--build --preset "$PRESET" --config "$CONFIG")
