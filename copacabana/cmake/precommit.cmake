@@ -9,22 +9,22 @@
 ##======================================================================================================================
 function(COPA_SETUP_PRECOMMIT_HOOKS)
   set(options QUIET)
-  cmake_parse_arguments(OPT "${options}" "" "" ${ARGN} )
+  cmake_parse_arguments(OPT "${options}" "" "" ${ARGN})
 
   if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
     find_program(PRE_COMMIT_CMD NAMES pre-commit)
 
     if(PRE_COMMIT_CMD)
 
-    string(TOLOWER "${PROJECT_NAME}" PROJECT_NAME_LOWER)
-    set(HOOK_TARGET "${PROJECT_NAME_LOWER}-setup-hooks")
+      string(TOLOWER "${PROJECT_NAME}" PROJECT_NAME_LOWER)
+      set(HOOK_TARGET "${PROJECT_NAME_LOWER}-setup-hooks")
 
-    add_custom_target ( "${HOOK_TARGET}"
-                          COMMAND ${PRE_COMMIT_CMD} install
-                          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                          COMMENT "Installing pre-commit git hooks to ${CMAKE_SOURCE_DIR}/.git/hooks"
-                          VERBATIM
-                        )
+      add_custom_target(
+        "${HOOK_TARGET}"
+        COMMAND ${PRE_COMMIT_CMD} install
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Installing pre-commit git hooks to ${CMAKE_SOURCE_DIR}/.git/hooks"
+        VERBATIM)
     endif()
 
     if(EXISTS "${CMAKE_SOURCE_DIR}/.git/hooks/pre-commit")
@@ -42,7 +42,7 @@ function(COPA_SETUP_PRECOMMIT_HOOKS)
 
         if(NOT PRE_COMMIT_CMD)
           message(STATUS "[${PROJECT_NAME}] -   1. 'pre-commit' tool is NOT found on your system.")
-          message(STATUS "[${PROJECT_NAME}] -     Please install it: 'pip install pre-commit' or 'brew install pre-commit'")
+          message(STATUS "[${PROJECT_NAME}] -     Install it: 'pip install pre-commit' or 'brew install pre-commit'")
         else()
           message(STATUS "[${PROJECT_NAME}] -   1. 'pre-commit' tool is found.")
         endif()
