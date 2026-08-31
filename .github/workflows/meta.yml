@@ -20,7 +20,7 @@ jobs:
       - name: Configure Project
         run: |
           cd example
-          cmake -B build -S . -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
+          cmake -B build -S . -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE -DCOPACABANA_SELF_TEST=ON
       - name: Build Project
         run: |
           cd example
@@ -82,6 +82,7 @@ jobs:
           cd example
           cmake -G Ninja -B build -S . \
                 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE \
+                -DCOPACABANA_SELF_TEST=ON \
                 -DOPT_QUIET=ON
 
       - name: Check Hierarchical Phony Targets

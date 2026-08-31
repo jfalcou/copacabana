@@ -17,24 +17,6 @@ include(${COPACABANA_SOURCE_DIR}/copacabana/cmake/copacabana.cmake)
 ## copa_project_version Setup a project version to be used in other functions and user defined code
 copa_project_version(MAJOR 1 MINOR 2 PATCH 3a)
 
-## Testing: copa_project_version
-if(NOT "${PROJECT_VERSION_MAJOR}" MATCHES "1")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Major version ${PROJECT_VERSION_MAJOR} is invalid")
-endif()
-
-if(NOT "${PROJECT_VERSION_MINOR}" MATCHES "2")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Minor version ${PROJECT_VERSION_MINOR} is invalid")
-endif()
-
-if(NOT "${PROJECT_VERSION_PATCH}" MATCHES "3a")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Patch ${PROJECT_VERSION_PATCH} is invalid")
-endif()
-
-if(NOT "${PROJECT_VERSION}" MATCHES "1.2.3a")
-message(FATAL_ERROR "[${PROJECT_NAME}] - Version ${PROJECT_VERSION} is invalid")
-endif()
-##======================================================================================================================
-
 ##======================================================================================================================
 ## Setup pre-commit hooks
 copa_setup_precommit_hooks()
@@ -43,29 +25,9 @@ copa_setup_precommit_hooks()
 ## Setup doxygen
 copa_setup_doxygen(QUIET DESTINATION "${PROJECT_BINARY_DIR}/doxygen-output")
 
-## Testing: copa_setup_doxygen
-if (DOXYGEN_FOUND)
-  if(NOT "${PROJECT_DOXYGEN_SOURCE_DIR}" MATCHES "${PROJECT_SOURCE_DIR}/doc")
-    message(FATAL_ERROR "[${PROJECT_NAME}] - Doxygen input path ${PROJECT_DOXYGEN_SOURCE_DIR} is invalid")
-  endif()
-
-  if(NOT "${PROJECT_DOXYGEN_OUTPUT_DIR}" MATCHES "${PROJECT_BINARY_DIR}/doxygen-output")
-    message(FATAL_ERROR "[${PROJECT_NAME}] - Doxygen output path ${PROJECT_DOXYGEN_OUTPUT_DIR} is invalid")
-  endif()
-endif()
-##======================================================================================================================
-
 ##======================================================================================================================
 ## Activate standalone target
 copa_setup_standalone(FILE example.hpp SOURCE src DESTINATION include ROOT libexample TARGET standalone-example)
-
-## Testing copa_setup_standalone
-if(Python_FOUND)
-  if(NOT "${PROJECT_STANDALONE_TARGET}" MATCHES "standalone-example")
-    message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target ${PROJECT_STANDALONE_TARGET} is invalid")
-  endif()
-endif()
-##======================================================================================================================
 
 ##======================================================================================================================
 ## System Installers Configuration
@@ -121,10 +83,6 @@ copa_setup_pch( TARGET      example
                 HEADERS     include/libexample/example.hpp
               )
 
-if(NOT "${PROJECT_PCH_TARGET}" MATCHES "example_pch")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - PCH Target ${PROJECT_PCH_TARGET} is invalid")
-endif()
-
 ##======================================================================================================================
 ## Setup Install
 ##======================================================================================================================
@@ -132,6 +90,16 @@ copa_setup_install( LIBRARY example FEATURES cxx_std_20
                     DOC     ${PROJECT_SOURCE_DIR}/LICENSE
                     INCLUDE ${PROJECT_SOURCE_DIR}/src/libexample
                   )
+
+##======================================================================================================================
+## What copacabana left behind, checked. Off by default: this is an example first, and the subdirectory below needs
+## copa_expect to have been defined.
+##======================================================================================================================
+option(COPACABANA_SELF_TEST "Check what copacabana's functions returned" OFF)
+
+if(COPACABANA_SELF_TEST)
+  include(${CMAKE_CURRENT_LIST_DIR}/../test/assertions.cmake)
+endif()
 
 ##======================================================================================================================
 ## Setup Testing
