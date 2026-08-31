@@ -12,7 +12,7 @@ global.HTMLElement = class {};
 global.document = { createElement: () => ({}), head: { appendChild() {} } };
 global.customElements = { define() {} };
 
-const { base64utf8 } = require("../copacabana/cmake/asset/godbolt.js");
+const { base64utf8, fragmentSource, escapeHtml, removeANSIEscapeCodes } = require("../copacabana/cmake/asset/godbolt.js");
 
 // Node's Buffer is an independent implementation of the same encoding, so it answers what the
 // expected string is without restating how the asset computes it.
@@ -36,4 +36,49 @@ test("a clientstate payload survives the round trip", () => {
   const state = base64utf8(JSON.stringify(data));
 
   assert.deepEqual(JSON.parse(Buffer.from(state, "base64").toString("utf8")), data);
+});
+
+// A doxygen fragment, reduced to the three things fragmentSource asks of it. The nodes it drops are the ones a real
+// page carries for the line numbers and the tooltips, and they report having been removed.
+const fragment = (text, junk = []) => {
+  const node = {
+    textContent: text,
+    cloneNode: () => node,
+    querySelectorAll(selector) {
+      node.asked = selector;
+      return junk;
+    },
+  };
+
+  return node;
+};
+
+test("fragmentSource drops the newlines doxygen leaves at the end", () => {
+  assert.equal(fragmentSource(fragment("int main() {}\n\n\n")), "int main() {}");
+  assert.equal(fragmentSource(fragment("int main() {}")), "int main() {}");
+  assert.equal(fragmentSource(fragment("\n\n")), "");
+});
+
+test("fragmentSource keeps the newlines inside the source", () => {
+  assert.equal(fragmentSource(fragment("int main()\n{\n}\n")), "int main()\n{\n}");
+});
+
+test("fragmentSource removes the line numbers and the tooltips", () => {
+  let removed = 0;
+  const junk = [{ remove: () => ++removed }, { remove: () => ++removed }];
+  const node = fragment("code", junk);
+
+  fragmentSource(node);
+
+  assert.equal(node.asked, ".lineno, .ttc");
+  assert.equal(removed, 2);
+});
+
+test("escapeHtml turns a compiler's output into something a page can hold", () => {
+  assert.equal(escapeHtml("<int&> \"x\" 'y'"), "&lt;int&amp;&gt; &quot;x&quot; &#39;y&#39;");
+});
+
+test("removeANSIEscapeCodes strips the colours a compiler adds", () => {
+  assert.equal(removeANSIEscapeCodes("\u001b[31merror\u001b[0m: no"), "error: no");
+  assert.equal(removeANSIEscapeCodes("plain"), "plain");
 });
