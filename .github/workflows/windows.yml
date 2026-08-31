@@ -22,10 +22,20 @@ jobs:
     steps:
       - name: Fetch current branch
         uses: actions/checkout@v7
-      - name: Setup MSVC Developer Environment
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
+      ## The generator finds the toolchain on its own, so nothing here needs the compiler environment. What does need
+      ## it is running an ASan-instrumented binary: clang_rt.asan_dynamic-x86_64.dll ships beside cl.exe and is loaded
+      ## at startup, so without its directory on PATH every test exits 0xc0000135, STATUS_DLL_NOT_FOUND.
+      - name: Put the ASan runtime on PATH
+        if: contains(matrix.cfg.mode, 'asan')
+        shell: pwsh
+        run: |
+          $dll = Get-ChildItem -Path "${env:ProgramFiles}\Microsoft Visual Studio\2022\*\VC\Tools\MSVC" `
+                               -Filter clang_rt.asan_dynamic-x86_64.dll -Recurse -ErrorAction SilentlyContinue |
+                 Select-Object -First 1
+          if (-not $dll) { throw "clang_rt.asan_dynamic-x86_64.dll not found under VC\Tools\MSVC" }
+          Write-Output "Found $($dll.FullName)"
+          Add-Content -Path $env:GITHUB_PATH -Value $dll.DirectoryName
+
       - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.config }} - ${{ matrix.cfg.mode }} mode
         run: |
           cd test/example
