@@ -3,7 +3,7 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-function(COPA_SETUP_TEST_TARGETS)
+function(copa_setup_test_targets)
   string(TOLOWER ${PROJECT_NAME} NAME)
   set(PROJECT_TEST_TARGET "${NAME}-test")
 
@@ -22,7 +22,7 @@ endfunction()
 ## Resolve which aggregate a unit belongs to. Defaults to the project's test target, so callers that
 ## say nothing keep gathering everything there; naming one keeps benchmarks or samples out of it.
 ##======================================================================================================================
-function(COPA_AGGREGATE_TARGET requested out)
+function(copa_aggregate_target requested out)
   if(requested STREQUAL "")
     set(${out}
         "${PROJECT_TEST_TARGET}"
@@ -40,7 +40,7 @@ endfunction()
 ##======================================================================================================================
 ## For any target of the form XXX.YYY.ZZZ.exe, generates all the intermediate XXX.YYY.exe and XXX.exe targets
 ##======================================================================================================================
-function(COPA_ADD_TARGET_PARENT target extension)
+function(copa_add_target_parent target extension)
   # Strip the extension first to look at the 'stem' logic
   string(REPLACE ".${extension}" "" stem "${target}")
 
@@ -70,7 +70,7 @@ endfunction()
 ##======================================================================================================================
 ## Turn a filename to a dot-separated target name
 ##======================================================================================================================
-function(COPA_SOURCE_TO_TARGET extension filename testname)
+function(copa_source_to_target extension filename testname)
   string(REPLACE "/" "." base "${filename}")
   string(REPLACE "\\" "." base "${base}")
   string(REGEX REPLACE "\\.[^.]+$" ".${extension}" base "${base}")
@@ -82,7 +82,7 @@ endfunction()
 ##======================================================================================================================
 ## Select a test target build location
 ##======================================================================================================================
-function(COPA_SETUP_TEST test location register)
+function(copa_setup_test test location register)
   set_property(TARGET ${test} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${location}")
 
   # A unit gathered under another aggregate is not a test: declaring it to ctest would ask for an
@@ -107,7 +107,7 @@ endfunction()
 ##======================================================================================================================
 ## Process a list of source files to generate corresponding test target
 ##======================================================================================================================
-function(COPA_MAKE_UNIT)
+function(copa_make_unit)
   set(options QUIET)
   set(oneValueArgs
       INTERFACE
@@ -171,7 +171,7 @@ endfunction()
 ##==================================================================================================
 ## Generate tests from a GLOB
 ##==================================================================================================
-function(COPA_GLOB_UNIT)
+function(copa_glob_unit)
   set(options QUIET IMPLICIT)
   set(oneValueArgs
       RELATIVE
@@ -250,7 +250,7 @@ endfunction()
 ##======================================================================================================================
 ## Process a list of source files to generate a single test target
 ##======================================================================================================================
-function(COPA_MAKE_SINGLE_UNIT)
+function(copa_make_single_unit)
   set(oneValueArgs
       NAME
       INTERFACE

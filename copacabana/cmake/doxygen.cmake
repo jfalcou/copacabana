@@ -9,7 +9,7 @@ include(FetchContent)
 ##======================================================================================================================
 ## Add Doxygen building target
 ##======================================================================================================================
-function(COPA_SETUP_DOXYGEN)
+function(copa_setup_doxygen)
   set(options QUIET)
   set(oneValueArgs SOURCE DESTINATION TARGET)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})
