@@ -1,0 +1,22 @@
+##======================================================================================================================
+##  SAMPLE - @brief@
+##  Copyright : SAMPLE Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+name: SAMPLE Integration Tests
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: sample-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    uses: jfalcou/copacabana/.github/workflows/integration.yml@3337f916bb581d0829909976773f7a2ee827a25c # v4
+    with:
+      project: sample
+      cxx-compiler: clang++
+      cxx-flags: -std=c++20

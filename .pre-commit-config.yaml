@@ -1,5 +1,11 @@
-# CPM is vendored upstream code, our style has no business rewriting it
-exclude: ^test/example/cmake/CPM\.cmake$
+# CPM is vendored upstream code, in every copy, and our style has no business rewriting it. The template also carries
+# a .pre-commit-config.yaml of its own, which is the generated project's, not this one's.
+exclude: |
+    (?x)^(
+        test/example/cmake/CPM\.cmake|
+        tools/template/cmake/CPM\.cmake|
+        tools/template/test/integration/cpm-test/cpm\.cmake
+    )$
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks

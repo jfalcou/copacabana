@@ -418,6 +418,20 @@ copa_glob_unit(QUIET PATTERN "unit/*.cpp" INTERFACE mylib_test RELATIVE ${CMAKE_
 plus `cmake/mylib-config.cmake` as shown under `copa_setup_install`. The `example/` directory in
 this repository is the same thing, kept building by Copacabana's own CI.
 
+## Starting a project
+
+`tools/new-project.py` writes a repository copacabana can build, test, document and package:
+
+```bash
+tools/new-project.py mylib --brief "What it does"
+```
+
+What it copies is `tools/template`, a working project named sample that this repository builds and lints like any
+other tree, so it cannot drift from what copacabana expects. `--presets` picks among `native`, `cross`, `cuda` and
+`intel` rather than shipping the whole matrix, `--no-standalone` leaves out the single-header target, and `--remote`
+decides which continuous integration is written: GitHub Actions on GitHub, a `.gitlab-ci.yml` on GitLab, none
+elsewhere. `--config` reads all of it from a json file.
+
 ## Ordering, in one place
 
 Three call orders are load-bearing, and getting them wrong fails in ways that do not name the
