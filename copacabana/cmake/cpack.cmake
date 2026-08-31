@@ -23,7 +23,7 @@ function(COPA_SETUP_CPACK)
     set(OPT_MAINTAINER "${OPT_VENDOR}")
   endif()
 
-# Format DEB dependencies (Requires parentheses for versions: package (>= 1.0))
+  # Format DEB dependencies (Requires parentheses for versions: package (>= 1.0))
   if(OPT_DEB_DEPENDENCIES)
     list(JOIN OPT_DEB_DEPENDENCIES ", " FORMATTED_DEB_DEPS)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${FORMATTED_DEB_DEPS}")

@@ -27,19 +27,36 @@ copa_setup_doxygen(QUIET DESTINATION "${PROJECT_BINARY_DIR}/doxygen-output")
 
 ##======================================================================================================================
 ## Activate standalone target
-copa_setup_standalone(FILE example.hpp SOURCE src DESTINATION include ROOT libexample TARGET standalone-example)
+copa_setup_standalone(
+  FILE
+  example.hpp
+  SOURCE
+  src
+  DESTINATION
+  include
+  ROOT
+  libexample
+  TARGET
+  standalone-example)
 
 ##======================================================================================================================
 ## System Installers Configuration
 ##======================================================================================================================
 copa_setup_cpack(
-  VENDOR       "Example Team"
-  MAINTAINER   "Example Team - example@team.com"
-  DESCRIPTION  "An example library to demonstrate Copacabana tools"
-  LICENSE_FILE "${PROJECT_SOURCE_DIR}/LICENSE"
-  DEB_DEPENDENCIES  "libfmt-dev (>= 10.1.1)" "cmake (>= 3.22.0)"
-  RPM_DEPENDENCIES  "fmt-devel >= 10.1.1"    "cmake >= 3.22.0"
-)
+  VENDOR
+  "Example Team"
+  MAINTAINER
+  "Example Team - example@team.com"
+  DESCRIPTION
+  "An example library to demonstrate Copacabana tools"
+  LICENSE_FILE
+  "${PROJECT_SOURCE_DIR}/LICENSE"
+  DEB_DEPENDENCIES
+  "libfmt-dev (>= 10.1.1)"
+  "cmake (>= 3.22.0)"
+  RPM_DEPENDENCIES
+  "fmt-devel >= 10.1.1"
+  "cmake >= 3.22.0")
 
 ##======================================================================================================================
 # Unit test Configuration
@@ -53,18 +70,15 @@ add_library(example_test INTERFACE)
 
 ## The standard through compile features, which is how the installed library asks for it too: a raw -std= flag goes
 ## past CMAKE_CXX_STANDARD, past the per-compiler spelling, and past the propagation to whoever links this.
-target_compile_features( example_test INTERFACE cxx_std_20 )
+target_compile_features(example_test INTERFACE cxx_std_20)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  target_compile_options( example_test INTERFACE /W3 /EHsc /bigobj)
+  target_compile_options(example_test INTERFACE /W3 /EHsc /bigobj)
 else()
-  target_compile_options( example_test INTERFACE -Werror -Wall -Wextra -Wconversion -Wunused-variable)
+  target_compile_options(example_test INTERFACE -Werror -Wall -Wextra -Wconversion -Wunused-variable)
 endif()
 
-target_include_directories( example_test INTERFACE
-                            ${PROJECT_SOURCE_DIR}/test
-                            ${PROJECT_SOURCE_DIR}/include
-                          )
+target_include_directories(example_test INTERFACE ${PROJECT_SOURCE_DIR}/test ${PROJECT_SOURCE_DIR}/include)
 
 # Dynamically apply sanitizers based on the options
 if(EXAMPLE_USE_ASAN)
@@ -78,18 +92,20 @@ endif()
 ##======================================================================================================================
 ## Setup PCH
 ##======================================================================================================================
-copa_setup_pch( TARGET      example
-                INTERFACES  example_test
-                HEADERS     include/libexample/example.hpp
-              )
+copa_setup_pch(TARGET example INTERFACES example_test HEADERS include/libexample/example.hpp)
 
 ##======================================================================================================================
 ## Setup Install
 ##======================================================================================================================
-copa_setup_install( LIBRARY example FEATURES cxx_std_20
-                    DOC     ${PROJECT_SOURCE_DIR}/LICENSE
-                    INCLUDE ${PROJECT_SOURCE_DIR}/src/libexample
-                  )
+copa_setup_install(
+  LIBRARY
+  example
+  FEATURES
+  cxx_std_20
+  DOC
+  ${PROJECT_SOURCE_DIR}/LICENSE
+  INCLUDE
+  ${PROJECT_SOURCE_DIR}/src/libexample)
 
 ##======================================================================================================================
 ## What copacabana left behind, checked. Before the subdirectory below, which needs copa_expect to exist.
@@ -106,9 +122,12 @@ add_subdirectory(test)
 ## Setup Coverage - after the test targets exist, as the coverage targets depend on them
 ##======================================================================================================================
 if(EXAMPLE_USE_COVERAGE)
-  copa_setup_coverage( example_test
-                       PREFIX  example
-                       FILTER  "${PROJECT_SOURCE_DIR}/include/libexample/"
-                       DEPENDS example-test
-                     )
+  copa_setup_coverage(
+    example_test
+    PREFIX
+    example
+    FILTER
+    "${PROJECT_SOURCE_DIR}/include/libexample/"
+    DEPENDS
+    example-test)
 endif()

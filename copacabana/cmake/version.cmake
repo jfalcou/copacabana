@@ -9,8 +9,8 @@
 ##======================================================================================================================
 function(COPA_PROJECT_VERSION)
   set(options QUIET)
-  set(oneValueArgs  MAJOR MINOR PATCH)
-  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN} )
+  set(oneValueArgs MAJOR MINOR PATCH)
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})
 
   if(NOT DEFINED OPT_MAJOR)
     set(OPT_MAJOR 0)
@@ -33,9 +33,17 @@ function(COPA_PROJECT_VERSION)
   ## Under the names project(VERSION) would have used, so a project has one spelling to read rather than two that
   ## say the same thing with the words in a different order. What keeps this function is the patch level: project()
   ## takes digits only, and a version like 1.2.3a has to come from somewhere.
-  set(PROJECT_VERSION_MAJOR ${OPT_MAJOR}  PARENT_SCOPE)
-  set(PROJECT_VERSION_MINOR ${OPT_MINOR}  PARENT_SCOPE)
-  set(PROJECT_VERSION_PATCH ${OPT_PATCH}  PARENT_SCOPE)
-  set(PROJECT_VERSION       "${VERSION}"  PARENT_SCOPE)
+  set(PROJECT_VERSION_MAJOR
+      ${OPT_MAJOR}
+      PARENT_SCOPE)
+  set(PROJECT_VERSION_MINOR
+      ${OPT_MINOR}
+      PARENT_SCOPE)
+  set(PROJECT_VERSION_PATCH
+      ${OPT_PATCH}
+      PARENT_SCOPE)
+  set(PROJECT_VERSION
+      "${VERSION}"
+      PARENT_SCOPE)
 
 endfunction()

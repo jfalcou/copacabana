@@ -5,9 +5,11 @@
 ##======================================================================================================================
 
 ##======================================================================================================================
-## Setup Sanitizers for a given target
+## The flags a compiler wants for the sanitizers asked for, or nothing when it knows none of them
+##
+## copa_sanitizer_flags(<out> [ENABLE_ASAN] [ENABLE_UBSAN] [ENABLE_TSAN] [ENABLE_MSAN])
 ##======================================================================================================================
-function(COPA_SETUP_SANITIZERS target)
+function(COPA_SANITIZER_FLAGS out)
   set(options ENABLE_ASAN ENABLE_UBSAN ENABLE_TSAN ENABLE_MSAN)
   cmake_parse_arguments(OPT "${options}" "" "" ${ARGN})
 
@@ -24,7 +26,7 @@ function(COPA_SETUP_SANITIZERS target)
 
     if(OPT_ENABLE_TSAN)
       if(OPT_ENABLE_ASAN)
-        message(FATAL_ERROR "[${PROJECT_NAME}] - ThreadSanitizer (TSan) cannot be combined with AddressSanitizer (ASan)")
+        message(FATAL_ERROR "[${PROJECT_NAME}] - ThreadSanitizer cannot be combined with AddressSanitizer")
       endif()
       list(APPEND SANITIZER_FLAGS "-fsanitize=thread")
     endif()
@@ -34,7 +36,7 @@ function(COPA_SETUP_SANITIZERS target)
         message(WARNING "[${PROJECT_NAME}] - MemorySanitizer (MSan) is only fully supported by Clang")
       endif()
       if(OPT_ENABLE_ASAN)
-        message(FATAL_ERROR "[${PROJECT_NAME}] - MemorySanitizer (MSan) cannot be combined with AddressSanitizer (ASan)")
+        message(FATAL_ERROR "[${PROJECT_NAME}] - MemorySanitizer cannot be combined with AddressSanitizer")
       endif()
       list(APPEND SANITIZER_FLAGS "-fsanitize=memory")
     endif()
@@ -42,10 +44,23 @@ function(COPA_SETUP_SANITIZERS target)
     if(OPT_ENABLE_ASAN)
       list(APPEND SANITIZER_FLAGS "/fsanitize=address")
     endif()
-    if(OPT_ENABLE_UBSAN OR OPT_ENABLE_TSAN OR OPT_ENABLE_MSAN)
+    if(OPT_ENABLE_UBSAN
+       OR OPT_ENABLE_TSAN
+       OR OPT_ENABLE_MSAN)
       message(WARNING "[${PROJECT_NAME}] - MSVC currently only supports AddressSanitizer (ASan)")
     endif()
   endif()
+
+  set(${out}
+      "${SANITIZER_FLAGS}"
+      PARENT_SCOPE)
+endfunction()
+
+##======================================================================================================================
+## Setup Sanitizers for a given target
+##======================================================================================================================
+function(COPA_SETUP_SANITIZERS target)
+  copa_sanitizer_flags(SANITIZER_FLAGS ${ARGN})
 
   if(SANITIZER_FLAGS)
     target_compile_options(${target} INTERFACE ${SANITIZER_FLAGS})

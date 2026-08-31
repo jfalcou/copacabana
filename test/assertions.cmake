@@ -7,6 +7,7 @@
 ## What copacabana's functions are expected to have left behind, checked against the example that calls them. Included
 ## by it, always: a failure stops the configure, which is the only moment these answers exist.
 
+## Stop the configure unless value matches pattern, naming what was being checked
 macro(COPA_EXPECT what value pattern)
   if(NOT "${value}" MATCHES "${pattern}")
     message(FATAL_ERROR "[${PROJECT_NAME}] - ${what} is '${value}', expected '${pattern}'")
@@ -18,14 +19,14 @@ endmacro()
 ##======================================================================================================================
 copa_expect("major version" "${PROJECT_VERSION_MAJOR}" "1")
 copa_expect("minor version" "${PROJECT_VERSION_MINOR}" "2")
-copa_expect("patch level"   "${PROJECT_VERSION_PATCH}" "3a")
-copa_expect("version"       "${PROJECT_VERSION}"       "1.2.3a")
+copa_expect("patch level" "${PROJECT_VERSION_PATCH}" "3a")
+copa_expect("version" "${PROJECT_VERSION}" "1.2.3a")
 
 ##======================================================================================================================
 ## copa_setup_doxygen, when there is a doxygen to find
 ##======================================================================================================================
 if(DOXYGEN_FOUND)
-  copa_expect("doxygen input"  "${PROJECT_DOXYGEN_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/doc")
+  copa_expect("doxygen input" "${PROJECT_DOXYGEN_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/doc")
   copa_expect("doxygen output" "${PROJECT_DOXYGEN_OUTPUT_DIR}" "${PROJECT_BINARY_DIR}/doxygen-output")
 endif()
 

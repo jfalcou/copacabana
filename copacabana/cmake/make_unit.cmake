@@ -8,12 +8,14 @@ function(COPA_SETUP_TEST_TARGETS)
   set(PROJECT_TEST_TARGET "${NAME}-test")
 
   if(NOT TARGET ${PROJECT_TEST_TARGET})
-    add_custom_target(${PROJECT_TEST_TARGET})
+    add_custom_target(${PROJECT_TEST_TARGET} COMMENT "[${PROJECT_NAME}] - Building every test")
   endif()
 
   # Named whether or not this call is the one that creates it: a second directory calling in still needs to be told
   # what the aggregate is called.
-  set(PROJECT_TEST_TARGET "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
+  set(PROJECT_TEST_TARGET
+      "${PROJECT_TEST_TARGET}"
+      PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================
@@ -22,12 +24,16 @@ endfunction()
 ##======================================================================================================================
 function(COPA_AGGREGATE_TARGET requested out)
   if(requested STREQUAL "")
-    set(${out} "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
+    set(${out}
+        "${PROJECT_TEST_TARGET}"
+        PARENT_SCOPE)
   else()
     if(NOT TARGET ${requested})
-      add_custom_target(${requested})
+      add_custom_target(${requested} COMMENT "[${PROJECT_NAME}] - Building every unit gathered under ${requested}")
     endif()
-    set(${out} "${requested}" PARENT_SCOPE)
+    set(${out}
+        "${requested}"
+        PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -46,7 +52,7 @@ function(COPA_ADD_TARGET_PARENT target extension)
     set(parent_target "${parent_stem}.${extension}")
 
     if(NOT TARGET ${parent_target})
-      add_custom_target(${parent_target})
+      add_custom_target(${parent_target} COMMENT "[${PROJECT_NAME}] - Building every unit under ${parent_stem}")
 
       # Extract suffix for IDE folder grouping
       string(REGEX REPLACE "^.*\\.([^.]+)$" "\\1" folder_suffix ${parent_stem})
@@ -68,7 +74,9 @@ function(COPA_SOURCE_TO_TARGET extension filename testname)
   string(REPLACE "/" "." base "${filename}")
   string(REPLACE "\\" "." base "${base}")
   string(REGEX REPLACE "\\.[^.]+$" ".${extension}" base "${base}")
-  set(${testname} "${base}" PARENT_SCOPE)
+  set(${testname}
+      "${base}"
+      PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================
@@ -87,14 +95,12 @@ function(COPA_SETUP_TEST test location register)
     add_test(
       NAME ${test}
       WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
-      COMMAND "${CMAKE_CROSSCOMPILING_CMD}" $<TARGET_FILE:${test}>
-    )
+      COMMAND "${CMAKE_CROSSCOMPILING_CMD}" $<TARGET_FILE:${test}>)
   else()
     add_test(
       NAME ${test}
       WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
-      COMMAND $<TARGET_FILE:${test}>
-    )
+      COMMAND $<TARGET_FILE:${test}>)
   endif()
 endfunction()
 
@@ -102,9 +108,16 @@ endfunction()
 ## Process a list of source files to generate corresponding test target
 ##======================================================================================================================
 function(COPA_MAKE_UNIT)
-  set(options         QUIET)
-  set(oneValueArgs    INTERFACE EXTENSION ROOT DESTINATION PCH IMPLICIT TARGET)
-  set(multiValueArgs  DEPENDENCIES FILES EXTERNALS PROPERTIES)
+  set(options QUIET)
+  set(oneValueArgs
+      INTERFACE
+      EXTENSION
+      ROOT
+      DESTINATION
+      PCH
+      IMPLICIT
+      TARGET)
+  set(multiValueArgs DEPENDENCIES FILES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT OPT_QUIET)
@@ -143,12 +156,13 @@ function(COPA_MAKE_UNIT)
       endif()
 
       if(NOT OPT_IMPLICIT)
+        ## cmake-lint cannot count the pairs a variable expands to
+        # cmake-lint: disable=E1120
         set_target_properties(
-          ${test} PROPERTIES
-          EXCLUDE_FROM_DEFAULT_BUILD TRUE
-          EXCLUDE_FROM_ALL TRUE
-          ${OPT_PROPERTIES}
-        )
+          ${test}
+          PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE
+                     EXCLUDE_FROM_ALL TRUE
+                     ${OPT_PROPERTIES})
       endif()
     endif()
   endforeach()
@@ -158,9 +172,16 @@ endfunction()
 ## Generate tests from a GLOB
 ##==================================================================================================
 function(COPA_GLOB_UNIT)
-  set(options         QUIET IMPLICIT)
-  set(oneValueArgs    RELATIVE PATTERN INTERFACE PCH EXTENSION DESTINATION TARGET)
-  set(multiValueArgs  DEPENDENCIES EXTERNALS PROPERTIES)
+  set(options QUIET IMPLICIT)
+  set(oneValueArgs
+      RELATIVE
+      PATTERN
+      INTERFACE
+      PCH
+      EXTENSION
+      DESTINATION
+      TARGET)
+  set(multiValueArgs DEPENDENCIES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT DEFINED OPT_INTERFACE)
@@ -190,7 +211,10 @@ function(COPA_GLOB_UNIT)
     set(MAKE_IMPLICIT 1)
   endif()
 
-  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
+  file(
+    GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS
+    RELATIVE ${OPT_RELATIVE}
+    ${OPT_PATTERN})
 
   set(QUIET_ARG "")
   if(OPT_QUIET)
@@ -198,27 +222,44 @@ function(COPA_GLOB_UNIT)
   endif()
 
   copa_make_unit(
-    INTERFACE     "${OPT_INTERFACE}"
-    EXTENSION     "${OPT_EXTENSION}"
-    DESTINATION   "${OPT_DESTINATION}"
-    EXTERNALS     ${OPT_EXTERNALS}
-    DEPENDENCIES  "${OPT_DEPENDENCIES}"
-    PCH           "${OPT_PCH}"
-    FILES         "${FOUND_FILES}"
-    ROOT          "${OPT_PATTERN}"
-    IMPLICIT      "${MAKE_IMPLICIT}"
-    TARGET        "${OPT_TARGET}"
-    PROPERTIES    ${OPT_PROPERTIES}
-    ${QUIET_ARG}
-  )
+    INTERFACE
+    "${OPT_INTERFACE}"
+    EXTENSION
+    "${OPT_EXTENSION}"
+    DESTINATION
+    "${OPT_DESTINATION}"
+    EXTERNALS
+    ${OPT_EXTERNALS}
+    DEPENDENCIES
+    "${OPT_DEPENDENCIES}"
+    PCH
+    "${OPT_PCH}"
+    FILES
+    "${FOUND_FILES}"
+    ROOT
+    "${OPT_PATTERN}"
+    IMPLICIT
+    "${MAKE_IMPLICIT}"
+    TARGET
+    "${OPT_TARGET}"
+    PROPERTIES
+    ${OPT_PROPERTIES}
+    ${QUIET_ARG})
 endfunction()
 
 ##======================================================================================================================
 ## Process a list of source files to generate a single test target
 ##======================================================================================================================
 function(COPA_MAKE_SINGLE_UNIT)
-  set(oneValueArgs    NAME INTERFACE EXTENSION ROOT DESTINATION PCH TARGET)
-  set(multiValueArgs  DEPENDENCIES FILES EXTERNALS PROPERTIES)
+  set(oneValueArgs
+      NAME
+      INTERFACE
+      EXTENSION
+      ROOT
+      DESTINATION
+      PCH
+      TARGET)
+  set(multiValueArgs DEPENDENCIES FILES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT DEFINED OPT_EXTENSION)
@@ -258,6 +299,8 @@ function(COPA_MAKE_SINGLE_UNIT)
     endif()
 
     if(OPT_PROPERTIES)
+      ## cmake-lint cannot count the pairs a variable expands to
+      # cmake-lint: disable=E1120
       set_target_properties(${test} PROPERTIES ${OPT_PROPERTIES})
     endif()
   endif()
