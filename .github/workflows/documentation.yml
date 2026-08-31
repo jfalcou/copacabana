@@ -5,6 +5,10 @@
 ##======================================================================================================================
 ## Doxygen generation and gh-pages deployment, shared by every project using copa_setup_doxygen.
 ##
+##   on:
+##     push:         { branches: [main] }   # builds and deploys
+##     pull_request: { branches: [main] }   # reports what Doxygen said, deploys nothing
+##
 ##   jobs:
 ##     doc:
 ##       uses: jfalcou/copacabana/.github/workflows/documentation.yml@v1
@@ -27,12 +31,19 @@ on:
         description: 'Ship a coverage report alongside the documentation'
         type: boolean
         default: false
+      min-parsed-files:
+        description: 'Below this many files parsed, the Doxygen run is treated as not having happened'
+        type: number
+        default: 10
 
 permissions:
   contents: write
 
 jobs:
+  ## Deploying is for a push: a pull request has nothing to publish, and its documentation is only worth reading for
+  ## what Doxygen said while building it, which is the job below.
   generate-doc:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     container:
       image: ${{ inputs.image }}
@@ -98,3 +109,89 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/doc
+
+  ##====================================================================================================================
+  ## What Doxygen said on the way. Kept out of the deploying job so that a warning can never cost a deployment, and
+  ## named so it stays out of the required contexts: it reports, it does not block.
+  ##====================================================================================================================
+  doxygen-warnings:
+    name: Doxygen warnings
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.image }}
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v7
+
+      - name: Prepare ${{ inputs.project }} for documentation
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: |
+          cmake -S . -B build -G Ninja "-D${PROJECT^^}_BUILD_TEST=OFF" "-D${PROJECT^^}_BUILD_DOCUMENTATION=ON"
+
+      - name: Generate Doxygen
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: |
+          set -o pipefail
+          cmake --build build --target "${PROJECT}-doxygen" 2>&1 | tee build/doxygen.log
+
+      - name: Report what Doxygen said
+        shell: bash
+        env:
+          MIN_PARSED: ${{ inputs.min-parsed-files }}
+        run: |
+          cd build
+
+          # A log that parsed nothing means the run did not happen, and reporting zero warnings from it would be a
+          # green light nobody earned.
+          parsed=$(grep -c '^Parsing file' doxygen.log || true)
+          if [ "$parsed" -lt "$MIN_PARSED" ]; then
+            echo "::error title=Doxygen::Doxygen parsed $parsed files, fewer than the $MIN_PARSED expected - this run proves nothing."
+            echo "### Doxygen did not run" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          grep -E ': (warning|error):' doxygen.log > warnings.txt || true
+          count=$(wc -l < warnings.txt)
+
+          if [ "$count" -eq 0 ]; then
+            echo "::notice title=Doxygen::0 warning, from $parsed parsed files."
+            echo "### Doxygen - 0 warning" >> "$GITHUB_STEP_SUMMARY"
+            echo "The documentation built clean from **$parsed** parsed files." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # One inline annotation per warning, anchored where Doxygen said it was, so they land in the diff. This
+          # reads WARN_FORMAT as "$file:$line: $text", which is the default and what every Doxyfile here uses; a
+          # project overriding it still gets the summary below, just not the annotations. Capped, because a broken
+          # alias yields hundreds of them.
+          sed -e "s|.*$GITHUB_WORKSPACE/||" warnings.txt \
+            | sed -E 's|^([^:]+):([0-9]+): [a-z]+: (.*)$|::warning file=\1,line=\2::\3|' \
+            | head -n 30
+
+          echo "::error title=Doxygen::$count warning(s) - the generated documentation lost something."
+          {
+            echo "### Doxygen - $count warning(s)"
+            echo ''
+            echo '```'
+            head -n 50 warnings.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      ## The summary carries the first fifty lines; the whole log is what tells you a warning is a consequence of
+      ## something further up.
+      - name: Upload the Doxygen log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doxygen-log
+          path: |
+            build/doxygen.log
+            build/warnings.txt
+          if-no-files-found: warn
+          retention-days: 7
