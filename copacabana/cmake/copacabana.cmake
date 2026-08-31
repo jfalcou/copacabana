@@ -3,7 +3,11 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-include_guard(GLOBAL)
+## DIRECTORY, not GLOBAL: including this file has side effects that belong to the scope doing the including - the
+## whole CMAKE_INSTALL_* family, which install.cmake gets from GNUInstallDirs. Under GLOBAL the first consumer to
+## reach the include takes them and every later one is left without, so a build holding two consumers - a library
+## and the test framework it pulls - configures with an empty CMAKE_INSTALL_DOCDIR in the second.
+include_guard(DIRECTORY)
 
 ##======================================================================================================================
 ## Prevent in-source build
