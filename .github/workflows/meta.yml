@@ -67,6 +67,19 @@ jobs:
       - name: Run Asset Tests
         run: node --test test/*.test.js
 
+  test-two-consumers:
+    name: Verify Two Consumers in One Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Configure Two Consumers
+        run: cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$GITHUB_WORKSPACE
+
   verify-hierarchy:
     name: Verify Ninja Target Hierarchy
     runs-on: ubuntu-latest
