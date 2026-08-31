@@ -7,7 +7,7 @@
 ##======================================================================================================================
 ## Defines version related informations for project
 ##======================================================================================================================
-function(COPA_PROJECT_VERSION)
+function(copa_project_version)
   set(options QUIET)
   set(oneValueArgs MAJOR MINOR PATCH)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})

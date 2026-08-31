@@ -7,7 +7,7 @@
 ##======================================================================================================================
 ## Setup pre-commit hooks setup targets
 ##======================================================================================================================
-function(COPA_SETUP_PRECOMMIT_HOOKS)
+function(copa_setup_precommit_hooks)
   set(options QUIET)
   cmake_parse_arguments(OPT "${options}" "" "" ${ARGN})
 

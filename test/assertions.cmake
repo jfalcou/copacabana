@@ -8,7 +8,7 @@
 ## by it, always: a failure stops the configure, which is the only moment these answers exist.
 
 ## Stop the configure unless value matches pattern, naming what was being checked
-macro(COPA_EXPECT what value pattern)
+macro(copa_expect what value pattern)
   if(NOT "${value}" MATCHES "${pattern}")
     message(FATAL_ERROR "[${PROJECT_NAME}] - ${what} is '${value}', expected '${pattern}'")
   endif()

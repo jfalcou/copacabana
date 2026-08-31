@@ -7,7 +7,7 @@
 ##======================================================================================================================
 ## Setup CPack for generating system installers (.deb, .rpm, .zip)
 ##======================================================================================================================
-function(COPA_SETUP_CPACK)
+function(copa_setup_cpack)
   set(options QUIET)
   set(oneValueArgs VENDOR DESCRIPTION LICENSE_FILE MAINTAINER)
   set(multiValueArgs DEB_DEPENDENCIES RPM_DEPENDENCIES)

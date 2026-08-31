@@ -7,7 +7,7 @@
 ##======================================================================================================================
 ## Setup PCH
 ##======================================================================================================================
-function(COPA_SETUP_PCH)
+function(copa_setup_pch)
   set(options AUTONOMOUS)
   set(oneValueArgs TARGET)
   set(multiValueArgs INTERFACES HEADERS PROPERTIES)

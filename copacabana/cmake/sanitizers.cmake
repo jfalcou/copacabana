@@ -9,7 +9,7 @@
 ##
 ## copa_sanitizer_flags(<out> [ENABLE_ASAN] [ENABLE_UBSAN] [ENABLE_TSAN] [ENABLE_MSAN])
 ##======================================================================================================================
-function(COPA_SANITIZER_FLAGS out)
+function(copa_sanitizer_flags out)
   set(options ENABLE_ASAN ENABLE_UBSAN ENABLE_TSAN ENABLE_MSAN)
   cmake_parse_arguments(OPT "${options}" "" "" ${ARGN})
 
@@ -59,7 +59,7 @@ endfunction()
 ##======================================================================================================================
 ## Setup Sanitizers for a given target
 ##======================================================================================================================
-function(COPA_SETUP_SANITIZERS target)
+function(copa_setup_sanitizers target)
   copa_sanitizer_flags(SANITIZER_FLAGS ${ARGN})
 
   if(SANITIZER_FLAGS)

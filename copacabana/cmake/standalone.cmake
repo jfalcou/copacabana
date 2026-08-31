@@ -7,7 +7,7 @@
 ##======================================================================================================================
 ## Standalone header generation target
 ##======================================================================================================================
-function(COPA_SETUP_STANDALONE)
+function(copa_setup_standalone)
   set(options QUIET)
   set(oneValueArgs SOURCE DESTINATION FILE ROOT TARGET OUTPUT)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})

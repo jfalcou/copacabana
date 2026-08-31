@@ -9,7 +9,7 @@ include(CMakePackageConfigHelpers)
 ##======================================================================================================================
 ## Prepare install target
 ##======================================================================================================================
-function(COPA_SETUP_INSTALL)
+function(copa_setup_install)
   set(oneValueArgs LIBRARY NAMESPACE COMPATIBILITY CONFIG)
   set(multiValueArgs LIB INCLUDE DOC FEATURES)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})

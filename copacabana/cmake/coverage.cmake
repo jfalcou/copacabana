@@ -12,7 +12,7 @@
 ## Notes carry the format version of the compiler that wrote them, and a reader from another major release accepts
 ## none of them - gcovr reports that as "could not infer a working directory".
 ##======================================================================================================================
-function(COPA_FIND_COVERAGE_TOOLS out_gcovr out_gcov_tool)
+function(copa_find_coverage_tools out_gcovr out_gcov_tool)
   find_program(GCOVR_EXECUTABLE gcovr)
   if(NOT GCOVR_EXECUTABLE)
     message(FATAL_ERROR "[${PROJECT_NAME}] - Coverage requires gcovr, install it with 'pip install gcovr'")
@@ -93,7 +93,7 @@ endfunction()
 ## Generates <prefix>-coverage, which runs the test suite under instrumentation, and
 ## <prefix>-coverage-report, which turns its counters into an HTML report and a JSON summary.
 ##======================================================================================================================
-function(COPA_SETUP_COVERAGE target)
+function(copa_setup_coverage target)
   set(oneValueArgs PREFIX FILTER DEPENDS)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "" ${ARGN})
 

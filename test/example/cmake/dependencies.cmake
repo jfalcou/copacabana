@@ -13,4 +13,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/CPM.cmake)
 ##======================================================================================================================
 ## Download and setup Copacabana
 ##======================================================================================================================
-cpmaddpackage(NAME COPACABANA GITHUB_REPOSITORY jfalcou/copacabana GIT_TAG main)
+CPMAddPackage(
+  NAME COPACABANA
+  GITHUB_REPOSITORY jfalcou/copacabana
+  GIT_TAG main)
