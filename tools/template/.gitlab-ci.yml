@@ -1,0 +1,38 @@
+##======================================================================================================================
+##  SAMPLE - @brief@
+##  Copyright : SAMPLE Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+
+## Every job must declare tags: the runners are registered with them and without "Run untagged jobs", so an untagged
+## job is eligible for no runner at all and sits pending forever with nothing saying why.
+default:
+  tags: ["docker"]
+  image: ghcr.io/jfalcou/compilers:v10
+
+stages: [build, test]
+
+.build:
+  stage: build
+  script:
+    - cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=${COMPILER}
+    - cmake --build build --target sample-test
+  artifacts:
+    paths: [build]
+    expire_in: 1 hour
+
+gcc:
+  extends: .build
+  variables:
+    COMPILER: g++-15
+
+clang:
+  extends: .build
+  variables:
+    COMPILER: clang++-20
+
+unit:
+  stage: test
+  needs: [gcc]
+  script:
+    - ctest --test-dir build --output-on-failure
