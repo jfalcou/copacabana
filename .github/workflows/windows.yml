@@ -28,7 +28,7 @@ jobs:
           arch: x64
       - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.config }} - ${{ matrix.cfg.mode }} mode
         run: |
-          cd example
+          cd test/example
           $local_path = "${{ github.workspace }}".Replace('\', '/')
           cmake -G "${{ matrix.cfg.compiler }}" -A x64 --preset=${{ matrix.cfg.mode }} -DCPM_COPACABANA_SOURCE="$local_path"
           cmake --build --preset=${{ matrix.cfg.mode }} --config ${{ matrix.cfg.config }} --target example-test --parallel 2

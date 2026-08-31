@@ -1,6 +1,6 @@
 @mainpage Hello Copacabana Example !
 
-This documentation is generated from the example/ folder for copacabana.
+This documentation is generated from the test/example/ folder for copacabana.
 If you read it, it worked!
 
 <div class="tabbed">
