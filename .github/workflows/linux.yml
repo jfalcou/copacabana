@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v7
       - name: Running Test with ${{ matrix.cfg.compiler }} in ${{ matrix.cfg.mode }} mode
         run: |
-          cd example
+          cd test/example
           cmake --preset=${{ matrix.cfg.mode }} -DCMAKE_CXX_COMPILER=${{ matrix.cfg.compiler }}         \
                 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE -DCMAKE_CXX_FLAGS="${{ matrix.cfg.option }}"
           cmake --build --preset=${{ matrix.cfg.mode }} --target example-test --parallel 2
@@ -54,6 +54,6 @@ jobs:
         uses: actions/checkout@v7
       - name: Collecting coverage
         run: |
-          cd example
+          cd test/example
           cmake --preset=dev-coverage -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
           cmake --build --preset=dev-coverage --target example-coverage-report --parallel 2

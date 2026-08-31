@@ -19,19 +19,19 @@ jobs:
         uses: lukka/get-cmake@latest
       - name: Configure Project
         run: |
-          cd example
+          cd test/example
           cmake -B build -S . -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
       - name: Build Project
         run: |
-          cd example
+          cd test/example
           cmake --build build
       - name: Generate CPack Installers
         run: |
-          cd example
+          cd test/example
           cmake --build build --target package
       - name: Verify DEB Package Validity
         run: |
-          cd example
+          cd test/example
           # Find the generated .deb file
           DEB_FILE=$(ls build/*.deb | head -n 1)
           echo "Validating DEB Package: $DEB_FILE"
@@ -44,7 +44,7 @@ jobs:
 
       - name: Verify RPM Package Validity
         run: |
-          cd example
+          cd test/example
           # Find the generated .rpm file
           RPM_FILE=$(ls build/*.rpm | head -n 1)
           echo "Validating RPM Package: $RPM_FILE"
@@ -79,14 +79,15 @@ jobs:
 
       - name: Configure Project
         run: |
-          cd example
+          cd test/example
           cmake -G Ninja -B build -S . \
                 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE \
+                \
                 -DOPT_QUIET=ON
 
       - name: Check Hierarchical Phony Targets
         run: |
-          cd example/build
+          cd test/example/build
           # Dump the full list of Ninja targets
           ninja -t targets > all_targets.txt
 

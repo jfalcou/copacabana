@@ -6,9 +6,8 @@
 copa_setup_test_targets()
 set(root "${CMAKE_SOURCE_DIR}/test")
 
-if(NOT "${PROJECT_TEST_TARGET}" MATCHES "example-test")
-  message(FATAL_ERROR "[${PROJECT_NAME}] - Top-level Test Target ${PROJECT_TEST_TARGET} is invalid")
-endif()
+## PROJECT_TEST_TARGET exists only in the scope that asked for it, so this one check stays where it can see it.
+copa_expect("test aggregate" "${PROJECT_TEST_TARGET}" "example-test")
 
 copa_glob_unit( QUIET PATTERN "unit/*.cpp"
                 RELATIVE ${root} DEPENDENCIES standalone-example INTERFACE example_test PCH example_pch
