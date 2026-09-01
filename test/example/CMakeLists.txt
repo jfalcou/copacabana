@@ -25,48 +25,33 @@ copa_setup_precommit_hooks()
 ## Setup doxygen
 copa_setup_doxygen(
   QUIET
-  DESTINATION
-  "${PROJECT_BINARY_DIR}/doxygen-output"
-  GODBOLT_LIBRARIES
-  fmt
-  tts
-  GODBOLT_COMPILER
-  clang1600
-  GODBOLT_OPTIONS
-  "-O3 -std=c++20 -DNDEBUG")
+  DESTINATION "${PROJECT_BINARY_DIR}/doxygen-output"
+  GODBOLT_LIBRARIES fmt tts
+  GODBOLT_COMPILER clang1600
+  GODBOLT_OPTIONS "-O3 -std=c++20 -DNDEBUG"
+  COLOR_HUE 75
+  COLOR_SATURATION 65
+  COLOR_LIGHTNESS 45)
 
 ##======================================================================================================================
 ## Activate standalone target
 copa_setup_standalone(
-  FILE
-  example.hpp
-  SOURCE
-  src
-  DESTINATION
-  include
-  ROOT
-  libexample
-  TARGET
-  standalone-example)
+  FILE example.hpp
+  SOURCE src
+  DESTINATION include
+  ROOT libexample
+  TARGET standalone-example)
 
 ##======================================================================================================================
 ## System Installers Configuration
 ##======================================================================================================================
 copa_setup_cpack(
-  VENDOR
-  "Example Team"
-  MAINTAINER
-  "Example Team - example@team.com"
-  DESCRIPTION
-  "An example library to demonstrate Copacabana tools"
-  LICENSE_FILE
-  "${PROJECT_SOURCE_DIR}/LICENSE"
-  DEB_DEPENDENCIES
-  "libfmt-dev (>= 10.1.1)"
-  "cmake (>= 3.22.0)"
-  RPM_DEPENDENCIES
-  "fmt-devel >= 10.1.1"
-  "cmake >= 3.22.0")
+  VENDOR "Example Team"
+  MAINTAINER "Example Team - example@team.com"
+  DESCRIPTION "An example library to demonstrate Copacabana tools"
+  LICENSE_FILE "${PROJECT_SOURCE_DIR}/LICENSE"
+  DEB_DEPENDENCIES "libfmt-dev (>= 10.1.1)" "cmake (>= 3.22.0)"
+  RPM_DEPENDENCIES "fmt-devel >= 10.1.1" "cmake >= 3.22.0")
 
 ##======================================================================================================================
 # Unit test Configuration
@@ -108,14 +93,10 @@ copa_setup_pch(TARGET example INTERFACES example_test HEADERS include/libexample
 ## Setup Install
 ##======================================================================================================================
 copa_setup_install(
-  LIBRARY
-  example
-  FEATURES
-  cxx_std_20
-  DOC
-  ${PROJECT_SOURCE_DIR}/LICENSE
-  INCLUDE
-  ${PROJECT_SOURCE_DIR}/src/libexample)
+  LIBRARY example
+  FEATURES cxx_std_20
+  DOC ${PROJECT_SOURCE_DIR}/LICENSE
+  INCLUDE ${PROJECT_SOURCE_DIR}/src/libexample)
 
 ##======================================================================================================================
 ## What copacabana left behind, checked. Before the subdirectory below, which needs copa_expect to exist.

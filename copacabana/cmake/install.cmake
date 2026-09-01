@@ -45,10 +45,7 @@ function(copa_setup_install)
   set_target_properties(${EXT_NAME} PROPERTIES EXPORT_NAME ${OPT_LIBRARY})
   add_library("${OPT_NAMESPACE}::${OPT_LIBRARY}" ALIAS ${EXT_NAME})
 
-  install(
-    TARGETS ${EXT_NAME}
-    EXPORT ${TARGETS_NAME}
-    DESTINATION "${MAIN_DEST}")
+  install(TARGETS ${EXT_NAME} EXPORT ${TARGETS_NAME} DESTINATION "${MAIN_DEST}")
 
   foreach(folder ${OPT_INCLUDE})
     install(DIRECTORY ${folder} DESTINATION "${INSTALL_DEST}")
@@ -77,16 +74,11 @@ function(copa_setup_install)
   configure_package_config_file("${OPT_CONFIG}" "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config.cmake"
                                 INSTALL_DESTINATION "${MAIN_DEST}")
 
-  write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake"
-    VERSION "${PROJECT_VERSION}"
-    COMPATIBILITY "${OPT_COMPATIBILITY}" ARCH_INDEPENDENT)
+  write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake"
+                                   VERSION "${PROJECT_VERSION}" COMPATIBILITY "${OPT_COMPATIBILITY}" ARCH_INDEPENDENT)
 
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config.cmake" DESTINATION "${MAIN_DEST}")
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake" DESTINATION "${MAIN_DEST}")
-  install(
-    EXPORT ${TARGETS_NAME}
-    NAMESPACE "${OPT_NAMESPACE}::"
-    DESTINATION "${MAIN_DEST}")
+  install(EXPORT ${TARGETS_NAME} NAMESPACE "${OPT_NAMESPACE}::" DESTINATION "${MAIN_DEST}")
 
 endfunction()

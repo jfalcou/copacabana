@@ -35,10 +35,7 @@ function(copa_setup_standalone)
   if(NOT OPT_QUIET)
     find_package(Python COMPONENTS Interpreter)
   else()
-    find_package(
-      Python
-      COMPONENTS Interpreter
-      QUIET)
+    find_package(Python COMPONENTS Interpreter QUIET)
   endif()
 
   if(Python_FOUND)
@@ -55,22 +52,14 @@ function(copa_setup_standalone)
       COMMENT "[${PROJECT_NAME}] - Generating standalone header: ${DST_FILE}"
       VERBATIM)
 
-    add_custom_target(
-      ${OPT_TARGET}
-      DEPENDS ${DST_FILE}
-      COMMENT "[${PROJECT_NAME}] - Assembling the standalone header")
+    add_custom_target(${OPT_TARGET} DEPENDS ${DST_FILE} COMMENT "[${PROJECT_NAME}] - Assembling the standalone header")
 
-    set_property(
-      TARGET ${OPT_TARGET}
-      APPEND
-      PROPERTY ADDITIONAL_CLEAN_FILES ${DST_FILE})
+    set_property(TARGET ${OPT_TARGET} APPEND PROPERTY ADDITIONAL_CLEAN_FILES ${DST_FILE})
 
     if(NOT OPT_QUIET)
       message(STATUS "[${PROJECT_NAME}] - Target ${OPT_TARGET} generates header ${DST_FILE}")
     endif()
 
-    set(PROJECT_STANDALONE_TARGET
-        "${OPT_TARGET}"
-        PARENT_SCOPE)
+    set(PROJECT_STANDALONE_TARGET "${OPT_TARGET}" PARENT_SCOPE)
   endif()
 endfunction()

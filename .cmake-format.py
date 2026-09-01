@@ -36,6 +36,23 @@ with section("parse"):
       }
   }
   additional_commands["cpmfindpackage"] = additional_commands["cpmaddpackage"]
+
+  # Copacabana's own functions, so the formatter keeps a keyword next to the value it introduces rather than
+  # putting every token on a line of its own. Read from their cmake_parse_arguments calls.
+  additional_commands["copa_find_coverage_tools"] = {"pargs": {"nargs": "*"}, "kwargs": {"PREFIX": 1, "FILTER": 1, "DEPENDS": 1}}
+  additional_commands["copa_glob_unit"] = {"pargs": {"nargs": "*", "flags": ["QUIET", "IMPLICIT"]}, "kwargs": {"RELATIVE": 1, "PATTERN": 1, "INTERFACE": 1, "PCH": 1, "EXTENSION": 1, "DESTINATION": 1, "TARGET": 1, "DEPENDENCIES": "*", "EXTERNALS": "*", "PROPERTIES": "*"}}
+  additional_commands["copa_make_single_unit"] = {"pargs": {"nargs": "*"}, "kwargs": {"NAME": 1, "INTERFACE": 1, "EXTENSION": 1, "ROOT": 1, "DESTINATION": 1, "PCH": 1, "TARGET": 1, "DEPENDENCIES": "*", "FILES": "*", "EXTERNALS": "*", "PROPERTIES": "*"}}
+  additional_commands["copa_project_version"] = {"pargs": {"nargs": "*", "flags": ["QUIET"]}, "kwargs": {"MAJOR": 1, "MINOR": 1, "PATCH": 1}}
+  additional_commands["copa_sanitizer_flags"] = {"pargs": {"nargs": "*", "flags": ["ENABLE_ASAN", "ENABLE_UBSAN", "ENABLE_TSAN", "ENABLE_MSAN"]}}
+  additional_commands["copa_setup_cpack"] = {"pargs": {"nargs": "*", "flags": ["QUIET"]}, "kwargs": {"VENDOR": 1, "DESCRIPTION": 1, "LICENSE_FILE": 1, "MAINTAINER": 1, "DEB_DEPENDENCIES": "*", "RPM_DEPENDENCIES": "*"}}
+  additional_commands["copa_setup_doxygen"] = {"pargs": {"nargs": "*", "flags": ["QUIET"]}, "kwargs": {"SOURCE": 1, "DESTINATION": 1, "TARGET": 1, "URL": 1, "GODBOLT_COMPILER": 1, "GODBOLT_OPTIONS": 1, "COLOR_HUE": 1, "COLOR_SATURATION": 1, "COLOR_LIGHTNESS": 1, "COLOR_GAMMA": 1, "GODBOLT_LIBRARIES": "*"}}
+  additional_commands["copa_setup_install"] = {"pargs": {"nargs": "*"}, "kwargs": {"LIBRARY": 1, "NAMESPACE": 1, "COMPATIBILITY": 1, "CONFIG": 1, "LIB": "*", "INCLUDE": "*", "DOC": "*", "FEATURES": "*"}}
+  additional_commands["copa_setup_pch"] = {"pargs": {"nargs": "*", "flags": ["AUTONOMOUS"]}, "kwargs": {"TARGET": 1, "INTERFACES": "*", "HEADERS": "*", "PROPERTIES": "*"}}
+  additional_commands["copa_setup_precommit_hooks"] = {"pargs": {"nargs": "*", "flags": ["QUIET"]}}
+  additional_commands["copa_setup_sanitizers"] = {"pargs": {"nargs": "*", "flags": ["ENABLE_ASAN", "ENABLE_UBSAN", "ENABLE_TSAN", "ENABLE_MSAN"]}}
+  additional_commands["copa_setup_standalone"] = {"pargs": {"nargs": "*", "flags": ["QUIET"]}, "kwargs": {"SOURCE": 1, "DESTINATION": 1, "FILE": 1, "ROOT": 1, "TARGET": 1, "OUTPUT": 1}}
+  additional_commands["copa_setup_test_targets"] = {"pargs": {"nargs": "*", "flags": ["QUIET"]}, "kwargs": {"INTERFACE": 1, "EXTENSION": 1, "ROOT": 1, "DESTINATION": 1, "PCH": 1, "IMPLICIT": 1, "TARGET": 1, "DEPENDENCIES": "*", "FILES": "*", "EXTERNALS": "*", "PROPERTIES": "*"}}
+
   additional_commands["cpmdeclarepackage"] = additional_commands["cpmaddpackage"]
 
 with section("format"):
@@ -43,6 +60,10 @@ with section("format"):
   # while leaving the function() declaring them untouched - an API documented in one case and invoked in another.
   # CPMAddPackage has the same problem, in CPM's spelling rather than ours.
   command_case = "unchanged"
+
+  # Declaring the copa_* and CPM signatures makes cmake-format prefer one keyword per line, which turns
+  # copa_project_version(MAJOR 0 MINOR 1 PATCH 0) into four. Three groups fit a line here at 120 columns.
+  max_subgroups_hwrap = 3
 
   line_width = 120
   tab_size = 2

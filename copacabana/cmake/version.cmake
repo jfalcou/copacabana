@@ -33,17 +33,9 @@ function(copa_project_version)
   ## Under the names project(VERSION) would have used, so a project has one spelling to read rather than two that
   ## say the same thing with the words in a different order. What keeps this function is the patch level: project()
   ## takes digits only, and a version like 1.2.3a has to come from somewhere.
-  set(PROJECT_VERSION_MAJOR
-      ${OPT_MAJOR}
-      PARENT_SCOPE)
-  set(PROJECT_VERSION_MINOR
-      ${OPT_MINOR}
-      PARENT_SCOPE)
-  set(PROJECT_VERSION_PATCH
-      ${OPT_PATCH}
-      PARENT_SCOPE)
-  set(PROJECT_VERSION
-      "${VERSION}"
-      PARENT_SCOPE)
+  set(PROJECT_VERSION_MAJOR ${OPT_MAJOR} PARENT_SCOPE)
+  set(PROJECT_VERSION_MINOR ${OPT_MINOR} PARENT_SCOPE)
+  set(PROJECT_VERSION_PATCH ${OPT_PATCH} PARENT_SCOPE)
+  set(PROJECT_VERSION "${VERSION}" PARENT_SCOPE)
 
 endfunction()
