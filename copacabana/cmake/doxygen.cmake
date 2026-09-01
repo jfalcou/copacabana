@@ -12,6 +12,7 @@ include(FetchContent)
 ## cmake_parse_arguments left in its caller's scope, and answers DOXYGEN_COLOR_SAT the same way.
 ##======================================================================================================================
 macro(copa_doxygen_assets)
+  set(DOXYGEN_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/copa-doxygen")
   ## One triplet, two consumers that had drifted apart: doxygen tints the widgets it generates from HTML_COLORSTYLE_*,
   ## and doxygen-awesome reads its own hsl() variables from a stylesheet. Writing both here is what keeps them the
   ## same colour - raberu's documentation had a red stylesheet over cyan doxygen widgets.
@@ -23,7 +24,7 @@ macro(copa_doxygen_assets)
   set(HS "${OPT_COLOR_HUE}, ${OPT_COLOR_SATURATION}%")
   file(
     GENERATE
-    OUTPUT "${OPT_DESTINATION}/color.css"
+    OUTPUT "${DOXYGEN_GENERATED}/color.css"
     CONTENT
       "html {
   --primary-dark-color: hsl(${HS}, ${COLOR_DARK}%);
@@ -153,7 +154,8 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
         DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset AWESOME_ASSETS=${AWESOME_CSS_DIR}
         DOXYGEN_PROJECT_LOWER=${PROJECT_LOWER} DOXYGEN_PROJECT_UPPER=${PROJECT_UPPER} DOXYGEN_PROJECT_URL=${OPT_URL}
         DOXYGEN_COLOR_HUE=${OPT_COLOR_HUE} DOXYGEN_COLOR_SAT=${DOXYGEN_COLOR_SAT} DOXYGEN_COLOR_GAMMA=${OPT_COLOR_GAMMA}
-        DOXYGEN_STRIP=${PROJECT_SOURCE_DIR} ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG}
+        DOXYGEN_STRIP=${PROJECT_SOURCE_DIR} DOXYGEN_GENERATED=${DOXYGEN_GENERATED} ${DOXYGEN_EXECUTABLE}
+        ${DOXYGEN_CONFIG}
       WORKING_DIRECTORY ${OPT_SOURCE}
       COMMENT "[${PROJECT_NAME}] - Generating API documentation with Doxygen"
       VERBATIM)
