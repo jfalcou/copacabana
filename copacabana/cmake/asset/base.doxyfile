@@ -18,7 +18,9 @@
 ## Four of them - GENERATE_TREEVIEW, DISABLE_INDEX, FULL_SIDEBAR, HTML_DYNAMIC_MENUS - are doxygen's own defaults, and
 ## they are stated anyway: this file is read last, so what it names is what a project's own value gets overridden by.
 ## Leaving them out would let a Doxyfile that still turns the index off keep doing so, which is the whole point.
-HTML_HEADER            = $(DOXYGEN_ASSETS)/base.html
+## Generated rather than read from the assets: doxygen expands $(VAR) in a Doxyfile but not in a header, so
+## anything a project has to put there - its repository URL, and see #75 - has to be substituted beforehand.
+HTML_HEADER            = $(DOXYGEN_GENERATED)/base.html
 HTML_FOOTER            = $(DOXYGEN_ASSETS)/footer.html
 HTML_EXTRA_STYLESHEET  = $(AWESOME_ASSETS)/doxygen-awesome.css $(AWESOME_ASSETS)/doxygen-awesome-sidebar-only.css
 HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/custom.css

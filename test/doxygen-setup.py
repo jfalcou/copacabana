@@ -33,6 +33,13 @@ def main(out):
 
     # doxygen-awesome-sidebar-only overrides doxygen-awesome, so it only works after it. Reversed, the header renders
     # broken and nothing reports it.
+    # The corner is the only link on the page that has to carry a value from outside doxygen, and doxygen expands
+    # $(VAR) in a Doxyfile but never in a header. It read as a literal on every published site for two months.
+    corner = re.search(r'<a href="([^"]*)"[^>]*class="github-corner"', index)
+    expect("the github corner is on the page", corner is not None)
+    if corner:
+        expect("the github corner links somewhere", corner.group(1).startswith("http"), corner.group(1))
+
     sheets = [pathlib.Path(h).name for h in re.findall(r'<link[^>]*href="([^"]+\.css)"', index)]
     awesome = [s for s in sheets if s.startswith("doxygen-awesome")]
     expect("both awesome stylesheets are linked", len(awesome) == 2, str(awesome))
