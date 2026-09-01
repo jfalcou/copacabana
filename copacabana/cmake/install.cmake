@@ -7,17 +7,9 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 ##======================================================================================================================
-## Prepare install target
+## What copa_setup_install falls back on when its caller says nothing about where the package config goes.
 ##======================================================================================================================
-function(copa_setup_install)
-  set(oneValueArgs LIBRARY NAMESPACE COMPATIBILITY CONFIG)
-  set(multiValueArgs LIB INCLUDE DOC FEATURES)
-  cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  if(NOT DEFINED OPT_LIBRARY)
-    message(FATAL_ERROR "[${PROJECT_NAME}] - Install target setup: Missing LIBRARY name")
-  endif()
-
+macro(copa_install_defaults)
   if(NOT DEFINED OPT_NAMESPACE)
     set(OPT_NAMESPACE "${OPT_LIBRARY}")
   endif()
@@ -28,9 +20,42 @@ function(copa_setup_install)
     set(OPT_COMPATIBILITY "SameMajorVersion")
   endif()
 
+  ## Copacabana exists for header-only libraries, so a package that says nothing is one. Saying NO puts the config
+  ## next to the binaries it has to match rather than in the architecture-neutral share tree.
+  if(NOT DEFINED OPT_ARCH_INDEPENDENT)
+    set(OPT_ARCH_INDEPENDENT YES)
+  endif()
+
+  ## Where find_package looks for <name>-config.cmake. It searches both trees, so this is a matter of saying what the
+  ## package is rather than of being found: share/<name> for one that runs anywhere, lib/cmake/<name> for one tied to
+  ## an architecture, which also sidesteps lib against lib64.
+  if(NOT DEFINED OPT_DESTINATION)
+    if(OPT_ARCH_INDEPENDENT)
+      set(OPT_DESTINATION "${CMAKE_INSTALL_DATADIR}/${OPT_LIBRARY}")
+    else()
+      set(OPT_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${OPT_LIBRARY}")
+    endif()
+  endif()
+endmacro()
+
+##======================================================================================================================
+## Prepare install target
+##======================================================================================================================
+function(copa_setup_install)
+  set(oneValueArgs LIBRARY NAMESPACE COMPATIBILITY CONFIG DESTINATION ARCH_INDEPENDENT)
+  set(multiValueArgs LIB INCLUDE DOC FEATURES)
+  cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  if(NOT DEFINED OPT_LIBRARY)
+    message(FATAL_ERROR "[${PROJECT_NAME}] - Install target setup: Missing LIBRARY name")
+  endif()
+
+  copa_install_defaults()
+
   set(EXT_NAME "${OPT_LIBRARY}_lib")
   set(TARGETS_NAME "${OPT_LIBRARY}-targets")
   set(MAIN_DEST "${CMAKE_INSTALL_LIBDIR}/${OPT_LIBRARY}")
+  set(CONFIG_DEST "${OPT_DESTINATION}")
   set(INSTALL_DEST "${CMAKE_INSTALL_INCLUDEDIR}")
   set(DOC_DEST "${CMAKE_INSTALL_DOCDIR}")
 
@@ -72,13 +97,21 @@ function(copa_setup_install)
   set(COPA_TARGETS_NAME "${TARGETS_NAME}")
 
   configure_package_config_file("${OPT_CONFIG}" "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config.cmake"
-                                INSTALL_DESTINATION "${MAIN_DEST}")
+                                INSTALL_DESTINATION "${CONFIG_DEST}")
+
+  ## Without it the version file records the pointer width it was generated on and refuses a consumer built with
+  ## another, which is meaningless for a package of headers.
+  if(OPT_ARCH_INDEPENDENT)
+    set(ARCH_FLAG ARCH_INDEPENDENT)
+  else()
+    set(ARCH_FLAG "")
+  endif()
 
   write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake"
-                                   VERSION "${PROJECT_VERSION}" COMPATIBILITY "${OPT_COMPATIBILITY}" ARCH_INDEPENDENT)
+                                   VERSION "${PROJECT_VERSION}" COMPATIBILITY "${OPT_COMPATIBILITY}" ${ARCH_FLAG})
 
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config.cmake" DESTINATION "${MAIN_DEST}")
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake" DESTINATION "${MAIN_DEST}")
-  install(EXPORT ${TARGETS_NAME} NAMESPACE "${OPT_NAMESPACE}::" DESTINATION "${MAIN_DEST}")
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config.cmake" DESTINATION "${CONFIG_DEST}")
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake" DESTINATION "${CONFIG_DEST}")
+  install(EXPORT ${TARGETS_NAME} NAMESPACE "${OPT_NAMESPACE}::" DESTINATION "${CONFIG_DEST}")
 
 endfunction()

@@ -3,11 +3,23 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##==================================================================================================
-name: Copacabana
+## A run of its own rather than a job inside the unit tests, so these land in their own box on a pull request instead
+## of interleaving with the compiler matrices.
+name: Meta Checks
 on:
-  workflow_call:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: copacabana-meta-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+
+  precommit:
+    name: Meta Checks
+    uses: ./.github/workflows/precommit.yml
 
   test-cpack:
     name: Build and Verify System Installers
@@ -85,6 +97,19 @@ jobs:
 
       - name: Check what it produced
         run: python3 test/doxygen-setup.py build/doc/doxygen-output
+
+  test-install-layout:
+    name: Verify Where the Package Installs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Install the example three ways and look
+        run: python3 test/install-layout.py $GITHUB_WORKSPACE
 
   test-two-consumers:
     name: Verify Two Consumers in One Build
