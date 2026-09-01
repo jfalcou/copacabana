@@ -13,9 +13,7 @@ function(copa_setup_test_targets)
 
   # Named whether or not this call is the one that creates it: a second directory calling in still needs to be told
   # what the aggregate is called.
-  set(PROJECT_TEST_TARGET
-      "${PROJECT_TEST_TARGET}"
-      PARENT_SCOPE)
+  set(PROJECT_TEST_TARGET "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================
@@ -24,16 +22,12 @@ endfunction()
 ##======================================================================================================================
 function(copa_aggregate_target requested out)
   if(requested STREQUAL "")
-    set(${out}
-        "${PROJECT_TEST_TARGET}"
-        PARENT_SCOPE)
+    set(${out} "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
   else()
     if(NOT TARGET ${requested})
       add_custom_target(${requested} COMMENT "[${PROJECT_NAME}] - Building every unit gathered under ${requested}")
     endif()
-    set(${out}
-        "${requested}"
-        PARENT_SCOPE)
+    set(${out} "${requested}" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -74,9 +68,7 @@ function(copa_source_to_target extension filename testname)
   string(REPLACE "/" "." base "${filename}")
   string(REPLACE "\\" "." base "${base}")
   string(REGEX REPLACE "\\.[^.]+$" ".${extension}" base "${base}")
-  set(${testname}
-      "${base}"
-      PARENT_SCOPE)
+  set(${testname} "${base}" PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================
@@ -92,15 +84,10 @@ function(copa_setup_test test location register)
   endif()
 
   if(DEFINED CMAKE_CROSSCOMPILING_CMD)
-    add_test(
-      NAME ${test}
-      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
-      COMMAND "${CMAKE_CROSSCOMPILING_CMD}" $<TARGET_FILE:${test}>)
+    add_test(NAME ${test} WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}" COMMAND "${CMAKE_CROSSCOMPILING_CMD}"
+                                                                                        $<TARGET_FILE:${test}>)
   else()
-    add_test(
-      NAME ${test}
-      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}"
-      COMMAND $<TARGET_FILE:${test}>)
+    add_test(NAME ${test} WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}" COMMAND $<TARGET_FILE:${test}>)
   endif()
 endfunction()
 
@@ -158,11 +145,8 @@ function(copa_make_unit)
       if(NOT OPT_IMPLICIT)
         ## cmake-lint cannot count the pairs a variable expands to
         # cmake-lint: disable=E1120
-        set_target_properties(
-          ${test}
-          PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE
-                     EXCLUDE_FROM_ALL TRUE
-                     ${OPT_PROPERTIES})
+        set_target_properties(${test} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE EXCLUDE_FROM_ALL TRUE
+                                                 ${OPT_PROPERTIES})
       endif()
     endif()
   endforeach()
@@ -211,10 +195,7 @@ function(copa_glob_unit)
     set(MAKE_IMPLICIT 1)
   endif()
 
-  file(
-    GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS
-    RELATIVE ${OPT_RELATIVE}
-    ${OPT_PATTERN})
+  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
 
   set(QUIET_ARG "")
   if(OPT_QUIET)

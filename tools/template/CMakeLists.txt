@@ -51,20 +51,22 @@ copa_setup_precommit_hooks(${QUIET_OPTION})
 ## Install Process setup
 ##======================================================================================================================
 copa_setup_install(
-  LIBRARY
-  sample
-  FEATURES
-  cxx_std_20
-  DOC
-  ${PROJECT_SOURCE_DIR}/LICENSE.md
-  INCLUDE
-  ${PROJECT_SOURCE_DIR}/include/sample)
+  LIBRARY sample
+  FEATURES cxx_std_20
+  DOC ${PROJECT_SOURCE_DIR}/LICENSE.md
+  INCLUDE ${PROJECT_SOURCE_DIR}/include/sample)
 
 ##======================================================================================================================
 ## Setup doxygen
 ##======================================================================================================================
 if(SAMPLE_BUILD_DOCUMENTATION)
-  copa_setup_doxygen(${QUIET_OPTION} TARGET sample-doxygen DESTINATION "${PROJECT_BINARY_DIR}/doc")
+  copa_setup_doxygen(
+    ${QUIET_OPTION}
+    TARGET sample-doxygen
+    DESTINATION "${PROJECT_BINARY_DIR}/doc"
+    GODBOLT_LIBRARIES sample tts
+    COLOR_HUE 293
+    COLOR_SATURATION 40)
 endif()
 
 ##@if standalone@
@@ -73,16 +75,11 @@ endif()
 ##======================================================================================================================
 copa_setup_standalone(
   QUIET
-  FILE
-  sample.hpp
-  SOURCE
-  include
-  ROOT
-  sample
-  TARGET
-  sample-standalone
-  OUTPUT
-  "${PROJECT_BINARY_DIR}")
+  FILE sample.hpp
+  SOURCE include
+  ROOT sample
+  TARGET sample-standalone
+  OUTPUT "${PROJECT_BINARY_DIR}")
 
 ##@endif@
 ##======================================================================================================================

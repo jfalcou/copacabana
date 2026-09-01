@@ -11,27 +11,18 @@ copa_expect("test aggregate" "${PROJECT_TEST_TARGET}" "example-test")
 
 copa_glob_unit(
   QUIET
-  PATTERN
-  "unit/*.cpp"
-  RELATIVE
-  ${ROOT}
-  DEPENDENCIES
-  standalone-example
-  INTERFACE
-  example_test
-  PCH
-  example_pch)
+  PATTERN "unit/*.cpp"
+  RELATIVE ${ROOT}
+  DEPENDENCIES standalone-example
+  INTERFACE example_test
+  PCH example_pch)
 
 ##======================================================================================================================
 ## Samples gather under their own target, so example-test stays the tests alone
 ##======================================================================================================================
 copa_glob_unit(
   QUIET
-  PATTERN
-  "samples/*.cpp"
-  RELATIVE
-  ${ROOT}
-  INTERFACE
-  example_test
-  TARGET
-  example-samples)
+  PATTERN "samples/*.cpp"
+  RELATIVE ${ROOT}
+  INTERFACE example_test
+  TARGET example-samples)

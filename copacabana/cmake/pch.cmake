@@ -35,17 +35,11 @@ function(copa_setup_pch)
   set_property(TARGET ${PCH_LIB} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/unit")
   ## cmake-lint cannot count the pairs a variable expands to
   # cmake-lint: disable=E1120
-  set_target_properties(
-    ${PCH_LIB}
-    PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE
-               EXCLUDE_FROM_ALL TRUE
-               ${OPT_PROPERTIES})
+  set_target_properties(${PCH_LIB} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE EXCLUDE_FROM_ALL TRUE ${OPT_PROPERTIES})
 
   foreach(header ${OPT_HEADERS})
     target_precompile_headers(${PCH_LIB} PRIVATE "${PROJECT_SOURCE_DIR}/${header}")
   endforeach()
 
-  set(PROJECT_PCH_TARGET
-      ${PCH_LIB}
-      PARENT_SCOPE)
+  set(PROJECT_PCH_TARGET ${PCH_LIB} PARENT_SCOPE)
 endfunction()

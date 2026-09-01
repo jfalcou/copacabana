@@ -20,10 +20,8 @@ function(copa_find_coverage_tools out_gcovr out_gcov_tool)
 
   # gcovr 8 sums a header's lines once per translation unit including it instead of taking their
   # union, which on a header-only template library reports totals larger than the files themselves.
-  execute_process(
-    COMMAND ${GCOVR_EXECUTABLE} --version
-    OUTPUT_VARIABLE GCOVR_VERSION_OUTPUT
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(COMMAND ${GCOVR_EXECUTABLE} --version OUTPUT_VARIABLE GCOVR_VERSION_OUTPUT
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   if(GCOVR_VERSION_OUTPUT MATCHES "gcovr ([0-9]+)" AND CMAKE_MATCH_1 GREATER_EQUAL 8)
     message(WARNING "[${PROJECT_NAME}] - gcovr ${CMAKE_MATCH_1}.x inflates per-file totals on templates, "
@@ -43,10 +41,8 @@ function(copa_find_coverage_tools out_gcovr out_gcov_tool)
         FATAL_ERROR "[${PROJECT_NAME}] - Coverage with Clang requires llvm-cov, install package llvm-${COMPILER_MAJOR}")
     endif()
 
-    execute_process(
-      COMMAND ${LLVM_COV_EXECUTABLE} --version
-      OUTPUT_VARIABLE COV_VERSION_OUTPUT
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND ${LLVM_COV_EXECUTABLE} --version OUTPUT_VARIABLE COV_VERSION_OUTPUT
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
     string(REGEX MATCH "LLVM version ([0-9]+)" _ "${COV_VERSION_OUTPUT}")
     set(COV_TOOL_NAME "llvm-cov")
     set(COV_PACKAGE "llvm-${COMPILER_MAJOR}")
@@ -58,10 +54,8 @@ function(copa_find_coverage_tools out_gcovr out_gcov_tool)
       message(FATAL_ERROR "[${PROJECT_NAME}] - Coverage with GCC requires gcov-${COMPILER_MAJOR}")
     endif()
 
-    execute_process(
-      COMMAND ${GCOV_EXECUTABLE} --version
-      OUTPUT_VARIABLE COV_VERSION_OUTPUT
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND ${GCOV_EXECUTABLE} --version OUTPUT_VARIABLE COV_VERSION_OUTPUT
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
     string(REGEX MATCH "gcov \\([^)]*\\) ([0-9]+)" _ "${COV_VERSION_OUTPUT}")
     set(COV_TOOL_NAME "gcov")
     set(COV_PACKAGE "gcc-${COMPILER_MAJOR}")
@@ -73,12 +67,8 @@ function(copa_find_coverage_tools out_gcovr out_gcov_tool)
                         "${CMAKE_CXX_COMPILER_ID} ${COMPILER_MAJOR}, install package ${COV_PACKAGE}")
   endif()
 
-  set(${out_gcovr}
-      "${GCOVR_EXECUTABLE}"
-      PARENT_SCOPE)
-  set(${out_gcov_tool}
-      "${GCOV_TOOL}"
-      PARENT_SCOPE)
+  set(${out_gcovr} "${GCOVR_EXECUTABLE}" PARENT_SCOPE)
+  set(${out_gcov_tool} "${GCOV_TOOL}" PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================

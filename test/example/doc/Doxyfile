@@ -27,6 +27,7 @@ TOC_INCLUDE_HEADINGS   = 0
 ##======================================================================================================================
 @INCLUDE               = $(DOXYGEN_ASSETS)/base.doxyfile
 
-## What this project adds on top of it
+## What this project adds on top of it. color.css is written into the output by copa_setup_doxygen, from the same
+## numbers that tint doxygen's own widgets.
 HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/custom.css
-HTML_EXTRA_STYLESHEET += color.css
+HTML_EXTRA_STYLESHEET += $(DOXYGEN_OUPUT)/color.css

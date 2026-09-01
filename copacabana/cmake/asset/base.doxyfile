@@ -26,11 +26,22 @@ DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
 HTML_DYNAMIC_MENUS     = YES
 HTML_COLORSTYLE        = LIGHT
+HTML_COLORSTYLE_HUE    = $(DOXYGEN_COLOR_HUE)
+HTML_COLORSTYLE_SAT    = $(DOXYGEN_COLOR_SAT)
+HTML_COLORSTYLE_GAMMA  = $(DOXYGEN_COLOR_GAMMA)
 PAGE_OUTLINE_PANEL     = NO
 
 ## Where things are read from and written to, through the variables copa_setup_doxygen exports.
 PROJECT_NAME           = $(DOXYGEN_PROJECT_NAME)
 PROJECT_NUMBER         = v$(DOXYGEN_PROJECT_VERSION)
+OUTPUT_DIRECTORY       = $(DOXYGEN_OUPUT)
+HTML_OUTPUT            = ./
+
+## Derived from the project's name rather than written out, which is how polyfloat came to define
+## KYOSU_DOXYGEN_INVOKED. The tagfile is what lets another project link into this one's pages.
+GENERATE_TAGFILE       = $(DOXYGEN_OUPUT)/$(DOXYGEN_PROJECT_LOWER).tag
+PREDEFINED             = $(DOXYGEN_PROJECT_UPPER)_DOXYGEN_INVOKED
+INPUT_FILTER           = "python3 $(DOXYGEN_ASSETS)/filter.py --prefix $(DOXYGEN_PROJECT_LOWER)"
 STRIP_FROM_PATH        = $(DOXYGEN_STRIP)/src $(DOXYGEN_STRIP)/include
 STRIP_FROM_INC_PATH    = $(DOXYGEN_STRIP)/include
 RECURSIVE              = YES
