@@ -115,10 +115,7 @@ add_subdirectory(test)
 if(EXAMPLE_USE_COVERAGE)
   copa_setup_coverage(
     example_test
-    PREFIX
-    example
-    FILTER
-    "${PROJECT_SOURCE_DIR}/include/libexample/"
-    DEPENDS
-    example-test)
+    PREFIX example
+    FILTER "${PROJECT_SOURCE_DIR}/include/libexample/"
+    DEPENDS example-test)
 endif()

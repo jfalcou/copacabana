@@ -3,8 +3,6 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##==================================================================================================
-## A run of its own rather than a job inside the unit tests, so these land in their own box on a pull request instead
-## of interleaving with the compiler matrices.
 name: Meta Checks
 on:
   pull_request:
@@ -44,7 +42,6 @@ jobs:
       - name: Verify DEB Package Validity
         run: |
           cd test/example
-          # Find the generated .deb file
           DEB_FILE=$(ls build/*.deb | head -n 1)
           echo "Validating DEB Package: $DEB_FILE"
 
@@ -57,7 +54,6 @@ jobs:
       - name: Verify RPM Package Validity
         run: |
           cd test/example
-          # Find the generated .rpm file
           RPM_FILE=$(ls build/*.rpm | head -n 1)
           echo "Validating RPM Package: $RPM_FILE"
 
@@ -111,6 +107,18 @@ jobs:
       - name: Install the example three ways and look
         run: python3 test/install-layout.py $GITHUB_WORKSPACE
 
+  test-failure-units:
+    name: Verify Sources That Must Not Compile
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/jfalcou/compilers:v10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Break the failing test three ways and read the verdict
+        run: python3 test/failure-units.py $GITHUB_WORKSPACE
+
   test-two-consumers:
     name: Verify Two Consumers in One Build
     runs-on: ubuntu-latest
@@ -145,7 +153,6 @@ jobs:
       - name: Check Hierarchical Phony Targets
         run: |
           cd test/example/build
-          # Dump the full list of Ninja targets
           ninja -t targets > all_targets.txt
 
           EXPECTED=(
