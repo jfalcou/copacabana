@@ -10,10 +10,19 @@
 
 namespace example
 {
+  //! @cond
+  namespace _
+  {
+    template<typename T> struct storage : std::vector<T> {};
+  }
+  //! @endcond
+
+  //! @brief A value and the storage the implementation picked for it
   template<typename T>
   struct type
   {
-    std::vector<T> data;
+    //! The storage, whose type is not part of the public interface
+    _::storage<T> data;
   };
 }
 
