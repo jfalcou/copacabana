@@ -104,7 +104,7 @@ ALIASES               += tab{1}="- <b class=\"tab-title\">\1</b>"
 
 ## Names an example still to be written. @godbolt would ask doxygen for the file and warn once per directive; this
 ## keeps the intent on the page and greppable in the source until someone writes it.
-ALIASES               += "godbolt_todo{1}=@remark An example for this function is still to be written, as `\1`."
+ALIASES               += "godbolt_todo{1}=@attention An example for this function is still to be written, as `\1`."
 
 ## The scripts the shared header loads. A project appends its own after the @INCLUDE line.
 HTML_EXTRA_FILES       = $(DOXYGEN_ASSETS)/godbolt.js
