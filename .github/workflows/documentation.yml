@@ -155,7 +155,11 @@ jobs:
             exit 1
           fi
 
-          grep -E ': (warning|error):' doxygen.log > warnings.txt || true
+          # Two shapes, and only the first names a file. Doxygen also warns about the configuration itself - an
+          # unknown tag, an unreadable input path, a file it cannot copy - and writes those with nothing in front,
+          # sometimes glued to whatever it was printing. Reading only the first shape let a typo in a Doxyfile
+          # pass for a clean run.
+          grep -E '(^|[^a-zA-Z])(warning|error): ' doxygen.log > warnings.txt || true
           count=$(wc -l < warnings.txt)
 
           if [ "$count" -eq 0 ]; then
