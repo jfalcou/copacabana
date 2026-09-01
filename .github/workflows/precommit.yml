@@ -1,0 +1,44 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## The pre-commit gate, shared by every project carrying a .pre-commit-config.yaml.
+##
+##   jobs:
+##     precommit:
+##       uses: jfalcou/copacabana/.github/workflows/precommit.yml@v5
+##======================================================================================================================
+name: Pre-commit
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: 'Python the hooks run under'
+        type: string
+        default: '3.x'
+
+      pre-commit-version:
+        description: 'pre-commit release to install, pinned rather than floating'
+        type: string
+        default: '4.6.2'
+
+jobs:
+  precommit:
+    name: Pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install pre-commit
+        # Pinned, and binary-only so no dependency gets to run a setup script during install
+        run: pip install --only-binary ":all:" pre-commit==${{ inputs.pre-commit-version }}
+
+      - name: Run pre-commit checks
+        run: pre-commit run --all-files --show-diff-on-failure --color=always
