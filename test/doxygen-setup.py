@@ -6,6 +6,8 @@ the page. Run it on the directory copa_setup_doxygen wrote:
 
   python3 test/doxygen-setup.py <doxygen output directory>
 """
+import collections
+import colorsys
 import pathlib
 import re
 import sys
@@ -53,6 +55,23 @@ def main(out):
     expect("pages were generated", len(pages) > 1, f"{len(pages)} page(s)")
     leaks = [p.name for p in pages if re.search(r"\b_::\w", p.read_text(encoding="utf-8"))]
     expect("no detail namespace reaches a page", not leaks, ", ".join(leaks))
+
+    # doxygen tints the widgets it generates, doxygen-awesome reads its own hsl() variables, and the two used to be
+    # written by hand in two files: raberu had a red stylesheet over cyan doxygen widgets, spy green over purple.
+    css = (out / "color.css").read_text(encoding="utf-8") if (out / "color.css").is_file() else ""
+    declared = re.search(r"hsl\(\s*(\d+)", css)
+    expect("color.css is generated and names a hue", declared is not None)
+    if declared:
+        wanted = int(declared.group(1))
+        hues = collections.Counter()
+        for hex6 in re.findall(r"#([0-9a-fA-F]{6})", (out / "doxygen.css").read_text(encoding="utf-8")):
+            r, g, b = (int(hex6[i:i + 2], 16) for i in (0, 2, 4))
+            hue, _, sat = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+            if sat > 0.05:
+                hues[round(hue * 360)] += 1
+        seen = hues.most_common(1)[0][0] if hues else None
+        expect(f"doxygen is tinted the hue color.css asks for ({wanted})",
+               seen is not None and abs(seen - wanted) <= 2, f"{seen}")
 
     # The panel doxygen puts on the right of every page, which this fleet does not want.
     expect("no page outline panel", "PageOutline" not in index and 'id="page-nav"' not in index)

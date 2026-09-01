@@ -26,6 +26,9 @@ DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
 HTML_DYNAMIC_MENUS     = YES
 HTML_COLORSTYLE        = LIGHT
+HTML_COLORSTYLE_HUE    = $(DOXYGEN_COLOR_HUE)
+HTML_COLORSTYLE_SAT    = $(DOXYGEN_COLOR_SAT)
+HTML_COLORSTYLE_GAMMA  = $(DOXYGEN_COLOR_GAMMA)
 PAGE_OUTLINE_PANEL     = NO
 
 ## Where things are read from and written to, through the variables copa_setup_doxygen exports.

@@ -7,20 +7,41 @@
 include(FetchContent)
 
 ##======================================================================================================================
-## Add Doxygen building target
 ##======================================================================================================================
-function(copa_setup_doxygen)
-  set(options QUIET)
-  set(oneValueArgs SOURCE DESTINATION TARGET URL GODBOLT_COMPILER GODBOLT_OPTIONS)
-  set(multiValueArgs GODBOLT_LIBRARIES)
-  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+## The two files copa_setup_doxygen generates into the output, from what its caller declared. Reads the OPT_ variables
+## cmake_parse_arguments left in its caller's scope, and answers DOXYGEN_COLOR_SAT the same way.
+##======================================================================================================================
+macro(copa_doxygen_assets)
+  ## One triplet, two consumers that had drifted apart: doxygen tints the widgets it generates from HTML_COLORSTYLE_*,
+  ## and doxygen-awesome reads its own hsl() variables from a stylesheet. Writing both here is what keeps them the
+  ## same colour - raberu's documentation had a red stylesheet over cyan doxygen widgets.
+  ##
+  ## The saturations are not the same number: doxygen's runs 0..255 where css writes a percentage.
+  math(EXPR DOXYGEN_COLOR_SAT "(${OPT_COLOR_SATURATION} * 255 + 50) / 100")
+  math(EXPR COLOR_DARK "${OPT_COLOR_LIGHTNESS} - 20")
+  math(EXPR COLOR_LIGHT "${OPT_COLOR_LIGHTNESS} + 20")
+  set(HS "${OPT_COLOR_HUE}, ${OPT_COLOR_SATURATION}%")
+  file(
+    GENERATE
+    OUTPUT "${OPT_DESTINATION}/color.css"
+    CONTENT
+      "html {
+  --primary-dark-color: hsl(${HS}, ${COLOR_DARK}%);
+  --primary-color: hsl(${HS}, ${OPT_COLOR_LIGHTNESS}%);
+  --primary-light-color: hsl(${HS}, ${COLOR_LIGHT}%);
 
-  if(OPT_QUIET)
-    find_package(Doxygen QUIET)
-  else()
-    find_package(Doxygen)
-  endif()
+  --page-background-color: white;
+  --page-foreground-color: hsl(${HS}, ${COLOR_DARK}%);
+  --page-secondary-foreground-color: hsl(${HS}, ${OPT_COLOR_LIGHTNESS}%);
+}
+")
+endmacro()
 
+##======================================================================================================================
+## What copa_setup_doxygen falls back on when its caller says nothing. The colour triplet is doxygen's own default, so
+## a project that never mentions colour gets the documentation doxygen would have given it.
+##======================================================================================================================
+macro(copa_doxygen_defaults)
   if(NOT DEFINED OPT_TARGET)
     string(TOLOWER ${PROJECT_NAME} NAME)
     set(OPT_TARGET "${NAME}-doxygen")
@@ -47,6 +68,51 @@ function(copa_setup_doxygen)
     set(OPT_GODBOLT_OPTIONS "-O3 -std=c++20 -DNDEBUG")
   endif()
 
+  ## Doxygen's own defaults, so a project that says nothing about colour gets what doxygen would have given it.
+  if(NOT DEFINED OPT_COLOR_HUE)
+    set(OPT_COLOR_HUE 220)
+  endif()
+
+  if(NOT DEFINED OPT_COLOR_SATURATION)
+    set(OPT_COLOR_SATURATION 39)
+  endif()
+
+  if(NOT DEFINED OPT_COLOR_LIGHTNESS)
+    set(OPT_COLOR_LIGHTNESS 45)
+  endif()
+
+  if(NOT DEFINED OPT_COLOR_GAMMA)
+    set(OPT_COLOR_GAMMA 80)
+  endif()
+endmacro()
+
+##======================================================================================================================
+## Add Doxygen building target
+##======================================================================================================================
+function(copa_setup_doxygen)
+  set(options QUIET)
+  set(oneValueArgs
+      SOURCE
+      DESTINATION
+      TARGET
+      URL
+      GODBOLT_COMPILER
+      GODBOLT_OPTIONS
+      COLOR_HUE
+      COLOR_SATURATION
+      COLOR_LIGHTNESS
+      COLOR_GAMMA)
+  set(multiValueArgs GODBOLT_LIBRARIES)
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  if(OPT_QUIET)
+    find_package(Doxygen QUIET)
+  else()
+    find_package(Doxygen)
+  endif()
+
+  copa_doxygen_defaults()
+
   if(DOXYGEN_FOUND)
     if(NOT OPT_QUIET)
       message(STATUS "[${PROJECT_NAME}] - Doxygen available via the ${OPT_TARGET} target")
@@ -71,6 +137,8 @@ function(copa_setup_doxygen)
 const GODBOLT_COMPILER  = \"${OPT_GODBOLT_COMPILER}\"\n\
 const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
 
+    copa_doxygen_assets()
+
     set(DOXYGEN_CONFIG ${OPT_SOURCE}/Doxyfile)
 
     add_custom_target(
@@ -78,17 +146,15 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
       COMMAND
         DOXYGEN_OUPUT=${OPT_DESTINATION} DOXYGEN_PROJECT_NAME=${PROJECT_NAME} DOXYGEN_PROJECT_VERSION=${PROJECT_VERSION}
         DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset AWESOME_ASSETS=${AWESOME_CSS_DIR}
-        DOXYGEN_PROJECT_URL=${OPT_URL} DOXYGEN_STRIP=${PROJECT_SOURCE_DIR} ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG}
+        DOXYGEN_PROJECT_URL=${OPT_URL} DOXYGEN_COLOR_HUE=${OPT_COLOR_HUE} DOXYGEN_COLOR_SAT=${DOXYGEN_COLOR_SAT}
+        DOXYGEN_COLOR_GAMMA=${OPT_COLOR_GAMMA} DOXYGEN_STRIP=${PROJECT_SOURCE_DIR} ${DOXYGEN_EXECUTABLE}
+        ${DOXYGEN_CONFIG}
       WORKING_DIRECTORY ${OPT_SOURCE}
       COMMENT "[${PROJECT_NAME}] - Generating API documentation with Doxygen"
       VERBATIM)
 
-    set(PROJECT_DOXYGEN_SOURCE_DIR
-        ${OPT_SOURCE}
-        PARENT_SCOPE)
-    set(PROJECT_DOXYGEN_OUTPUT_DIR
-        ${OPT_DESTINATION}
-        PARENT_SCOPE)
+    set(PROJECT_DOXYGEN_SOURCE_DIR ${OPT_SOURCE} PARENT_SCOPE)
+    set(PROJECT_DOXYGEN_OUTPUT_DIR ${OPT_DESTINATION} PARENT_SCOPE)
 
   else()
     message(STATUS "[${PROJECT_NAME}] - Doxygen need to be installed to generate the doxygen documentation")

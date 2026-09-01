@@ -44,16 +44,12 @@ function(copa_sanitizer_flags out)
     if(OPT_ENABLE_ASAN)
       list(APPEND SANITIZER_FLAGS "/fsanitize=address")
     endif()
-    if(OPT_ENABLE_UBSAN
-       OR OPT_ENABLE_TSAN
-       OR OPT_ENABLE_MSAN)
+    if(OPT_ENABLE_UBSAN OR OPT_ENABLE_TSAN OR OPT_ENABLE_MSAN)
       message(WARNING "[${PROJECT_NAME}] - MSVC currently only supports AddressSanitizer (ASan)")
     endif()
   endif()
 
-  set(${out}
-      "${SANITIZER_FLAGS}"
-      PARENT_SCOPE)
+  set(${out} "${SANITIZER_FLAGS}" PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================
