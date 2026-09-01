@@ -40,7 +40,7 @@ depends on changes — `copacabana/cmake/` or the reusable workflows.
 
 ## The CMake functions
 
-Thirteen functions, covering four things a library ends up needing whatever it does.
+Fifteen functions, covering four things a library ends up needing whatever it does.
 
 **Shipping it.**
 
@@ -59,6 +59,8 @@ Thirteen functions, covering four things a library ends up needing whatever it d
 | `copa_glob_unit` | one executable per source file, from a glob |
 | `copa_make_unit` | the same, from an explicit list |
 | `copa_make_single_unit` | several sources into one executable |
+| `copa_glob_failure_unit` | one test per source that has to be rejected, from a glob |
+| `copa_make_failure_unit` | the same, for a named source |
 
 **Checking it.**
 
@@ -75,8 +77,8 @@ Thirteen functions, covering four things a library ends up needing whatever it d
 | `copa_setup_pch` | precompiled header |
 | `copa_setup_precommit_hooks` | install the git hooks |
 
-None of them is mandatory and none depends on the others being used, bar the three call orders
-listed at the end. Take `copa_glob_unit` alone if that is all you want.
+None of them is mandatory and none depends on the others being used, except for the three
+orderings listed at the end. Take `copa_glob_unit` alone if that is all you want.
 
 The ones that have something to say take `QUIET` to silence their own `message(STATUS ...)`
 lines: `copa_project_version`, `copa_setup_doxygen`, `copa_setup_standalone`,
@@ -218,7 +220,7 @@ aggregate.
 | `IMPLICIT` | | one executable per source, without a `main` of its own |
 
 This is test-framework agnostic: it compiles and registers executables, and does not care what
-they are written against. `INTERFACE` is where you hang your framework of choice.
+they are written against. `INTERFACE` names the target carrying your framework.
 
 **`TARGET` is what keeps benchmarks and samples out of the test run.** A unit gathered under
 another aggregate is not registered with CTest, because the test target never builds it and
@@ -291,6 +293,48 @@ copa_setup_cpack(VENDOR "..." DESCRIPTION "..." LICENSE_FILE ... MAINTAINER ...)
 Configures CPack for `.deb`, `.rpm` and `.zip`. `DEB_DEPENDENCIES` and `RPM_DEPENDENCIES` take
 lists in each packager's own syntax.
 
+### `copa_glob_failure_unit`, `copa_make_failure_unit`
+
+Some of what a library promises is that certain code will **not** compile. A `static_assert`
+guarding an interface, a concept refusing a type: nothing exercises those, and a refactor that
+disarms one is silent.
+
+```cmake
+copa_glob_failure_unit(PATTERN "failure/*.cpp" RELATIVE ${root} INTERFACE mylib_test)
+```
+
+Each source becomes a target excluded from every aggregate and a ctest that builds it. The test
+passes only when the compiler rejects the source **and** says what the source declared it would
+say, one line per diagnostic:
+
+```cpp
+// build error: Duplicate fields in record definition
+
+#include <mylib/mylib.hpp>
+auto bad = mylib::record{ "x"_f = 1, "x"_f = 2 };
+```
+
+The second half is the point. A check that only asks whether the build failed goes green on a
+typo, a missing header or a renamed include, and proves nothing about the diagnostic it exists
+to pin. The expected text lives in the source rather than in the `CMakeLists.txt` so that
+editing one does not silently outdate the other.
+
+A `static_assert` carries a message you wrote, so it reads the same everywhere. A diagnostic the
+compiler words itself does not, and such a line names the compiler it belongs to:
+
+```cpp
+// build error-gcc: which is of non-class type
+// build error-clang: is not a structure or union
+
+int main() { int i = 1; i.clear(); }
+```
+
+Lines naming another compiler than the one in use are ignored, and a source left with none
+reports the test skipped rather than passing on nothing.
+
+A source that names no diagnostic at all is an error rather than a pass: there is nothing to
+check.
+
 ## The reusable workflows
 
 Called from your own `.github/workflows/`, they carry the steps; you keep the triggers and the
@@ -341,7 +385,7 @@ What each expects of your repository:
 
 **Pin by full commit SHA with the tag in a trailing comment**, not by tag. SonarCloud's
 `githubactions:S7637` fails the quality gate on a `uses:` pinned to a tag from outside a trusted
-organisation, and any external repository counts as outside. Add a `.github/dependabot.yml` for
+organisation, and any external repository is outside. Add a `.github/dependabot.yml` for
 the `github-actions` ecosystem so the SHA and its comment get maintained; pinning by SHA then
 costs no more than pinning by tag.
 
@@ -426,7 +470,7 @@ this repository is the same thing, kept building by Copacabana's own CI.
 tools/new-project.py mylib --brief "What it does"
 ```
 
-What it copies is `tools/template`, a working project named sample that this repository builds and lints like any
+It copies `tools/template`, a working project named sample that this repository builds and lints like any
 other tree, so it cannot drift from what copacabana expects. `--presets` picks among `native`, `cross`, `cuda` and
 `intel` rather than shipping the whole matrix, `--no-standalone` leaves out the single-header target, and `--remote`
 decides which continuous integration is written: GitHub Actions on GitHub, a `.gitlab-ci.yml` on GitLab, none
@@ -434,8 +478,7 @@ elsewhere. `--config` reads all of it from a json file.
 
 ## Ordering, in one place
 
-Three call orders are load-bearing, and getting them wrong fails in ways that do not name the
-cause:
+Three calls depend on when they run, and the failure when they are wrong does not say so:
 
 1. `copa_setup_test_targets()` **before** any `copa_glob_unit` / `copa_make_unit`.
 2. `copa_setup_sanitizers()` **before** `add_subdirectory(test)`, so the units are created with

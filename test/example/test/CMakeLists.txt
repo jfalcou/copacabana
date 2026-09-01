@@ -26,3 +26,12 @@ copa_glob_unit(
   RELATIVE ${ROOT}
   INTERFACE example_test
   TARGET example-samples)
+
+##======================================================================================================================
+## Sources the compiler has to reject, each naming what it must say
+##======================================================================================================================
+copa_glob_failure_unit(
+  QUIET
+  PATTERN "failure/*.cpp"
+  RELATIVE ${ROOT}
+  INTERFACE example_test)

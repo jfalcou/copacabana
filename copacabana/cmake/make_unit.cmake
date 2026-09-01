@@ -72,6 +72,75 @@ function(copa_source_to_target extension filename testname)
 endfunction()
 
 ##======================================================================================================================
+## Declare one source that has to be rejected by the compiler
+##======================================================================================================================
+function(copa_make_failure_unit)
+  set(options QUIET)
+  set(oneValueArgs FILE INTERFACE ROOT NAME)
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})
+
+  if(NOT DEFINED OPT_ROOT)
+    set(OPT_ROOT "${CMAKE_SOURCE_DIR}/test")
+  endif()
+
+  if(NOT DEFINED OPT_NAME)
+    copa_source_to_target("exe" "${OPT_FILE}" OPT_NAME)
+  endif()
+
+  ## Out of every aggregate: building it is what the test does, so anything that builds it outside the test turns a
+  ## passing check into a failing build.
+  add_executable(${OPT_NAME} EXCLUDE_FROM_ALL "${OPT_ROOT}/${OPT_FILE}")
+  if(OPT_INTERFACE)
+    target_link_libraries(${OPT_NAME} PUBLIC ${OPT_INTERFACE})
+  endif()
+
+  add_test(
+    NAME ${OPT_NAME}
+    COMMAND
+      ${CMAKE_COMMAND} "-DBUILD_DIR=${PROJECT_BINARY_DIR}" "-DTARGET=${OPT_NAME}" "-DSOURCE=${OPT_ROOT}/${OPT_FILE}"
+      "-DCONFIG=$<CONFIG>" "-DCOMPILER=${CMAKE_CXX_COMPILER_ID}" -P
+      "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/expect_failure.cmake")
+
+  ## A source naming only diagnostics of another compiler has nothing to check here, and saying so beats passing.
+  set_tests_properties(${OPT_NAME} PROPERTIES SKIP_RETURN_CODE 77)
+
+  if(NOT OPT_QUIET)
+    message(STATUS "[${PROJECT_NAME}] - ${OPT_FILE} is expected not to compile")
+  endif()
+endfunction()
+
+##======================================================================================================================
+## Declare every source under a pattern as one that has to be rejected
+##======================================================================================================================
+function(copa_glob_failure_unit)
+  set(options QUIET)
+  set(oneValueArgs RELATIVE PATTERN INTERFACE)
+  cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})
+
+  if(NOT DEFINED OPT_RELATIVE)
+    set(OPT_RELATIVE "${CMAKE_SOURCE_DIR}/test")
+  endif()
+
+  if(NOT DEFINED OPT_PATTERN)
+    set(OPT_PATTERN "failure/*.cpp")
+  endif()
+
+  set(QUIET_ARG "")
+  if(OPT_QUIET)
+    set(QUIET_ARG "QUIET")
+  endif()
+
+  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
+  foreach(file ${FOUND_FILES})
+    copa_make_failure_unit(
+      ${QUIET_ARG}
+      FILE "${file}"
+      ROOT "${OPT_RELATIVE}"
+      INTERFACE "${OPT_INTERFACE}")
+  endforeach()
+endfunction()
+
+##======================================================================================================================
 ## Select a test target build location
 ##======================================================================================================================
 function(copa_setup_test test location register)
@@ -203,29 +272,17 @@ function(copa_glob_unit)
   endif()
 
   copa_make_unit(
-    INTERFACE
-    "${OPT_INTERFACE}"
-    EXTENSION
-    "${OPT_EXTENSION}"
-    DESTINATION
-    "${OPT_DESTINATION}"
-    EXTERNALS
-    ${OPT_EXTERNALS}
-    DEPENDENCIES
-    "${OPT_DEPENDENCIES}"
-    PCH
-    "${OPT_PCH}"
-    FILES
-    "${FOUND_FILES}"
-    ROOT
-    "${OPT_PATTERN}"
-    IMPLICIT
-    "${MAKE_IMPLICIT}"
-    TARGET
-    "${OPT_TARGET}"
-    PROPERTIES
-    ${OPT_PROPERTIES}
-    ${QUIET_ARG})
+    INTERFACE "${OPT_INTERFACE}"
+    EXTENSION "${OPT_EXTENSION}"
+    DESTINATION "${OPT_DESTINATION}"
+    EXTERNALS ${OPT_EXTERNALS}
+    DEPENDENCIES "${OPT_DEPENDENCIES}"
+    PCH "${OPT_PCH}"
+    FILES "${FOUND_FILES}"
+    ROOT "${OPT_PATTERN}"
+    IMPLICIT "${MAKE_IMPLICIT}"
+    TARGET "${OPT_TARGET}"
+    PROPERTIES ${OPT_PROPERTIES} ${QUIET_ARG})
 endfunction()
 
 ##======================================================================================================================
