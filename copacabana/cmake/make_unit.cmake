@@ -218,10 +218,13 @@ function(copa_make_unit)
       endif()
 
       if(NOT OPT_IMPLICIT)
+        set_target_properties(${test} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE EXCLUDE_FROM_ALL TRUE)
+      endif()
+
+      if(OPT_PROPERTIES)
         ## cmake-lint cannot count the pairs a variable expands to
         # cmake-lint: disable=E1120
-        set_target_properties(${test} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE EXCLUDE_FROM_ALL TRUE
-                                                 ${OPT_PROPERTIES})
+        set_target_properties(${test} PROPERTIES ${OPT_PROPERTIES})
       endif()
     endif()
   endforeach()
