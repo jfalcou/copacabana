@@ -83,7 +83,7 @@ directory here is the same thing, kept building by Copacabana's own CI.
 
 The [wiki](https://github.com/jfalcou/copacabana/wiki) has the rest:
 
-- [CMake Functions](https://github.com/jfalcou/copacabana/wiki/CMake-Functions): every `copa_*`, what it takes and what it writes
+- [CMake Functions](https://github.com/jfalcou/copacabana/wiki/CMake-Functions): the `copa_*` functions, one reference page per family
 - [Reusable Workflows](https://github.com/jfalcou/copacabana/wiki/Reusable-Workflows): the workflows a consumer calls by `uses:`
 - [Composite Actions](https://github.com/jfalcou/copacabana/wiki/Composite-Actions): `config` and `test`, for the matrices a project keeps
 - [Project Anatomy](https://github.com/jfalcou/copacabana/wiki/Project-Anatomy): the targets, the install tree and the packages a project ends up with
