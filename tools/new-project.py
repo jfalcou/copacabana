@@ -106,6 +106,17 @@ def presets_of(workflow: str) -> set[str]:
     return set(re.findall(r"""preset:\s*["']?([A-Za-z0-9._-]+)["']?""", workflow))
 
 
+def prune_matrix(workflow: str, alive: set[str]) -> str:
+    """Drop the matrix rows naming a preset the caller left out.
+
+    A workflow keeps its file as long as one of its presets survived, and the rows for the others would each ask to be
+    built with a preset the project does not declare.
+    """
+    kept = [line for line in workflow.split("\n")
+            if not (line.lstrip().startswith("- {") and (named := presets_of(line)) and not (named & alive))]
+    return "\n".join(kept)
+
+
 def prune_jobs(workflow: str, gone: set[str]) -> str:
     """Drop the jobs calling a workflow that was not written, then the needs entries naming a job that is gone.
 
@@ -177,8 +188,10 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
 
         if relative == "CMakePresets.json":
             content = select_presets(substitute(content, fields), presets)
-        elif source.name == "ci.yml":
-            content = prune_jobs(substitute(content, fields), gone)
+        elif ".github/workflows" in relative.replace("\\", "/"):
+            content = prune_matrix(substitute(content, fields), alive)
+            if source.name == "ci.yml":
+                content = prune_jobs(content, gone)
         else:
             content = substitute(content, fields)
 

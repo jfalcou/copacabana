@@ -102,6 +102,8 @@ jobs:
                   --remote https://github.com/someone/narrow --presets gcc,clang --no-standalone
           python3 test/scaffolded-workflows.py /tmp/narrow
           test ! -f /tmp/narrow/.github/workflows/windows.yml
+          ## Two rows survive out of ten: a workflow keeps its file while one preset holds, not its every row.
+          test "$(grep -c -- '- {' /tmp/narrow/.github/workflows/linux.yml)" = 2
 
       - name: Check the hooks a scaffolded project ships pass on it
         run: |
