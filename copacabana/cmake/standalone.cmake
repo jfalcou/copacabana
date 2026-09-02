@@ -12,6 +12,8 @@ function(copa_setup_standalone)
   set(oneValueArgs SOURCE DESTINATION FILE ROOT TARGET OUTPUT)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})
 
+  copa_check_arguments()
+
   if(NOT DEFINED OPT_SOURCE)
     message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target setup header: Missing SOURCE folder")
   endif()

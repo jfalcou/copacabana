@@ -87,11 +87,6 @@ macro(copa_doxygen_defaults)
     set(OPT_DESTINATION "${PROJECT_BINARY_DIR}/docs")
   endif()
 
-  if(NOT DEFINED OPT_URL)
-    string(TOLOWER ${PROJECT_NAME} NAME)
-    set(OPT_URL "https://github.com/jfalcou/${NAME}")
-  endif()
-
   if(NOT DEFINED OPT_GODBOLT_COMPILER)
     set(OPT_GODBOLT_COMPILER "clang1600")
   endif()
@@ -127,7 +122,6 @@ function(copa_setup_doxygen)
       SOURCE
       DESTINATION
       TARGET
-      URL
       GODBOLT_COMPILER
       GODBOLT_OPTIONS
       COLOR_HUE
@@ -136,6 +130,8 @@ function(copa_setup_doxygen)
       COLOR_GAMMA)
   set(multiValueArgs GODBOLT_LIBRARIES TAGFILES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  copa_check_arguments()
 
   if(OPT_QUIET)
     find_package(Doxygen QUIET)
@@ -175,7 +171,15 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
     copa_doxygen_tagfiles()
 
     ## doxygen expands $(VAR) in a Doxyfile, never in a header, so the header is configured rather than read.
-    set(COPA_PROJECT_URL "${OPT_URL}")
+    ## Drawn only when copa_project_version was told where the project lives. A corner pointing at a guess is worse
+    ## than no corner, and the repository is said once rather than twice.
+    set(COPA_GITHUB_CORNER "")
+    if(COPA_PROJECT_REPOSITORY)
+      set(COPA_PROJECT_URL "${COPA_PROJECT_REPOSITORY}")
+      configure_file("${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/github-corner.html.in"
+                     "${DOXYGEN_GENERATED}/github-corner.html" @ONLY)
+      file(READ "${DOXYGEN_GENERATED}/github-corner.html" COPA_GITHUB_CORNER)
+    endif()
 
     ## Anything a project wants in the <head> and copacabana cannot work out: the Open Graph and Twitter tags a link
     ## to these pages unfurls into are prose about the project and absolute URLs to where it is published, so they
@@ -197,8 +201,8 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
       COMMAND
         DOXYGEN_OUPUT=${OPT_DESTINATION} DOXYGEN_PROJECT_NAME=${PROJECT_NAME} DOXYGEN_PROJECT_VERSION=${PROJECT_VERSION}
         DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset AWESOME_ASSETS=${AWESOME_CSS_DIR}
-        DOXYGEN_PROJECT_LOWER=${PROJECT_LOWER} DOXYGEN_PROJECT_UPPER=${PROJECT_UPPER} DOXYGEN_PROJECT_URL=${OPT_URL}
-        DOXYGEN_COLOR_HUE=${OPT_COLOR_HUE} DOXYGEN_COLOR_SAT=${DOXYGEN_COLOR_SAT} DOXYGEN_COLOR_GAMMA=${OPT_COLOR_GAMMA}
+        DOXYGEN_PROJECT_LOWER=${PROJECT_LOWER} DOXYGEN_PROJECT_UPPER=${PROJECT_UPPER} DOXYGEN_COLOR_HUE=${OPT_COLOR_HUE}
+        DOXYGEN_COLOR_SAT=${DOXYGEN_COLOR_SAT} DOXYGEN_COLOR_GAMMA=${OPT_COLOR_GAMMA}
         DOXYGEN_STRIP=${PROJECT_SOURCE_DIR} DOXYGEN_GENERATED=${DOXYGEN_GENERATED} "DOXYGEN_TAGS=${DOXYGEN_TAGS}"
         ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG}
       WORKING_DIRECTORY ${OPT_SOURCE}

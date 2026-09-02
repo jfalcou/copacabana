@@ -20,7 +20,7 @@ macro(copa_install_defaults)
     set(OPT_COMPATIBILITY "SameMajorVersion")
   endif()
 
-  ## Copacabana exists for header-only libraries, so a package that says nothing is one. Saying NO puts the config
+  ## A package that says nothing is taken to run anywhere, which an INTERFACE target does. Saying NO puts the config
   ## next to the binaries it has to match rather than in the architecture-neutral share tree.
   if(NOT DEFINED OPT_ARCH_INDEPENDENT)
     set(OPT_ARCH_INDEPENDENT YES)
@@ -45,6 +45,8 @@ function(copa_setup_install)
   set(oneValueArgs LIBRARY NAMESPACE COMPATIBILITY CONFIG DESTINATION ARCH_INDEPENDENT)
   set(multiValueArgs LIB INCLUDE DOC FEATURES)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  copa_check_arguments()
 
   if(NOT DEFINED OPT_LIBRARY)
     message(FATAL_ERROR "[${PROJECT_NAME}] - Install target setup: Missing LIBRARY name")

@@ -87,6 +87,8 @@ function(copa_setup_coverage target)
   set(oneValueArgs PREFIX FILTER DEPENDS)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "" ${ARGN})
 
+  copa_check_arguments()
+
   if(NOT OPT_PREFIX)
     string(TOLOWER "${PROJECT_NAME}" OPT_PREFIX)
   endif()

@@ -40,8 +40,9 @@ def main(out):
 
     # The corner is the only link on the page that has to carry a value from outside doxygen, and doxygen expands
     # $(VAR) in a Doxyfile but never in a header. It read as a literal on every published site for two months.
+    # There is no corner at all when the project said nowhere it lives, which is deliberate. What must not happen is
+    # a corner carrying something other than a URL.
     corner = re.search(r'<a href="([^"]*)"[^>]*class="github-corner"', index)
-    expect("the github corner is on the page", corner is not None)
     if corner:
         expect("the github corner links somewhere", corner.group(1).startswith("http"), corner.group(1))
 

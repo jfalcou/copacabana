@@ -11,6 +11,8 @@ function(copa_setup_precommit_hooks)
   set(options QUIET)
   cmake_parse_arguments(OPT "${options}" "" "" ${ARGN})
 
+  copa_check_arguments()
+
   if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
     find_program(PRE_COMMIT_CMD NAMES pre-commit)
 
