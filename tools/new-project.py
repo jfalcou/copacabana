@@ -150,7 +150,7 @@ def settings(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--config", help="Json file holding any of the options below")
     parser.add_argument("--name", help="Project name, when it differs from the directory name")
     parser.add_argument("--brief", help="One line describing what the project is")
-    parser.add_argument("--remote", help="Where the repository will live, as a url (default: github.com/jfalcou/NAME)")
+    parser.add_argument("--remote", help="Required. Where the repository will live, as a url")
     parser.add_argument("--presets", help=f"Comma-separated groups or names ({', '.join(PRESET_GROUPS)}, default native)")
     parser.add_argument("--standalone", action="store_true", default=None, help="Ship the standalone header target")
     parser.add_argument("--no-standalone", dest="standalone", action="store_false", help="Leave the standalone out")
@@ -180,7 +180,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[copacabana] - '{name}' is not a usable name: lowercase, starting with a letter", file=sys.stderr)
         return 1
 
-    remote = args.remote or f"https://github.com/jfalcou/{name}"
+    ## No default: where a repository will live is not something this script can know, and a guess would put
+    ## someone else's account in a generated project's documentation, CI and README.
+    if not args.remote:
+        print("[copacabana] - --remote is required: the url the repository will live at", file=sys.stderr)
+        return 1
+
+    remote = args.remote
     forge = forge_of(remote)
     presets = [p.strip() for p in (args.presets or "native").split(",") if p.strip()]
     standalone = True if args.standalone is None else args.standalone
@@ -192,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
     path = urlparse(remote).path.strip("/")
     fields = { "project": name
              , "PROJECT": name.upper()
-             , "owner":   path.rsplit("/", 1)[0] if "/" in path else "jfalcou"
+             , "owner":   path.rsplit("/", 1)[0] if "/" in path else name
              , "remote":  remote
              , "brief":   args.brief or "A C++20 library"
              , "standalone-needs": "standalone-generation, " if standalone else ""
