@@ -7,7 +7,7 @@
 ##
 ##   jobs:
 ##     coverage:
-##       uses: jfalcou/copacabana/.github/workflows/coverage.yml@v4
+##       uses: jfalcou/copacabana/.github/workflows/coverage.yml@<sha> # v6
 ##       with:
 ##         project: mylib
 ##         build-targets: mylib-test
