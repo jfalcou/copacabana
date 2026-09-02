@@ -13,6 +13,8 @@ function(copa_setup_cpack)
   set(multiValueArgs DEB_DEPENDENCIES RPM_DEPENDENCIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+  copa_check_arguments()
+
   if(NOT OPT_VENDOR)
     set(OPT_VENDOR "Copacabana User")
   endif()

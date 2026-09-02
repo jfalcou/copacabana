@@ -79,6 +79,8 @@ function(copa_make_failure_unit)
   set(oneValueArgs FILE INTERFACE ROOT NAME)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})
 
+  copa_check_arguments()
+
   if(NOT DEFINED OPT_ROOT)
     set(OPT_ROOT "${CMAKE_SOURCE_DIR}/test")
   endif()
@@ -116,6 +118,8 @@ function(copa_glob_failure_unit)
   set(options QUIET)
   set(oneValueArgs RELATIVE PATTERN INTERFACE)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})
+
+  copa_check_arguments()
 
   if(NOT DEFINED OPT_RELATIVE)
     set(OPT_RELATIVE "${CMAKE_SOURCE_DIR}/test")
@@ -175,6 +179,8 @@ function(copa_make_unit)
       TARGET)
   set(multiValueArgs DEPENDENCIES FILES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  copa_check_arguments()
 
   if(NOT OPT_QUIET)
     list(LENGTH OPT_FILES NB_TARGETS)
@@ -236,6 +242,8 @@ function(copa_glob_unit)
       TARGET)
   set(multiValueArgs DEPENDENCIES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  copa_check_arguments()
 
   if(NOT DEFINED OPT_INTERFACE)
     set(OPT_INTERFACE "")
@@ -299,6 +307,8 @@ function(copa_make_single_unit)
       TARGET)
   set(multiValueArgs DEPENDENCIES FILES EXTERNALS PROPERTIES)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  copa_check_arguments()
 
   if(NOT DEFINED OPT_EXTENSION)
     set(OPT_EXTENSION "exe")

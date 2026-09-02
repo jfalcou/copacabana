@@ -13,6 +13,8 @@ function(copa_sanitizer_flags out)
   set(options ENABLE_ASAN ENABLE_UBSAN ENABLE_TSAN ENABLE_MSAN)
   cmake_parse_arguments(OPT "${options}" "" "" ${ARGN})
 
+  copa_check_arguments()
+
   set(SANITIZER_FLAGS "")
 
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")

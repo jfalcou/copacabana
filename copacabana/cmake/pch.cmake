@@ -13,6 +13,8 @@ function(copa_setup_pch)
   set(multiValueArgs INTERFACES HEADERS PROPERTIES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+  copa_check_arguments()
+
   set(PCH_LIB "${OPT_TARGET}_pch")
   set(PCH_FILE "${OPT_TARGET}_pch.cpp")
 

@@ -10,6 +10,20 @@
 include_guard(DIRECTORY)
 
 ##======================================================================================================================
+## What cmake_parse_arguments does with a keyword it does not know: nothing. It lands in UNPARSED_ARGUMENTS, the
+## setting takes its default, and a typed DESTINATON configures as quietly as a correct one. Every copa_ function
+## calls this straight after parsing so that a misspelling fails where it was written.
+##
+## Only the unknown ones. A keyword arriving with no value is what forwarding an empty list looks like, which these
+## functions do to each other, so flagging it would fail on correct code.
+##======================================================================================================================
+macro(copa_check_arguments)
+  if(OPT_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "[${PROJECT_NAME}] - ${CMAKE_CURRENT_FUNCTION}: unknown argument(s) ${OPT_UNPARSED_ARGUMENTS}")
+  endif()
+endmacro()
+
+##======================================================================================================================
 ## Prevent in-source build
 ##======================================================================================================================
 ## Against the top level rather than the current project, and through REALPATH so that a build directory symlinked
