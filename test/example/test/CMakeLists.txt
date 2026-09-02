@@ -21,11 +21,19 @@ copa_glob_unit(
 ## Samples gather under their own target, so example-test stays the tests alone
 ##======================================================================================================================
 copa_glob_unit(
-  QUIET
+  QUIET IMPLICIT
   PATTERN "samples/*.cpp"
   RELATIVE ${ROOT}
   INTERFACE example_test
-  TARGET example-samples)
+  TARGET example-samples
+  PROPERTIES FOLDER "samples")
+
+## PROPERTIES used to share a branch with the exclusion, so asking for both left the properties unset.
+get_target_property(SAMPLE_FOLDER samples.demo.exe FOLDER)
+copa_expect("sample folder" "${SAMPLE_FOLDER}" "samples")
+
+get_target_property(UNIT_EXCLUDED unit.values.value.exe EXCLUDE_FROM_ALL)
+copa_expect("unit exclusion" "${UNIT_EXCLUDED}" "^TRUE$")
 
 ##======================================================================================================================
 ## Sources the compiler has to reject, each naming what it must say
