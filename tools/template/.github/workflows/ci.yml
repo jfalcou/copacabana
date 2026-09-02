@@ -62,14 +62,14 @@ jobs:
   ##################################################################################################
   sanitizer-tests:
     name: Sanitizers
-    uses: jfalcou/copacabana/.github/workflows/sanitizers.yml@3337f916bb581d0829909976773f7a2ee827a25c # v4
+    uses: jfalcou/copacabana/.github/workflows/sanitizers.yml@643b9f4cac5bbfa7a6cfe6da385478c5aa3773f8 # v6
 
   ##################################################################################################
   ## Coverage report - informational, runs alongside the gate without blocking the matrix
   ##################################################################################################
   coverage-report:
     name: Coverage
-    uses: jfalcou/copacabana/.github/workflows/coverage.yml@3337f916bb581d0829909976773f7a2ee827a25c # v4
+    uses: jfalcou/copacabana/.github/workflows/coverage.yml@643b9f4cac5bbfa7a6cfe6da385478c5aa3773f8 # v6
     with:
       project: sample
 

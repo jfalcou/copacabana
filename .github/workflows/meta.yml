@@ -75,6 +75,25 @@ jobs:
       - name: Run Asset Tests
         run: node --test test/*.test.js
 
+  test-scaffolder:
+    name: Verify the Scaffolded Project
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/jfalcou/compilers:v10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Scaffold a project and configure it
+        run: |
+          python3 tools/new-project.py /tmp/scaffolded --name mylib --brief "A scaffolded library" \
+                  --remote https://github.com/someone/mylib
+          cmake -S /tmp/scaffolded -B /tmp/scaffolded/build -G Ninja \
+                -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE -DMYLIB_BUILD_DOCUMENTATION=ON
+
+      - name: Build what it declares
+        run: cmake --build /tmp/scaffolded/build --target mylib-test mylib-doxygen --parallel 2
+
   test-doxygen-warnings:
     name: Verify the Doxygen Warning Count
     runs-on: ubuntu-latest
