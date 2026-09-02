@@ -12,7 +12,6 @@ include(FetchContent)
 ## cmake_parse_arguments left in its caller's scope, and answers DOXYGEN_COLOR_SAT the same way.
 ##======================================================================================================================
 macro(copa_doxygen_assets)
-  set(DOXYGEN_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/copa-doxygen")
   ## One triplet, two consumers that had drifted apart: doxygen tints the widgets it generates from HTML_COLORSTYLE_*,
   ## and doxygen-awesome reads its own hsl() variables from a stylesheet. Writing both here is what keeps them the
   ## same colour - raberu's documentation had a red stylesheet over cyan doxygen widgets.
@@ -142,6 +141,23 @@ function(copa_setup_doxygen)
       CONTENT "const GODBOLT_LIBRARIES = \"${GODBOLT_LIBRARIES}\"\n\
 const GODBOLT_COMPILER  = \"${OPT_GODBOLT_COMPILER}\"\n\
 const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
+
+    ## Where copacabana writes what it makes, outside what doxygen publishes.
+    set(DOXYGEN_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/copa-doxygen")
+
+    ## doxygen expands $(VAR) in a Doxyfile, never in a header, so the header is configured rather than read.
+    set(COPA_PROJECT_URL "${OPT_URL}")
+
+    ## Anything a project wants in the <head> and copacabana cannot work out: the Open Graph and Twitter tags a link
+    ## to these pages unfurls into are prose about the project and absolute URLs to where it is published, so they
+    ## are written by the project and dropped beside its Doxyfile. Without the file the head is what it has always
+    ## been, rather than a set of empty tags.
+    set(COPA_EXTRA_HEAD "")
+    if(EXISTS "${OPT_SOURCE}/head.html")
+      file(READ "${OPT_SOURCE}/head.html" COPA_EXTRA_HEAD)
+    endif()
+    configure_file("${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/base.html.in" "${DOXYGEN_GENERATED}/base.html"
+                   @ONLY)
 
     copa_doxygen_assets()
 

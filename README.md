@@ -149,6 +149,31 @@ Adds the Doxygen target, wired to doxygen-awesome-css and to the styling assets 
 carries. `TARGET` defaults to `<project>-doxygen`, which is the name the shared documentation
 workflow expects — leave it alone unless you have a reason. `SOURCE` says what to document.
 
+`URL` is the repository the GitHub corner links to, `GODBOLT_LIBRARIES`, `GODBOLT_COMPILER` and
+`GODBOLT_OPTIONS` say what an `@godbolt` example is sent to Compiler Explorer with, and the four
+`COLOR_*` are the hue, saturation, lightness and gamma the whole palette is derived from — three
+numbers rather than a stylesheet, so the light and dark shades cannot drift apart.
+
+A `head.html` beside the Doxyfile is copied verbatim into the generated `<head>`, and nothing is
+emitted without it. It is where the Open Graph and Twitter tags go: what a link to the pages
+unfurls into is prose about the project and absolute URLs to where it is published, neither of
+which can be worked out from here. KUMI's is the model to copy:
+
+```html
+<meta name="description" content="Efficient C++20 tuple-like classes and algorithms" />
+<link rel="canonical" href="https://jfalcou.github.io/kumi/" />
+<meta property="og:title" content="KUMI - The C++20 Compact Tuple Tools" />
+<meta property="og:description" content="A fast-to-compile C++20 tuple-like class." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://jfalcou.github.io/kumi/" />
+<meta property="og:image" content="https://jfalcou.github.io/kumi/card.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://jfalcou.github.io/kumi/card.png" />
+```
+
+The image has to be listed in `HTML_EXTRA_FILES` to be published beside the pages, and both it and
+the URLs have to be absolute: the sites that read these tags fetch them from elsewhere.
+
 ### `copa_setup_standalone`
 
 ```cmake
