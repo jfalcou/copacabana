@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "cmakeMinimumRequired": { "major": 3, "minor": 22, "patch": 0 },
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
   "vendor": {
     "copyright": "SAMPLE - @brief@: SAMPLE Project Contributors",
     "license": "BSL-1.0",
