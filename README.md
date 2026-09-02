@@ -1,8 +1,11 @@
 # Copacabana
 
-Recurring CMake and CI plumbing for C++ projects — install rules and package config, Doxygen,
-unit-test generation, sanitizers, coverage, single-header packaging — so you write it once and
-never again.
+Recurring CMake and CI plumbing for C++ projects, written once so you never write it again:
+
+- install rules and the package config `find_package` needs
+- unit-test generation, sanitizers, coverage
+- a styled Doxygen setup
+- single-header packaging, `.deb`, `.rpm` and `.tar.gz`
 
 Copacabana gives you two independent halves:
 
@@ -15,8 +18,8 @@ none. The CI half assumes your project builds through CMake presets, and nothing
 
 **What it assumes about your project.** Two functions carry a shape: `copa_setup_install` creates an
 `INTERFACE` target and expects your headers under `<source>/include`, and `copa_setup_standalone` only
-makes sense for a library that can be flattened into one header. Everything else — the test generator, sanitizers,
-coverage, Doxygen, pre-commit, CPack — is indifferent to how your project is built.
+makes sense for a library that can be flattened into one header. Everything else is indifferent to how
+your project is built.
 
 ## Getting it
 
@@ -32,7 +35,7 @@ include the same file. One `include` makes every function available, and an in-s
 outright.
 
 Pin a tag rather than tracking `main`, which also carries Copacabana's own CI and example. A consumer
-carries **two** pins — the `GIT_TAG` here and the SHA in its `uses:` lines — and only the second is
+carries **two** pins (the `GIT_TAG` here and the SHA in its `uses:` lines) and only the second is
 moved by Dependabot. Change them together.
 
 ## A minimal consumer
@@ -80,9 +83,9 @@ directory here is the same thing, kept building by Copacabana's own CI.
 
 The [wiki](https://github.com/jfalcou/copacabana/wiki) has the rest:
 
-- [CMake Functions](https://github.com/jfalcou/copacabana/wiki/CMake-Functions) — every `copa_*`, what it takes and what it writes
-- [Reusable Workflows](https://github.com/jfalcou/copacabana/wiki/Reusable-Workflows) — the workflows a consumer calls by `uses:`
-- [Composite Actions](https://github.com/jfalcou/copacabana/wiki/Composite-Actions) — `config` and `test`, for the matrices a project keeps
-- [Call Ordering](https://github.com/jfalcou/copacabana/wiki/Call-Ordering) — the three orders that are load-bearing
-- [Starting A Project](https://github.com/jfalcou/copacabana/wiki/Starting-A-Project) — the scaffolder
-- [Return Of Experiments](https://github.com/jfalcou/copacabana/wiki/Return-Of-Experiments) — what six libraries adopting this measured
+- [CMake Functions](https://github.com/jfalcou/copacabana/wiki/CMake-Functions): the `copa_*` functions, one reference page per family
+- [Reusable Workflows](https://github.com/jfalcou/copacabana/wiki/Reusable-Workflows): the workflows a consumer calls by `uses:`
+- [Composite Actions](https://github.com/jfalcou/copacabana/wiki/Composite-Actions): `config` and `test`, for the matrices a project keeps
+- [Project Anatomy](https://github.com/jfalcou/copacabana/wiki/Project-Anatomy): the targets, the install tree and the packages a project ends up with
+- [Starting A Project](https://github.com/jfalcou/copacabana/wiki/Starting-A-Project): the scaffolder
+- [Return Of Experiments](https://github.com/jfalcou/copacabana/wiki/Return-Of-Experiments): what six libraries adopting this measured
