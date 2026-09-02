@@ -9,8 +9,10 @@
 ##======================================================================================================================
 function(copa_project_version)
   set(options QUIET)
-  set(oneValueArgs MAJOR MINOR PATCH)
+  set(oneValueArgs MAJOR MINOR PATCH REPOSITORY)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "" ${ARGN})
+
+  copa_check_arguments()
 
   if(NOT DEFINED OPT_MAJOR)
     set(OPT_MAJOR 0)
@@ -37,5 +39,10 @@ function(copa_project_version)
   set(PROJECT_VERSION_MINOR ${OPT_MINOR} PARENT_SCOPE)
   set(PROJECT_VERSION_PATCH ${OPT_PATCH} PARENT_SCOPE)
   set(PROJECT_VERSION "${VERSION}" PARENT_SCOPE)
+
+  ## Where the project lives, which nothing here can work out: copacabana knows the project's name and not who owns
+  ## it. copa_setup_doxygen reads it as the URL its GitHub corner points at, and draws no corner without it rather
+  ## than inventing one.
+  set(COPA_PROJECT_REPOSITORY "${OPT_REPOSITORY}" PARENT_SCOPE)
 
 endfunction()
