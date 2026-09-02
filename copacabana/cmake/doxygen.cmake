@@ -41,7 +41,7 @@ endmacro()
 macro(copa_doxygen_assets)
   ## One triplet, two consumers that had drifted apart: doxygen tints the widgets it generates from HTML_COLORSTYLE_*,
   ## and doxygen-awesome reads its own hsl() variables from a stylesheet. Writing both here is what keeps them the
-  ## same colour - raberu's documentation had a red stylesheet over cyan doxygen widgets.
+  ## same colour: written by hand in two places they drift, and the stylesheet wins where the reader looks.
   ##
   ## The saturations are not the same number: doxygen's runs 0..255 where css writes a percentage.
   math(EXPR DOXYGEN_COLOR_SAT "(${OPT_COLOR_SATURATION} * 255 + 50) / 100")
@@ -69,7 +69,7 @@ endmacro()
 ## a project that never mentions colour gets the documentation doxygen would have given it.
 ##======================================================================================================================
 macro(copa_doxygen_defaults)
-  ## The fleet spells PROJECT_NAME both ways - TTS and KUMI, spy and kyosu - so the Doxyfile cannot derive a file name
+  ## PROJECT_NAME is spelled either way from one project to the next, so the Doxyfile cannot derive a file name
   ## or a macro name from it directly. Both spellings go out instead.
   string(TOLOWER ${PROJECT_NAME} PROJECT_LOWER)
   string(TOUPPER ${PROJECT_NAME} PROJECT_UPPER)
@@ -158,9 +158,9 @@ function(copa_setup_doxygen)
     FetchContent_MakeAvailable(doxygen-awesome-css)
     FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
 
-    ## Compiler Explorer loads the libraries in the order given, and a snippet needs every one it includes: kyosu's
-    ## examples do not build there without eve beside them. The shared header reads this rather than naming them, so
-    ## one header serves every project.
+    ## Compiler Explorer loads the libraries in the order given, and a snippet needs every one it includes: a project
+    ## built on another does not compile there without it beside. The shared header reads this rather than naming
+    ## them, so one header serves every project.
     string(JOIN ":" GODBOLT_LIBRARIES ${OPT_GODBOLT_LIBRARIES})
     file(
       GENERATE
@@ -206,8 +206,8 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
       VERBATIM)
 
     ## Reading a tagfile also hands doxygen every symbol the other project documents, which then fills this one's
-    ## search box - KYOSU measured 3308 eve:: entries against 2 of its own. Doxygen has no setting for it, so the
-    ## generated index is trimmed once the pages are written.
+    ## search box, where most of the results then lead somewhere else. Doxygen has no setting for it, so the generated
+    ## index is trimmed once the pages are written.
     if(OPT_TAGFILES)
       add_custom_command(
         TARGET ${OPT_TARGET}

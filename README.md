@@ -161,24 +161,24 @@ generated index is trimmed afterwards. A URL that does not answer warns and leav
 rather than failing the configure.
 
 ```cmake
-copa_setup_doxygen(DESTINATION "${PROJECT_BINARY_DIR}/doc" TAGFILES eve=https://jfalcou.github.io/eve)
+copa_setup_doxygen(DESTINATION "${PROJECT_BINARY_DIR}/doc" TAGFILES other=https://example.org/other)
 ```
 
 A `head.html` beside the Doxyfile is copied verbatim into the generated `<head>`, and nothing is
 emitted without it. It is where the Open Graph and Twitter tags go: what a link to the pages
 unfurls into is prose about the project and absolute URLs to where it is published, neither of
-which can be worked out from here. KUMI's is the model to copy:
+which can be worked out from here:
 
 ```html
-<meta name="description" content="Efficient C++20 tuple-like classes and algorithms" />
-<link rel="canonical" href="https://jfalcou.github.io/kumi/" />
-<meta property="og:title" content="KUMI - The C++20 Compact Tuple Tools" />
-<meta property="og:description" content="A fast-to-compile C++20 tuple-like class." />
+<meta name="description" content="What the library does, in one line" />
+<link rel="canonical" href="https://example.org/mylib/" />
+<meta property="og:title" content="MYLIB - What it is" />
+<meta property="og:description" content="What the library does, in one line" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://jfalcou.github.io/kumi/" />
-<meta property="og:image" content="https://jfalcou.github.io/kumi/card.png" />
+<meta property="og:url" content="https://example.org/mylib/" />
+<meta property="og:image" content="https://example.org/mylib/card.png" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="https://jfalcou.github.io/kumi/card.png" />
+<meta name="twitter:image" content="https://example.org/mylib/card.png" />
 ```
 
 The image has to be listed in `HTML_EXTRA_FILES` to be published beside the pages, and both it and

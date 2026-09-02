@@ -9,8 +9,8 @@
 ##     coverage:
 ##       uses: jfalcou/copacabana/.github/workflows/coverage.yml@v4
 ##       with:
-##         project: kumi
-##         build-targets: kumi-test
+##         project: mylib
+##         build-targets: mylib-test
 ##======================================================================================================================
 name: Coverage
 on:

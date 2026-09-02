@@ -13,7 +13,7 @@
 ##     doc:
 ##       uses: jfalcou/copacabana/.github/workflows/documentation.yml@v1
 ##       with:
-##         project: tts
+##         project: mylib
 ##======================================================================================================================
 name: Documentation
 on:

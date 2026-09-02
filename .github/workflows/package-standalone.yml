@@ -10,7 +10,7 @@
 ##     standalone:
 ##       uses: jfalcou/copacabana/.github/workflows/package-standalone.yml@v1
 ##       with:
-##         project: tts
+##         project: mylib
 ##======================================================================================================================
 name: Standalone Generation
 on:

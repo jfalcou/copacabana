@@ -10,7 +10,7 @@
 ##     integration:
 ##       uses: jfalcou/copacabana/.github/workflows/integration.yml@v1
 ##       with:
-##         project: tts
+##         project: mylib
 ##======================================================================================================================
 name: Integration
 on:
