@@ -45,9 +45,11 @@ PROJECT_NUMBER         = v$(DOXYGEN_PROJECT_VERSION)
 OUTPUT_DIRECTORY       = $(DOXYGEN_OUPUT)
 HTML_OUTPUT            = ./
 
-## Derived from the project's name rather than written out, which is how polyfloat came to define
-## KYOSU_DOXYGEN_INVOKED. The tagfile is what lets another project link into this one's pages.
+## Derived from the project's name rather than written out: a Doxyfile copied from elsewhere otherwise keeps the
+## guard of the project it came from, and documents nothing. The tagfile is what lets another project link here.
 GENERATE_TAGFILE       = $(DOXYGEN_OUPUT)/$(DOXYGEN_PROJECT_LOWER).tag
+## Downloaded by copa_setup_doxygen from what TAGFILES names, empty when it names nothing.
+TAGFILES               = $(DOXYGEN_TAGS)
 PREDEFINED             = $(DOXYGEN_PROJECT_UPPER)_DOXYGEN_INVOKED
 INPUT_FILTER           = "python3 $(DOXYGEN_ASSETS)/filter.py --prefix $(DOXYGEN_PROJECT_LOWER)"
 STRIP_FROM_PATH        = $(DOXYGEN_STRIP)/src $(DOXYGEN_STRIP)/include

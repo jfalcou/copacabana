@@ -16,16 +16,16 @@ WORKFLOW = ".github/workflows/documentation.yml"
 # What doxygen actually writes, and whether the job has to count it. The first shape names a file and a line;
 # the second is what it says about the configuration itself, with nothing in front of it.
 LINES = [
-    (True,  "/src/kumi/tuple.hpp:42: warning: Found unknown command '@tab_begin'"),
-    (True,  "/src/spy/os.hpp:150: warning: Illegal command '@jmgorius' found as part of a <a>..</a> block"),
-    (True,  "/src/eve/wide.hpp:7: error: Unexpected end of comment"),
+    (True,  "/src/lib/thing.hpp:42: warning: Found unknown command '@tab_begin'"),
+    (True,  "/src/lib/other.hpp:150: warning: Illegal command '@someone' found as part of a <a>..</a> block"),
+    (True,  "/src/lib/third.hpp:7: error: Unexpected end of comment"),
     (True,  "warning: ignoring unsupported tag 'COPY_CLIPBOARD' at line 35, file doc/Doxyfile"),
     (True,  "warning: source '../nowhere' is not a readable file or directory... skipping."),
     (True,  "error: could not copy file build/doc/color.css to build/doc/.//color.css"),
     # Doxygen interleaves its progress output, so a message can arrive glued to the line before it.
-    (True,  "Preprocessing /src/kyosu/error: could not copy file a to b"),
-    (False, "Parsing file /src/kumi/tuple.hpp..."),
-    (False, "Generating docs for compound kumi::tuple..."),
+    (True,  "Preprocessing /src/lib/error: could not copy file a to b"),
+    (False, "Parsing file /src/lib/thing.hpp..."),
+    (False, "Generating docs for compound lib::thing..."),
     (False, "Searching for documented variables..."),
     # A page may legitimately talk about warnings and errors without doxygen having emitted one.
     (False, "  * `is_error`: reports whether the operation failed"),

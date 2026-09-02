@@ -7,6 +7,33 @@
 include(FetchContent)
 
 ##======================================================================================================================
+## Downloads what TAGFILES names and works out the paths the Doxyfile reads them from.
+##======================================================================================================================
+macro(copa_doxygen_tagfiles)
+  ## Doxygen never fetches anything itself: a tagfile has to be on disk before the target runs, and the Doxyfile
+  ## has to name a path. Both are worked out here from <name>=<url>, and reach the Doxyfile as DOXYGEN_TAGS.
+  set(DOXYGEN_TAGS "")
+  foreach(entry IN LISTS OPT_TAGFILES)
+    if(NOT entry MATCHES "^([^=]+)=(.+)$")
+      message(FATAL_ERROR "[${PROJECT_NAME}] - TAGFILES wants <name>=<url>, got '${entry}'")
+    endif()
+    set(TAG_NAME "${CMAKE_MATCH_1}")
+    set(TAG_SITE "${CMAKE_MATCH_2}")
+    string(REGEX REPLACE "/$" "" TAG_SITE "${TAG_SITE}")
+    set(TAG_FILE "${DOXYGEN_GENERATED}/${TAG_NAME}.tag")
+
+    file(DOWNLOAD "${TAG_SITE}/${TAG_NAME}.tag" "${TAG_FILE}" STATUS TAG_STATUS)
+    list(GET TAG_STATUS 0 TAG_CODE)
+    if(NOT TAG_CODE EQUAL 0)
+      message(WARNING "[${PROJECT_NAME}] - ${TAG_NAME}.tag could not be fetched (${TAG_STATUS}), "
+                      "the ${TAG_NAME}:: links will be dead")
+    endif()
+
+    string(APPEND DOXYGEN_TAGS " ${TAG_FILE}=${TAG_SITE}")
+  endforeach()
+  string(STRIP "${DOXYGEN_TAGS}" DOXYGEN_TAGS)
+endmacro()
+
 ##======================================================================================================================
 ## The two files copa_setup_doxygen generates into the output, from what its caller declared. Reads the OPT_ variables
 ## cmake_parse_arguments left in its caller's scope, and answers DOXYGEN_COLOR_SAT the same way.
@@ -14,7 +41,7 @@ include(FetchContent)
 macro(copa_doxygen_assets)
   ## One triplet, two consumers that had drifted apart: doxygen tints the widgets it generates from HTML_COLORSTYLE_*,
   ## and doxygen-awesome reads its own hsl() variables from a stylesheet. Writing both here is what keeps them the
-  ## same colour - raberu's documentation had a red stylesheet over cyan doxygen widgets.
+  ## same colour: written by hand in two places they drift, and the stylesheet wins where the reader looks.
   ##
   ## The saturations are not the same number: doxygen's runs 0..255 where css writes a percentage.
   math(EXPR DOXYGEN_COLOR_SAT "(${OPT_COLOR_SATURATION} * 255 + 50) / 100")
@@ -42,7 +69,7 @@ endmacro()
 ## a project that never mentions colour gets the documentation doxygen would have given it.
 ##======================================================================================================================
 macro(copa_doxygen_defaults)
-  ## The fleet spells PROJECT_NAME both ways - TTS and KUMI, spy and kyosu - so the Doxyfile cannot derive a file name
+  ## PROJECT_NAME is spelled either way from one project to the next, so the Doxyfile cannot derive a file name
   ## or a macro name from it directly. Both spellings go out instead.
   string(TOLOWER ${PROJECT_NAME} PROJECT_LOWER)
   string(TOUPPER ${PROJECT_NAME} PROJECT_UPPER)
@@ -107,7 +134,7 @@ function(copa_setup_doxygen)
       COLOR_SATURATION
       COLOR_LIGHTNESS
       COLOR_GAMMA)
-  set(multiValueArgs GODBOLT_LIBRARIES)
+  set(multiValueArgs GODBOLT_LIBRARIES TAGFILES)
   cmake_parse_arguments(OPT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(OPT_QUIET)
@@ -131,9 +158,9 @@ function(copa_setup_doxygen)
     FetchContent_MakeAvailable(doxygen-awesome-css)
     FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
 
-    ## Compiler Explorer loads the libraries in the order given, and a snippet needs every one it includes: kyosu's
-    ## examples do not build there without eve beside them. The shared header reads this rather than naming them, so
-    ## one header serves every project.
+    ## Compiler Explorer loads the libraries in the order given, and a snippet needs every one it includes: a project
+    ## built on another does not compile there without it beside. The shared header reads this rather than naming
+    ## them, so one header serves every project.
     string(JOIN ":" GODBOLT_LIBRARIES ${OPT_GODBOLT_LIBRARIES})
     file(
       GENERATE
@@ -144,6 +171,8 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
 
     ## Where copacabana writes what it makes, outside what doxygen publishes.
     set(DOXYGEN_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/copa-doxygen")
+
+    copa_doxygen_tagfiles()
 
     ## doxygen expands $(VAR) in a Doxyfile, never in a header, so the header is configured rather than read.
     set(COPA_PROJECT_URL "${OPT_URL}")
@@ -170,11 +199,24 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
         DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset AWESOME_ASSETS=${AWESOME_CSS_DIR}
         DOXYGEN_PROJECT_LOWER=${PROJECT_LOWER} DOXYGEN_PROJECT_UPPER=${PROJECT_UPPER} DOXYGEN_PROJECT_URL=${OPT_URL}
         DOXYGEN_COLOR_HUE=${OPT_COLOR_HUE} DOXYGEN_COLOR_SAT=${DOXYGEN_COLOR_SAT} DOXYGEN_COLOR_GAMMA=${OPT_COLOR_GAMMA}
-        DOXYGEN_STRIP=${PROJECT_SOURCE_DIR} DOXYGEN_GENERATED=${DOXYGEN_GENERATED} ${DOXYGEN_EXECUTABLE}
-        ${DOXYGEN_CONFIG}
+        DOXYGEN_STRIP=${PROJECT_SOURCE_DIR} DOXYGEN_GENERATED=${DOXYGEN_GENERATED} "DOXYGEN_TAGS=${DOXYGEN_TAGS}"
+        ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG}
       WORKING_DIRECTORY ${OPT_SOURCE}
       COMMENT "[${PROJECT_NAME}] - Generating API documentation with Doxygen"
       VERBATIM)
+
+    ## Reading a tagfile also hands doxygen every symbol the other project documents, which then fills this one's
+    ## search box, where most of the results then lead somewhere else. Doxygen has no setting for it, so the generated
+    ## index is trimmed once the pages are written.
+    if(OPT_TAGFILES)
+      add_custom_command(
+        TARGET ${OPT_TARGET}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E env python3
+                "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/strip_external_search.py" "${OPT_DESTINATION}/search"
+        COMMENT "[${PROJECT_NAME}] - Dropping the external symbols from the search index"
+        VERBATIM)
+    endif()
 
     set(PROJECT_DOXYGEN_SOURCE_DIR ${OPT_SOURCE} PARENT_SCOPE)
     set(PROJECT_DOXYGEN_OUTPUT_DIR ${OPT_DESTINATION} PARENT_SCOPE)

@@ -42,7 +42,7 @@ function fragmentSource(fragment) {
 }
 
 // btoa() only accepts Latin-1, so the UTF-8 bytes have to be handed to it one by one: a source
-// using a character like eve::π would otherwise throw InvalidCharacterError and the Godbolt
+// using a character like lib::π would otherwise throw InvalidCharacterError and the Godbolt
 // button would silently do nothing.
 function base64utf8(str) {
     let binary = "";

@@ -14,31 +14,31 @@ def process_text(text, prefix):
 
   Test Cases:
   # Basic replacement
-    >>> process_text("_::simple_type", prefix="kumi")
-    'kumi_implementation_defined'
+    >>> process_text("_::simple_type", prefix="lib")
+    'lib_implementation_defined'
 
     >>> # Replacement with explicit namespace
-    >>> process_text("kumi::_::simple_type", prefix="kumi")
-    'kumi_implementation_defined'
+    >>> process_text("lib::_::simple_type", prefix="lib")
+    'lib_implementation_defined'
 
     >>> # Handling const and namespaces
-    >>> process_text("const kumi::_::simple_type", prefix="kumi")
-    'const kumi_implementation_defined'
+    >>> process_text("const lib::_::simple_type", prefix="lib")
+    'const lib_implementation_defined'
 
     >>> # Handling nested namespaces
-    >>> process_text("outer::inner::_::type", prefix="kumi")
-    'kumi_implementation_defined'
+    >>> process_text("outer::inner::_::type", prefix="lib")
+    'lib_implementation_defined'
 
     >>> # Handling prefix operators
-    >>> process_text("!_::value_of<X>", prefix="kumi")
-    '!kumi_implementation_defined'
+    >>> process_text("!_::value_of<X>", prefix="lib")
+    '!lib_implementation_defined'
 
     >>> # Handling complex templates
     >>> process_text("_::some_code<T, U, 4 >", prefix="std")
     'std_implementation_defined'
   """
   # The regex now captures any number of 'namespace::' sequences before _::
-  # ([a-zA-Z0-9_]+::)* matches 'kumi::', 'a:🅱️:', or nothing.
+  # ([a-zA-Z0-9_]+::)* matches 'lib::', 'a:🅱️:', or nothing.
   pattern = re.compile(r'([a-zA-Z0-9_]+::)*_::[a-zA-Z0-9_]+')
   replacement_token = f"{prefix}_implementation_defined"
   offset = 0
@@ -77,7 +77,7 @@ def main():
   parser = argparse.ArgumentParser(description="Filter C++ implementation details for Doxygen.")
   parser.add_argument("file", nargs="?", help="Input file to process")
   parser.add_argument("--test", action="store_true", help="Run doctests")
-  parser.add_argument("-p", "--prefix", default="kumi", help="Prefix for the replacement string")
+  parser.add_argument("-p", "--prefix", required=True, help="Prefix for the replacement string")
 
   args = parser.parse_args()
 

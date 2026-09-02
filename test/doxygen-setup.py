@@ -69,7 +69,7 @@ def main(out):
     expect("no detail namespace reaches a page", not leaks, ", ".join(leaks))
 
     # doxygen tints the widgets it generates, doxygen-awesome reads its own hsl() variables, and the two used to be
-    # written by hand in two files: raberu had a red stylesheet over cyan doxygen widgets, spy green over purple.
+    # written by hand in two files they drift, and the stylesheet is what the reader sees.
     css = (out / "color.css").read_text(encoding="utf-8") if (out / "color.css").is_file() else ""
     declared = re.search(r"hsl\(\s*(\d+)", css)
     expect("color.css is generated and names a hue", declared is not None)

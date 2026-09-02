@@ -9,7 +9,7 @@
 ##     with:
 ##       preset: gcc
 ##       config: Release
-##       targets: kumi-test    # omit to build the preset default target
+##       targets: mylib-test   # omit to build the preset default target
 ##
 ##======================================================================================================================
 name: 'Configure & Build'
