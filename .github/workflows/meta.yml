@@ -94,6 +94,37 @@ jobs:
       - name: Build what it declares
         run: cmake --build /tmp/scaffolded/build --target mylib-test mylib-doxygen --parallel 2
 
+      ## What the caller leaves out has to leave with it. Asking for neither the standalone nor a Windows preset is
+      ## what turns a job into a name nothing declares, and a workflow into a call to a file that was not written.
+      - name: Scaffold what asks for less, and read what it wrote
+        run: |
+          python3 tools/new-project.py /tmp/narrow --name narrow --brief "A narrower library" \
+                  --remote https://github.com/someone/narrow --presets gcc,clang --no-standalone
+          python3 test/scaffolded-workflows.py /tmp/narrow
+          test ! -f /tmp/narrow/.github/workflows/windows.yml
+
+      - name: Check the hooks a scaffolded project ships pass on it
+        run: |
+          pip install --quiet pre-commit
+          git -C /tmp/narrow init --quiet .
+          git -C /tmp/narrow add --all
+          git -C /tmp/narrow -c user.email=ci@example.org -c user.name=CI commit --quiet -m init
+          pre-commit run --all-files
+        working-directory: /tmp/narrow
+
+  test-template-pin:
+    name: Verify the Template's Pins
+    runs-on: ubuntu-latest
+    steps:
+      ## The tags are what the pins are checked against, so the whole history is needed rather than one commit.
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check every pin names the commit its tag points at
+        run: python3 test/template-pin.py .
+
   test-doxygen-warnings:
     name: Verify the Doxygen Warning Count
     runs-on: ubuntu-latest

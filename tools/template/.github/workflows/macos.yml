@@ -21,13 +21,13 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Configure CMake and Build
-        uses: jfalcou/copacabana/.github/actions/config@643b9f4cac5bbfa7a6cfe6da385478c5aa3773f8 # v6
+        uses: jfalcou/copacabana/.github/actions/config@468da45ac73a026a4bca4510840ebe635aa66c2c # v6
         with:
           config: ${{ matrix.options }}
           preset: clang-macos
 
       - name: Run Unit Tests
-        uses: jfalcou/copacabana/.github/actions/test@643b9f4cac5bbfa7a6cfe6da385478c5aa3773f8 # v6
+        uses: jfalcou/copacabana/.github/actions/test@468da45ac73a026a4bca4510840ebe635aa66c2c # v6
         with:
           config: ${{ matrix.options }}
           preset: clang-macos

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   integration:
-    uses: jfalcou/copacabana/.github/workflows/integration.yml@643b9f4cac5bbfa7a6cfe6da385478c5aa3773f8 # v6
+    uses: jfalcou/copacabana/.github/workflows/integration.yml@468da45ac73a026a4bca4510840ebe635aa66c2c # v6
     with:
       project: sample
       cxx-compiler: clang++
