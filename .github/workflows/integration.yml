@@ -8,7 +8,7 @@
 ##
 ##   jobs:
 ##     integration:
-##       uses: jfalcou/copacabana/.github/workflows/integration.yml@v1
+##       uses: jfalcou/copacabana/.github/workflows/integration.yml@<sha> # v6
 ##       with:
 ##         project: mylib
 ##======================================================================================================================

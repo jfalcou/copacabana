@@ -7,7 +7,7 @@
 ##
 ##   jobs:
 ##     sanitizers:
-##       uses: jfalcou/copacabana/.github/workflows/sanitizers.yml@v4
+##       uses: jfalcou/copacabana/.github/workflows/sanitizers.yml@<sha> # v6
 ##       with:
 ##         build-targets: unit.exe doc.exe
 ##         test-targets: unit|doc

@@ -11,7 +11,7 @@
 ##
 ##   jobs:
 ##     doc:
-##       uses: jfalcou/copacabana/.github/workflows/documentation.yml@v1
+##       uses: jfalcou/copacabana/.github/workflows/documentation.yml@<sha> # v6
 ##       with:
 ##         project: mylib
 ##======================================================================================================================
