@@ -13,7 +13,7 @@ Copacabana gives you two independent halves:
 - **Reusable GitHub workflows and composite actions**, that you reference from your own
   `.github/workflows/`.
 
-Take either on its own. The CMake half needs nothing but CMake 3.22 and works with any CI, or
+Take either on its own. The CMake half needs nothing but CMake 3.24 and works with any CI, or
 none. The CI half assumes your project builds through CMake presets, and nothing else about it.
 
 **What it assumes about your project.** Two functions carry a shape: `copa_setup_install` creates an
@@ -41,7 +41,7 @@ moved by Dependabot. Change them together.
 ## A minimal consumer
 
 ```cmake
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.24)
 project(mylib LANGUAGES CXX)
 
 include(cmake/dependencies.cmake)      # brings in CPM, then Copacabana
