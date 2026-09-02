@@ -75,6 +75,16 @@ jobs:
       - name: Run Asset Tests
         run: node --test test/*.test.js
 
+  test-doxygen-warnings:
+    name: Verify the Doxygen Warning Count
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Check what the documentation job counts as a warning
+        run: python3 test/doxygen-warnings.py .
+
   test-doxygen-setup:
     name: Verify the Shared Doxygen Setup
     runs-on: ubuntu-latest
