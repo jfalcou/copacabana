@@ -191,9 +191,12 @@ def main(argv: list[str] | None = None) -> int:
     presets = [p.strip() for p in (args.presets or "native").split(",") if p.strip()]
     standalone = True if args.standalone is None else args.standalone
 
-    unknown = [p for p in presets if p not in PRESET_GROUPS]
+    ## A name that is not a group is a preset of its own, and select_presets keeps it: warning about those made the
+    ## script complain while doing the right thing.
+    known = set(PRESET_GROUPS) | {p for group in PRESET_GROUPS.values() for p in group}
+    unknown = [p for p in presets if p not in known]
     if unknown:
-        print(f"[copacabana] - unknown preset group {', '.join(unknown)}", file=sys.stderr)
+        print(f"[copacabana] - unknown preset {', '.join(unknown)}", file=sys.stderr)
 
     path = urlparse(remote).path.strip("/")
     fields = { "project": name
