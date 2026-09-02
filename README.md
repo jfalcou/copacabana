@@ -154,6 +154,16 @@ workflow expects — leave it alone unless you have a reason. `SOURCE` says what
 `COLOR_*` are the hue, saturation, lightness and gamma the whole palette is derived from — three
 numbers rather than a stylesheet, so the light and dark shades cannot drift apart.
 
+`TAGFILES` takes `<name>=<url>` entries and downloads `<url>/<name>.tag` before the target runs,
+which is what makes references into another library resolve — Doxygen fetches nothing itself. It
+also hands Doxygen every symbol that library documents, and those land in the search box, so the
+generated index is trimmed afterwards. A URL that does not answer warns and leaves the links dead
+rather than failing the configure.
+
+```cmake
+copa_setup_doxygen(DESTINATION "${PROJECT_BINARY_DIR}/doc" TAGFILES eve=https://jfalcou.github.io/eve)
+```
+
 A `head.html` beside the Doxyfile is copied verbatim into the generated `<head>`, and nothing is
 emitted without it. It is where the Open Graph and Twitter tags go: what a link to the pages
 unfurls into is prose about the project and absolute URLs to where it is published, neither of
