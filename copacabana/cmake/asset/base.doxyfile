@@ -21,11 +21,17 @@
 HTML_HEADER            = $(DOXYGEN_ASSETS)/base.html
 HTML_FOOTER            = $(DOXYGEN_ASSETS)/footer.html
 HTML_EXTRA_STYLESHEET  = $(AWESOME_ASSETS)/doxygen-awesome.css $(AWESOME_ASSETS)/doxygen-awesome-sidebar-only.css
+HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/custom.css
+## Written by copa_setup_doxygen from the same numbers that tint doxygen's own widgets, and outside the html output
+## so that doxygen is not asked to copy it onto itself.
+HTML_EXTRA_STYLESHEET += $(DOXYGEN_GENERATED)/color.css
 GENERATE_TREEVIEW      = YES
 DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
 HTML_DYNAMIC_MENUS     = YES
 HTML_COLORSTYLE        = LIGHT
+## doxygen draws one of its own on top of the styled one doxygen-awesome adds.
+HTML_COPY_CLIPBOARD    = NO
 HTML_COLORSTYLE_HUE    = $(DOXYGEN_COLOR_HUE)
 HTML_COLORSTYLE_SAT    = $(DOXYGEN_COLOR_SAT)
 HTML_COLORSTYLE_GAMMA  = $(DOXYGEN_COLOR_GAMMA)
@@ -90,6 +96,15 @@ ALIASES               += "callable{1}=[Callable Object\1](https://en.cppreferenc
 ALIASES               += "container{1}=[Container\1](https://en.cppreference.com/w/cpp/named_req/Container)"
 ALIASES               += "iterator{1}=[Input Iterator\1](https://en.cppreference.com/w/cpp/named_req/InputIterator)"
 ALIASES               += "raiterator{1}=[Random Access Iterator\1](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator)"
+
+## The markup doxygen-awesome-tabs.js animates and doxygen-awesome.css styles, both of which the fragment already ships.
+ALIASES               += tab_begin="<div class=\"tabbed\">"
+ALIASES               += tab_end="</div>"
+ALIASES               += tab{1}="- <b class=\"tab-title\">\1</b>"
+
+## Names an example still to be written. @godbolt would ask doxygen for the file and warn once per directive; this
+## keeps the intent on the page and greppable in the source until someone writes it.
+ALIASES               += "godbolt_todo{1}=@attention An example for this function is still to be written, as `\1`."
 
 ## The scripts the shared header loads. A project appends its own after the @INCLUDE line.
 HTML_EXTRA_FILES       = $(DOXYGEN_ASSETS)/godbolt.js
