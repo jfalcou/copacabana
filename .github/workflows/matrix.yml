@@ -1,0 +1,182 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## A platform matrix, shared by every project driving its CI from CMakePresets.json. The matrix stays with the caller,
+## in a file of its own; what surrounds it is written here once.
+##
+##   jobs:
+##     linux:
+##       name: Linux
+##       uses: jfalcou/copacabana/.github/workflows/matrix.yml@<sha> # v7
+##       with:
+##         file: .github/matrices/linux.yml
+##
+## The file is YAML, or JSON, and holds the rows plus what the platform needs:
+##
+##   runs-on: ubuntu-latest                 # default ubuntu-latest
+##   image: v10                             # default tag for the rows naming none; none at all runs on the host
+##   registry: ghcr.io/jfalcou/compilers    # where a tag is looked up
+##   container-options: -u root             # handed to docker, when there is a container
+##   configs: [Debug, Release]              # one job per row and configuration
+##   build-targets: unit.exe                # empty builds the preset default target
+##   test-targets: ^unit.*                  # a ctest -R rule, empty runs everything
+##   memcheck: true                         # valgrind as well, on the rows not saying otherwise
+##   rows:
+##     - { name: "gcc"   , preset: "gcc"   }
+##     - { name: "wasm"  , preset: "wasm"  , wrapper: "emcmake" }
+##     - { name: "icpx"  , preset: "icpx"  , image: "sycl-v1", setup: "/opt/intel/oneapi/setvars.sh", memcheck: false }
+##     - { name: "arm64" , preset: "android-arm64", test: false }
+##
+## A row names its preset and, when it needs them, a name to show, an image tag, a setup script to source, a compiler
+## wrapper to run cmake through, extra configure arguments as args, and test: false when its executables are built
+## for another machine. The job of a row is called "<name> (<config>)", which is the context a ruleset requires.
+##
+## A reusable workflow takes no list as input, which is why the matrix goes through a file: reading it is a job of a
+## few seconds, and the rows keep the shape they always had.
+##======================================================================================================================
+name: Matrix
+on:
+  workflow_call:
+    inputs:
+      file:
+        description: 'The matrix file, relative to the root of the calling repository'
+        type: string
+        required: true
+
+jobs:
+  read:
+    name: Read ${{ inputs.file }}
+    runs-on: ubuntu-latest
+    outputs:
+      rows: ${{ steps.read.outputs.rows }}
+      configs: ${{ steps.read.outputs.configs }}
+      runs-on: ${{ steps.read.outputs.runs-on }}
+      registry: ${{ steps.read.outputs.registry }}
+      image: ${{ steps.read.outputs.image }}
+      container-options: ${{ steps.read.outputs.container-options }}
+      build-targets: ${{ steps.read.outputs.build-targets }}
+      test-targets: ${{ steps.read.outputs.test-targets }}
+      memcheck: ${{ steps.read.outputs.memcheck }}
+    steps:
+      - name: Fetch the matrix file
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: ${{ inputs.file }}
+          sparse-checkout-cone-mode: false
+
+      ## Everything the matrix job needs comes out as a string: the rows and the configurations as JSON, the rest as
+      ## written. A key left out takes its default here, so the file says only what differs.
+      - name: Read it
+        id: read
+        shell: bash
+        env:
+          FILE: ${{ inputs.file }}
+        run: |
+          python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
+          python3 - "$FILE" >> "$GITHUB_OUTPUT" <<'EOF'
+          import json, sys, yaml
+
+          spec = yaml.safe_load(open(sys.argv[1]))
+          rows = spec.get("rows")
+          if not rows:
+            sys.exit(f"{sys.argv[1]} holds no rows")
+          for row in rows:
+            if "preset" not in row:
+              sys.exit(f"{sys.argv[1]}: a row names no preset: {row}")
+
+          print("rows=" + json.dumps(rows))
+          print("configs=" + json.dumps(spec.get("configs", ["Debug", "Release"])))
+          print("runs-on=" + str(spec.get("runs-on", "ubuntu-latest")))
+          print("registry=" + str(spec.get("registry", "ghcr.io/jfalcou/compilers")))
+          print("image=" + str(spec.get("image", "")))
+          print("container-options=" + str(spec.get("container-options", "")))
+          print("build-targets=" + str(spec.get("build-targets", "")))
+          print("test-targets=" + str(spec.get("test-targets", "")))
+          print("memcheck=" + ("true" if spec.get("memcheck", False) else "false"))
+          EOF
+
+  matrix:
+    name: ${{ matrix.compiler.name || matrix.compiler.preset }} (${{ matrix.options }})
+    needs: read
+    runs-on: ${{ needs.read.outputs.runs-on }}
+    ## An empty image is no container at all, which is how the same file serves a macOS or Windows runner.
+    container:
+      image: ${{ (matrix.compiler.image || needs.read.outputs.image) && format('{0}:{1}', needs.read.outputs.registry, matrix.compiler.image || needs.read.outputs.image) || '' }}
+      options: ${{ needs.read.outputs.container-options }}
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: ${{ fromJSON(needs.read.outputs.rows) }}
+        options: ${{ fromJSON(needs.read.outputs.configs) }}
+
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v7
+
+      ## The same steps as the config action, inlined: a reusable workflow resolves a relative uses in the caller's
+      ## tree, and a pinned one would name a release of this repository from inside it.
+      - name: Configure CMake and Build
+        shell: bash
+        env:
+          PRESET: ${{ matrix.compiler.preset }}
+          CONFIG: ${{ matrix.options }}
+          WRAP: ${{ matrix.compiler.wrapper }}
+          SETUP_SCRIPT: ${{ matrix.compiler.setup }}
+          TARGETS: ${{ needs.read.outputs.build-targets }}
+          CMAKE_ARGS: ${{ matrix.compiler.args }}
+        run: |
+          if [ -n "$SETUP_SCRIPT" ]; then
+            if [ ! -f "$SETUP_SCRIPT" ]; then
+              echo "Setup script not found: $SETUP_SCRIPT"
+              exit 1
+            fi
+            source "$SETUP_SCRIPT"
+          fi
+
+          # Unquoted on purpose: the row passes a whole argument list, not a single argument.
+          if [ -n "$WRAP" ]; then
+            "$WRAP" cmake --preset "$PRESET" $CMAKE_ARGS
+          else
+            cmake --preset "$PRESET" $CMAKE_ARGS
+          fi
+
+          args=(--build --preset "$PRESET" --config "$CONFIG")
+          if [ -n "$TARGETS" ]; then
+            args+=(--target $TARGETS)
+          fi
+
+          cmake "${args[@]}" --parallel 2
+
+      ## A row built for another machine, a cross compilation, says test: false and stops here.
+      - name: Run Unit Tests
+        if: matrix.compiler.test != false
+        shell: bash
+        env:
+          PRESET: ${{ matrix.compiler.preset }}
+          CONFIG: ${{ matrix.options }}
+          TARGETS: ${{ needs.read.outputs.test-targets }}
+        run: |
+          args=(--preset "$PRESET" --build-config "$CONFIG")
+          if [ -n "$TARGETS" ]; then
+            args+=(-R "$TARGETS")
+          fi
+
+          ctest "${args[@]}" -j 2 --output-on-failure
+
+      ## MemCheck puts ctest in a mode the presets do not carry, hence the explicit test directory.
+      - name: Run MemCheck
+        if: needs.read.outputs.memcheck == 'true' && matrix.compiler.test != false && matrix.compiler.memcheck != false
+        shell: bash
+        env:
+          PRESET: ${{ matrix.compiler.preset }}
+          CONFIG: ${{ matrix.options }}
+          TARGETS: ${{ needs.read.outputs.test-targets }}
+        run: |
+          args=(--test-dir "build/$PRESET" --preset "$PRESET" --build-config "$CONFIG")
+          if [ -n "$TARGETS" ]; then
+            args+=(-R "$TARGETS")
+          fi
+
+          ctest "${args[@]}" -T MemCheck -j 2 --output-on-failure
