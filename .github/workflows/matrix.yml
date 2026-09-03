@@ -139,6 +139,10 @@ jobs:
             source "$SETUP_SCRIPT"
           fi
 
+          # A row may name the checkout root as $GITHUB_WORKSPACE; the shell does not expand a
+          # variable inside another one, so it is done here, for that one name.
+          CMAKE_ARGS="${CMAKE_ARGS//\$GITHUB_WORKSPACE/$GITHUB_WORKSPACE}"
+
           # Unquoted on purpose: the row passes a whole argument list, not a single argument.
           if [ -n "$WRAP" ]; then
             "$WRAP" cmake --preset "$PRESET" $CMAKE_ARGS
