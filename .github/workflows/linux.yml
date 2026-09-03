@@ -57,3 +57,20 @@ jobs:
           cd test/example
           cmake --preset=dev-coverage -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
           cmake --build --preset=dev-coverage --target example-coverage-report --parallel 2
+
+  # clang only: -fproc-stat-report and -ftime-trace are its flags, gcc has neither.
+  compile-cost:
+    name: Compile Cost
+    runs-on: [ubuntu-latest]
+    container:
+      image: ghcr.io/jfalcou/compilers:v10
+    steps:
+      - name: Fetch current branch
+        uses: actions/checkout@v7
+      - name: Measuring the compile cost, and breaking it down
+        run: |
+          cd test/example
+          cmake --preset=dev-compile-cost -DCMAKE_CXX_COMPILER=clang++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
+          CMAKE_BUILD_PARALLEL_LEVEL=2 cmake --build --preset=dev-compile-cost --target example-compile-cost-report
+          cmake --build --preset=dev-compile-cost --target example-time-trace --parallel 2
+          python3 $GITHUB_WORKSPACE/test/compile-cost.py build/dev-compile-cost .

@@ -51,6 +51,15 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "EXAMPLE_USE_COVERAGE": "ON"
       }
+    },
+    {
+      "name": "dev-compile-cost",
+      "inherits": "base-dev",
+      "displayName": "Build measuring the compile cost of every unit",
+      "cacheVariables": {
+        "EXAMPLE_COMPILE_COST": "ON",
+        "EXAMPLE_TIME_TRACE": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -73,6 +82,10 @@
     {
       "name": "dev-coverage",
       "configurePreset": "dev-coverage"
+    },
+    {
+      "name": "dev-compile-cost",
+      "configurePreset": "dev-compile-cost"
     }
   ],
   "testPresets": [
@@ -95,6 +108,10 @@
     {
       "name": "dev-coverage",
       "configurePreset": "dev-coverage"
+    },
+    {
+      "name": "dev-compile-cost",
+      "configurePreset": "dev-compile-cost"
     }
   ]
 }
