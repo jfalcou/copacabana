@@ -117,6 +117,10 @@ HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-fragment-copy-button.
 HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-paragraph-link.js
 HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-tabs.js
 
+## The compile cost reader, configured by copa_setup_doxygen with the project's name. It reads a CSV a run attaches,
+## and goes nowhere else.
+HTML_EXTRA_FILES      += $(DOXYGEN_GENERATED)/compile-cost.html
+
 ## Settled here rather than left to drift: the fleet had these two both ways round with nobody having chosen.
 EXPAND_ONLY_PREDEF     = YES
 SHOW_FILES             = NO

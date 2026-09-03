@@ -192,6 +192,11 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
     configure_file("${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/base.html.in" "${DOXYGEN_GENERATED}/base.html"
                    @ONLY)
 
+    ## The compile cost reader carries the project's name in its title, and nothing else of the project: the colours
+    ## reach it through color.css once it sits beside the pages.
+    configure_file("${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/compile-cost.html.in"
+                   "${DOXYGEN_GENERATED}/compile-cost.html" @ONLY)
+
     copa_doxygen_assets()
 
     set(DOXYGEN_CONFIG ${OPT_SOURCE}/Doxyfile)

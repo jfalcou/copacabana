@@ -60,6 +60,8 @@ option(EXAMPLE_USE_ASAN "Enable Address & Undefined Behavior Sanitizers" OFF)
 option(EXAMPLE_USE_TSAN "Enable Thread Sanitizer" OFF)
 option(EXAMPLE_USE_MSAN "Enable Memory Sanitizer" OFF)
 option(EXAMPLE_USE_COVERAGE "Enable coverage instrumentation" OFF)
+option(EXAMPLE_COMPILE_COST "Measure what every unit costs to compile" OFF)
+option(EXAMPLE_TIME_TRACE "Break the compile cost down by template" OFF)
 
 add_library(example_test INTERFACE)
 
@@ -118,4 +120,15 @@ if(EXAMPLE_USE_COVERAGE)
     PREFIX example
     FILTER "${PROJECT_SOURCE_DIR}/include/libexample/"
     DEPENDS example-test)
+endif()
+
+##======================================================================================================================
+## Setup Compile Cost - clang only, and after the test targets for the same reason as coverage
+##======================================================================================================================
+if(EXAMPLE_COMPILE_COST)
+  copa_setup_compile_cost(example_test PREFIX example DEPENDS example-test)
+endif()
+
+if(EXAMPLE_TIME_TRACE)
+  copa_setup_time_trace(example_test PREFIX example DEPENDS example-test)
 endif()
