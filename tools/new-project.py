@@ -24,6 +24,7 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -94,13 +95,71 @@ def toolchains_of(presets: str) -> set[str]:
     return set(re.findall(r"toolchain/([A-Za-z0-9._]+\.cmake)", presets))
 
 
+def preset_names(presets: str) -> set[str]:
+    """The presets a document declares, hidden ones aside, since nothing is ever asked for by their name."""
+    document = json.loads(presets)
+    return {p["name"] for p in document.get("configurePresets", []) if not p.get("hidden")}
+
+
+def presets_of(workflow: str) -> set[str]:
+    """The presets a workflow asks to be built with. Quoted or not, both spellings appear in the template."""
+    return set(re.findall(r"""preset:\s*["']?([A-Za-z0-9._-]+)["']?""", workflow))
+
+
+def prune_matrix(workflow: str, alive: set[str]) -> str:
+    """Drop the matrix rows naming a preset the caller left out.
+
+    A workflow keeps its file as long as one of its presets survived, and the rows for the others would each ask to be
+    built with a preset the project does not declare.
+    """
+    kept = [line for line in workflow.split("\n")
+            if not (line.lstrip().startswith("- {") and (named := presets_of(line)) and not (named & alive))]
+    return "\n".join(kept)
+
+
+def prune_jobs(workflow: str, gone: set[str]) -> str:
+    """Drop the jobs calling a workflow that was not written, then the needs entries naming a job that is gone.
+
+    A job removed by a conditional block leaves its name behind in every needs list that mentions it, and a
+    workflow whose jobs depend on one that does not exist is refused before a single job starts.
+    """
+    kept, dropped = [], set()
+
+    for block in re.split(r"\n(?=  [A-Za-z0-9_-]+:\n)", workflow):
+        called = re.search(r"uses:\s*\./\.github/workflows/([A-Za-z0-9._-]+)", block)
+        if called and called.group(1) in gone:
+            name = re.match(r"\n?  ([A-Za-z0-9_-]+):", block)
+            dropped.add(name.group(1) if name else "")
+            continue
+        kept.append(block)
+
+    text = "\n".join(kept)
+    declared = set(re.findall(r"^  ([A-Za-z0-9_-]+):$", text, re.M)) - dropped
+
+    def needs(match: re.Match) -> str:
+        names = [n.strip() for n in match.group(1).split(",")]
+        alive = [n for n in names if n in declared]
+        return f"needs: [{', '.join(alive)}]" if alive else ""
+
+    return re.sub(r"needs:\s*\[([^\]]*)\]", needs, text)
+
+
 def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], presets: list[str], forge: str) -> int:
     if directory.exists() and any(directory.iterdir()):
         print(f"[copacabana] - {directory} exists and is not empty", file=sys.stderr)
         return 1
 
     dropped = [p for name, patterns in FORGE_ONLY.items() if name != forge for p in patterns]
-    kept_toolchains = toolchains_of(select_presets((TEMPLATE / "CMakePresets.json").read_text(encoding="utf-8"), presets))
+    selected = select_presets((TEMPLATE / "CMakePresets.json").read_text(encoding="utf-8"), presets)
+    kept_toolchains = toolchains_of(selected)
+    alive = preset_names(selected)
+
+    # A workflow whose every preset was left out has nothing left to build, so it goes the way of the toolchain
+    # files above, and prune_jobs takes the job that called it out of ci.yml.
+    gone = { workflow.name
+             for workflow in (TEMPLATE / ".github" / "workflows").glob("*.yml")
+             if (named := presets_of(workflow.read_text(encoding="utf-8"))) and not (named & alive)
+           }
     written = 0
 
     for source in sorted(p for p in TEMPLATE.rglob("*") if p.is_file()):
@@ -112,6 +171,9 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
         # A preset the caller left out takes its toolchain file with it, rather than leaving a cross-compile
         # description behind for a target nothing in the project can be built for.
         if "test/toolchain/" in relative.replace("\\", "/") and source.name not in kept_toolchains:
+            continue
+
+        if source.name in gone and ".github/workflows" in relative.replace("\\", "/"):
             continue
 
         target = directory / substitute(relative, fields)
@@ -126,6 +188,10 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
 
         if relative == "CMakePresets.json":
             content = select_presets(substitute(content, fields), presets)
+        elif ".github/workflows" in relative.replace("\\", "/"):
+            content = prune_matrix(substitute(content, fields), alive)
+            if source.name == "ci.yml":
+                content = prune_jobs(content, gone)
         else:
             content = substitute(content, fields)
 
@@ -136,7 +202,25 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
         target.write_text(content + "\n" if content else "", encoding="utf-8")
         written += 1
 
+    reformat(directory)
     return 0 if written else 1
+
+
+def reformat(directory: Path) -> None:
+    """Lay out the CMake that was written the way the hooks the project ships would.
+
+    The name reaches nearly every line, so what fits in the width for one project overflows for the next, and no
+    hand-written template can be right for every name. Done here when cmake-format is on the path, and left for the
+    first `pre-commit run` when it is not, since asking for it to be installed to make a project would be steep.
+    """
+    if not shutil.which("cmake-format"):
+        return
+
+    written = [str(p) for p in directory.rglob("*.cmake")] + [str(p) for p in directory.rglob("CMakeLists.txt")]
+    written = [p for p in written if "CPM.cmake" not in p and "cpm.cmake" not in p]
+
+    if written:
+        subprocess.run(["cmake-format", "-i", *written], check=False, capture_output=True)
 
 
 def forge_of(remote: str) -> str:
