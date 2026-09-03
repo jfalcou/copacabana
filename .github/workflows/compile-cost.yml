@@ -15,8 +15,8 @@
 ##       with:
 ##         project: mylib
 ##
-## A push to main leaves a reference artifact, kept 90 days. A pull request looks up the last successful run of the
-## calling workflow on main, downloads that artifact and reports the delta against it; until the first merge there is
+## A push to main leaves a reference artifact, <project>-compile-cost-reference, kept 90 days. A pull request looks up
+## the last successful run of the calling workflow on main, downloads that artifact and reports the delta against it; until the first merge there is
 ## none, and the report says so. Reading an artifact off another run is outside the contents scope the token defaults
 ## to, hence the permissions above: a called workflow gets no more than its caller grants.
 ##
@@ -88,7 +88,7 @@ jobs:
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
-          name: compile-cost-reference
+          name: ${{ inputs.project }}-compile-cost-reference
           path: reference
           run-id: ${{ steps.reference.outputs.result }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -102,8 +102,8 @@ jobs:
           JOBS: ${{ inputs.jobs }}
         run: |
           baseline=()
-          if [ -f reference/compile-cost.csv ]; then
-            baseline=(-DCOPA_COMPILE_COST_BASELINE="$PWD/reference/compile-cost.csv")
+          if [ -f "reference/${PROJECT}-compile-cost.csv" ]; then
+            baseline=(-DCOPA_COMPILE_COST_BASELINE="$PWD/reference/${PROJECT}-compile-cost.csv")
           fi
 
           cmake --preset "$PRESET" "${baseline[@]}"
@@ -113,8 +113,9 @@ jobs:
         shell: bash
         env:
           PRESET: ${{ inputs.preset }}
+          PROJECT: ${{ inputs.project }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ ! -f reference/compile-cost.csv ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ ! -f "reference/${PROJECT}-compile-cost.csv" ]; then
             echo "> No reference from main was found, so this run has no delta." >> "$GITHUB_STEP_SUMMARY"
           fi
           cat "build/$PRESET/compile-cost/summary.md" >> "$GITHUB_STEP_SUMMARY"
@@ -126,9 +127,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ github.event_name == 'push' && 'compile-cost-reference' || 'compile-cost' }}
+          name: ${{ inputs.project }}-compile-cost${{ github.event_name == 'push' && '-reference' || '' }}
           path: |
-            build/${{ inputs.preset }}/compile-cost/full.md
-            build/${{ inputs.preset }}/compile-cost/compile-cost.csv
+            build/${{ inputs.preset }}/compile-cost/${{ inputs.project }}-compile-cost.md
+            build/${{ inputs.preset }}/compile-cost/${{ inputs.project }}-compile-cost.csv
           if-no-files-found: warn
           retention-days: ${{ github.event_name == 'push' && 90 || 14 }}

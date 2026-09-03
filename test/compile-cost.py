@@ -32,8 +32,10 @@ def main():
 
     units = sorted(p.relative_to(example / "test") for p in (example / "test" / "unit").rglob("*.cpp"))
 
-    csv = cost / "compile-cost.csv"
-    expect("compile-cost.csv is written", csv.is_file())
+    ## Named after the project, so that what a run attaches says whose it is
+    found = sorted(cost.glob("*-compile-cost.csv"))
+    csv = found[0] if found else cost / "example-compile-cost.csv"
+    expect("%s is written" % csv.name, csv.is_file())
     lines = [line for line in csv.read_text().splitlines() if line.strip()] if csv.is_file() else []
 
     ## clang appends, and any build after the measurement adds its lines: the time trace target rebuilds the units
@@ -51,8 +53,8 @@ def main():
         expect("the summary counts the units", "translation units" in text)
         expect("the summary names the project", "EXAMPLE compile cost" in text or "example compile cost" in text.lower())
 
-    full = cost / "full.md"
-    expect("full.md is written", full.is_file())
+    full = cost / "example-compile-cost.md"
+    expect("example-compile-cost.md is written", full.is_file())
     if full.is_file():
         rows = [line for line in full.read_text().splitlines() if line.startswith("| `")]
         expect("the full table has a row per object, %d rows" % len(rows), len(rows) == len(objects))
