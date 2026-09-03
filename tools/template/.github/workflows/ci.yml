@@ -69,14 +69,20 @@ jobs:
   linux-tests:
     name: Linux
     needs: [precommit, standalone-generation, sanitizer-tests]
-    uses: ./.github/workflows/linux.yml
+    uses: jfalcou/copacabana/.github/workflows/matrix.yml@a7646a9ac6623bf0fa0acf2ac91c51a593150591 # main, until the tag that carries it
+    with:
+      file: .github/matrices/linux.yml
 
   macos-tests:
     name: MacOS
     needs: [precommit, standalone-generation, sanitizer-tests]
-    uses: ./.github/workflows/macos.yml
+    uses: jfalcou/copacabana/.github/workflows/matrix.yml@a7646a9ac6623bf0fa0acf2ac91c51a593150591 # main, until the tag that carries it
+    with:
+      file: .github/matrices/macos.yml
 
   windows-tests:
     name: Windows
     needs: [precommit, standalone-generation, sanitizer-tests]
-    uses: ./.github/workflows/windows.yml
+    uses: jfalcou/copacabana/.github/workflows/matrix.yml@a7646a9ac6623bf0fa0acf2ac91c51a593150591 # main, until the tag that carries it
+    with:
+      file: .github/matrices/windows.yml

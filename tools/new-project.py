@@ -121,7 +121,8 @@ def prune_matrix(workflow: str, alive: set[str]) -> str:
 
 
 def prune_jobs(workflow: str, gone: set[str]) -> str:
-    """Drop the jobs calling a workflow that was not written, then the needs entries naming a job that is gone.
+    """Drop the jobs calling a workflow, or reading a matrix, that was not written, then the needs entries naming a
+    job that is gone.
 
     A job removed by a conditional block leaves its name behind in every needs list that mentions it, and a
     workflow whose jobs depend on one that does not exist is refused before a single job starts.
@@ -129,7 +130,7 @@ def prune_jobs(workflow: str, gone: set[str]) -> str:
     kept, dropped = [], set()
 
     for block in re.split(r"\n(?=  [A-Za-z0-9_-]+:\n)", workflow):
-        called = re.search(r"uses:\s*\./\.github/workflows/([A-Za-z0-9._-]+)", block)
+        called = re.search(r"(?:uses:\s*\./\.github/workflows/|file:\s*\.github/matrices/)([A-Za-z0-9._-]+)", block)
         if called and called.group(1) in gone:
             name = re.match(r"\n?  ([A-Za-z0-9_-]+):", block)
             dropped.add(name.group(1) if name else "")
@@ -160,11 +161,12 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
     kept_toolchains = toolchains_of(selected)
     alive = preset_names(selected)
 
-    # A workflow whose every preset was left out has nothing left to build, so it goes the way of the toolchain
-    # files above, and prune_jobs takes the job that called it out of ci.yml.
-    gone = { workflow.name
-             for workflow in (TEMPLATE / ".github" / "workflows").glob("*.yml")
-             if (named := presets_of(workflow.read_text(encoding="utf-8"))) and not (named & alive)
+    # A workflow, or a matrix file, whose every preset was left out has nothing left to build, so it goes the way of
+    # the toolchain files above, and prune_jobs takes the job that called it out of ci.yml.
+    gone = { candidate.name
+             for folder in ("workflows", "matrices")
+             for candidate in (TEMPLATE / ".github" / folder).glob("*.yml")
+             if (named := presets_of(candidate.read_text(encoding="utf-8"))) and not (named & alive)
            }
     written = 0
 
@@ -179,7 +181,7 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
         if "test/toolchain/" in relative.replace("\\", "/") and source.name not in kept_toolchains:
             continue
 
-        if source.name in gone and ".github/workflows" in relative.replace("\\", "/"):
+        if source.name in gone and re.search(r"\.github/(workflows|matrices)", relative.replace("\\", "/")):
             continue
 
         target = directory / substitute(relative, fields)
@@ -194,7 +196,7 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
 
         if relative == "CMakePresets.json":
             content = select_presets(substitute(content, fields), presets)
-        elif ".github/workflows" in relative.replace("\\", "/"):
+        elif re.search(r"\.github/(workflows|matrices)", relative.replace("\\", "/")):
             content = prune_matrix(substitute(content, fields), alive)
             if source.name == "ci.yml":
                 content = prune_jobs(content, gone)
