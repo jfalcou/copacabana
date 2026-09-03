@@ -19,7 +19,8 @@
 ##
 ## Generates <prefix>-compile-cost, which drops the CSV and rebuilds DEPENDS from a clean tree so that every unit is
 ## in it, and <prefix>-compile-cost-report, which turns the CSV into compile-cost/summary.md, written for a job
-## summary, and compile-cost/full.md, which holds every unit. Both land under the build tree.
+## summary, and compile-cost/<prefix>-compile-cost.md, which holds every unit. Both land under the build tree, beside
+## the CSV, compile-cost/<prefix>-compile-cost.csv: what a run attaches carries the project's name.
 ##
 ## The rebuild takes its parallelism from CMAKE_BUILD_PARALLEL_LEVEL, as any cmake --build does. A CI hands the
 ## reference it downloaded through COPA_COMPILE_COST_BASELINE, so a project has nothing to plumb for the delta.
@@ -48,7 +49,7 @@ function(copa_setup_compile_cost target)
   endif()
 
   set(COST_DIR "${PROJECT_BINARY_DIR}/compile-cost")
-  set(COST_CSV "${COST_DIR}/compile-cost.csv")
+  set(COST_CSV "${COST_DIR}/${OPT_PREFIX}-compile-cost.csv")
   file(MAKE_DIRECTORY "${COST_DIR}")
 
   target_compile_options(${target} INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-fproc-stat-report=${COST_CSV}>)
@@ -59,7 +60,7 @@ function(copa_setup_compile_cost target)
   set(REPORT_COMMAND
       ${CMAKE_COMMAND} -E env python3 "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/compile_cost.py" "${COST_CSV}"
       --title "${PROJECT_NAME} compile cost" --strip "$<CONFIG>/" --summary "${COST_DIR}/summary.md" --full
-      "${COST_DIR}/full.md")
+      "${COST_DIR}/${OPT_PREFIX}-compile-cost.md")
 
   if(OPT_BASELINE)
     list(APPEND REPORT_COMMAND --baseline "${OPT_BASELINE}")
