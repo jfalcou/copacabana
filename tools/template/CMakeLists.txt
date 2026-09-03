@@ -78,7 +78,6 @@ copa_setup_standalone(
   FILE sample.hpp
   SOURCE include
   ROOT sample
-  TARGET sample-standalone
   OUTPUT "${PROJECT_BINARY_DIR}")
 
 ##@endif@

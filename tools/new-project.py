@@ -35,6 +35,9 @@ TEMPLATE = Path(__file__).resolve().parent / "template"
 VERBATIM = {"cmake/CPM.cmake"}
 
 ## What a preset group holds, so that a new project ships the handful it will use rather than the fleet's whole matrix.
+## Written only when the flag is on: the publisher of the standalone branch has nothing to publish otherwise.
+FLAG_ONLY = { "standalone": [r"^\.github/workflows/standalone\.yml$"] }
+
 PRESET_GROUPS = { "native": [ "gcc", "clang", "clang-macos", "msvc", "clangcl"
                             , "gcc-sanitize", "gcc-coverage", "clang-sanitize", "clang-coverage"
                             ]
@@ -150,6 +153,9 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
         return 1
 
     dropped = [p for name, patterns in FORGE_ONLY.items() if name != forge for p in patterns]
+    # A file that only makes sense with a flag on goes with the flag, whole: a conditional block would leave an
+    # empty workflow behind, which GitHub refuses as it does a job that needs a name nothing declares.
+    dropped += [p for flag, patterns in FLAG_ONLY.items() if not flags.get(flag, False) for p in patterns]
     selected = select_presets((TEMPLATE / "CMakePresets.json").read_text(encoding="utf-8"), presets)
     kept_toolchains = toolchains_of(selected)
     alive = preset_names(selected)
