@@ -139,12 +139,11 @@ jobs:
             source "$SETUP_SCRIPT"
           fi
 
-          # The row passes a whole argument list, quotes included, so it is expanded as one:
-          # -G "Visual Studio 17 2022" has to reach cmake as a single argument.
+          # Unquoted on purpose: the row passes a whole argument list, not a single argument.
           if [ -n "$WRAP" ]; then
-            eval "\"$WRAP\" cmake --preset \"$PRESET\" $CMAKE_ARGS"
+            "$WRAP" cmake --preset "$PRESET" $CMAKE_ARGS
           else
-            eval "cmake --preset \"$PRESET\" $CMAKE_ARGS"
+            cmake --preset "$PRESET" $CMAKE_ARGS
           fi
 
           args=(--build --preset "$PRESET" --config "$CONFIG")

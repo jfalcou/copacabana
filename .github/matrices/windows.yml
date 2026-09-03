@@ -3,11 +3,12 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-## Visual Studio builds both configurations from one configure, so the pair goes through configs.
+## Visual Studio builds both configurations from one configure, so the pair goes through configs. No
+## generator is named: the presets carry none, so CMake takes the Visual Studio the runner ships.
 directory: test/example
 runs-on: windows-latest
 configs: [Debug, Release]
 build-targets: example-test
 rows:
-  - { name: "msvc"      , preset: "dev-normal", args: "-G \"Visual Studio 17 2022\" -A x64 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
-  - { name: "msvc asan" , preset: "dev-asan"  , args: "-G \"Visual Studio 17 2022\" -A x64 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "msvc"      , preset: "dev-normal", args: "-DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "msvc asan" , preset: "dev-asan"  , args: "-DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
