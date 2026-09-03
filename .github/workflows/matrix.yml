@@ -15,6 +15,7 @@
 ##
 ## The file is YAML, or JSON, and holds the rows plus what the platform needs:
 ##
+##   directory: test/example                # where the presets are, default the repository root
 ##   runs-on: ubuntu-latest                 # default ubuntu-latest
 ##   image: v10                             # default tag for the rows naming none; none at all runs on the host
 ##   registry: ghcr.io/jfalcou/compilers    # where a tag is looked up
@@ -59,6 +60,7 @@ jobs:
       build-targets: ${{ steps.read.outputs.build-targets }}
       test-targets: ${{ steps.read.outputs.test-targets }}
       memcheck: ${{ steps.read.outputs.memcheck }}
+      directory: ${{ steps.read.outputs.directory }}
     steps:
       - name: Fetch the matrix file
         uses: actions/checkout@v7
@@ -95,6 +97,7 @@ jobs:
           print("build-targets=" + str(spec.get("build-targets", "")))
           print("test-targets=" + str(spec.get("test-targets", "")))
           print("memcheck=" + ("true" if spec.get("memcheck", False) else "false"))
+          print("directory=" + str(spec.get("directory", ".")))
           EOF
 
   matrix:
@@ -118,6 +121,7 @@ jobs:
       ## The same steps as the config action, inlined: a reusable workflow resolves a relative uses in the caller's
       ## tree, and a pinned one would name a release of this repository from inside it.
       - name: Configure CMake and Build
+        working-directory: ${{ needs.read.outputs.directory }}
         shell: bash
         env:
           PRESET: ${{ matrix.compiler.preset }}
@@ -135,11 +139,12 @@ jobs:
             source "$SETUP_SCRIPT"
           fi
 
-          # Unquoted on purpose: the row passes a whole argument list, not a single argument.
+          # The row passes a whole argument list, quotes included, so it is expanded as one:
+          # -G "Visual Studio 17 2022" has to reach cmake as a single argument.
           if [ -n "$WRAP" ]; then
-            "$WRAP" cmake --preset "$PRESET" $CMAKE_ARGS
+            eval "\"$WRAP\" cmake --preset \"$PRESET\" $CMAKE_ARGS"
           else
-            cmake --preset "$PRESET" $CMAKE_ARGS
+            eval "cmake --preset \"$PRESET\" $CMAKE_ARGS"
           fi
 
           args=(--build --preset "$PRESET" --config "$CONFIG")
@@ -151,6 +156,7 @@ jobs:
 
       ## A row built for another machine, a cross compilation, says test: false and stops here.
       - name: Run Unit Tests
+        working-directory: ${{ needs.read.outputs.directory }}
         if: matrix.compiler.test != false
         shell: bash
         env:
@@ -167,6 +173,7 @@ jobs:
 
       ## MemCheck puts ctest in a mode the presets do not carry, hence the explicit test directory.
       - name: Run MemCheck
+        working-directory: ${{ needs.read.outputs.directory }}
         if: needs.read.outputs.memcheck == 'true' && matrix.compiler.test != false && matrix.compiler.memcheck != false
         shell: bash
         env:

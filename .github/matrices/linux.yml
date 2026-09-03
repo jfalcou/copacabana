@@ -1,0 +1,26 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## The example is what this repository tests, so the presets sit in its directory and CPM is pointed back at the
+## checkout rather than at a release.
+directory: test/example
+image: v10
+configs: [Debug]
+build-targets: example-test
+rows:
+  - { name: "g++"              , preset: "dev-normal", args: "-DCMAKE_CXX_COMPILER=g++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "g++ tsan"         , preset: "dev-tsan"  , args: "-DCMAKE_CXX_COMPILER=g++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "g++ asan"         , preset: "dev-asan"  , args: "-DCMAKE_CXX_COMPILER=g++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "g++-14"           , preset: "dev-normal", args: "-DCMAKE_CXX_COMPILER=g++-14 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "g++-14 tsan"      , preset: "dev-tsan"  , args: "-DCMAKE_CXX_COMPILER=g++-14 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "g++-14 asan"      , preset: "dev-asan"  , args: "-DCMAKE_CXX_COMPILER=g++-14 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++"          , preset: "dev-normal", args: "-DCMAKE_CXX_COMPILER=clang++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++ asan"     , preset: "dev-asan"  , args: "-DCMAKE_CXX_COMPILER=clang++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++ tsan"     , preset: "dev-tsan"  , args: "-DCMAKE_CXX_COMPILER=clang++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++ msan"     , preset: "dev-msan"  , args: "-DCMAKE_CXX_COMPILER=clang++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE -DCMAKE_CXX_FLAGS=-stdlib=libc++" }
+  - { name: "clang++-20"       , preset: "dev-normal", args: "-DCMAKE_CXX_COMPILER=clang++-20 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++-20 asan"  , preset: "dev-asan"  , args: "-DCMAKE_CXX_COMPILER=clang++-20 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++-20 tsan"  , preset: "dev-tsan"  , args: "-DCMAKE_CXX_COMPILER=clang++-20 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++-20 msan"  , preset: "dev-msan"  , args: "-DCMAKE_CXX_COMPILER=clang++-20 -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE -DCMAKE_CXX_FLAGS=-stdlib=libc++" }
