@@ -30,8 +30,10 @@ function(copa_setup_standalone)
     message(FATAL_ERROR "[${PROJECT_NAME}] - Standalone target setup header: Missing FILE name")
   endif()
 
+  # The name package-standalone.yml builds, and the shape the doxygen and test targets already take.
   if(NOT DEFINED OPT_TARGET)
-    set(OPT_TARGET "standalone")
+    string(TOLOWER "${PROJECT_NAME}" PROJECT_LOWER)
+    set(OPT_TARGET "${PROJECT_LOWER}-standalone")
   endif()
 
   if(NOT OPT_QUIET)

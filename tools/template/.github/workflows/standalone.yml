@@ -1,0 +1,20 @@
+##======================================================================================================================
+##  SAMPLE - @brief@
+##  Copyright : SAMPLE Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Republishes the single header on the standalone branch, which has to exist before the first run.
+name: SAMPLE Standalone
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  standalone:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: jfalcou/copacabana/.github/workflows/package-standalone.yml@468da45ac73a026a4bca4510840ebe635aa66c2c # v6
+    with:
+      project: sample
