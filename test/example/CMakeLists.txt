@@ -56,12 +56,13 @@ copa_setup_cpack(
 ##======================================================================================================================
 # Unit test Configuration
 ##======================================================================================================================
-option(EXAMPLE_USE_ASAN "Enable Address & Undefined Behavior Sanitizers" OFF)
-option(EXAMPLE_USE_TSAN "Enable Thread Sanitizer" OFF)
-option(EXAMPLE_USE_MSAN "Enable Memory Sanitizer" OFF)
-option(EXAMPLE_USE_COVERAGE "Enable coverage instrumentation" OFF)
-option(EXAMPLE_COMPILE_COST "Measure what every unit costs to compile" OFF)
-option(EXAMPLE_TIME_TRACE "Break the compile cost down by template" OFF)
+copa_add_option(EXAMPLE_USE_ASAN "Enable Address & Undefined Behavior Sanitizers" OFF LABEL "ASan and UBSan")
+copa_add_option(EXAMPLE_USE_TSAN "Enable Thread Sanitizer" OFF LABEL "TSan")
+copa_add_option(EXAMPLE_USE_MSAN "Enable Memory Sanitizer" OFF LABEL "MSan")
+copa_add_option(EXAMPLE_USE_COVERAGE "Enable coverage instrumentation" OFF)
+copa_add_option(EXAMPLE_COMPILE_COST "Measure what every unit costs to compile" OFF)
+copa_add_option(EXAMPLE_TIME_TRACE "Break the compile cost down by template" OFF)
+copa_show_options()
 
 add_library(example_test INTERFACE)
 
@@ -104,6 +105,14 @@ copa_setup_install(
 ## What copacabana left behind, checked. Before the subdirectory below, which needs copa_expect to exist.
 ##======================================================================================================================
 include(${CMAKE_CURRENT_LIST_DIR}/../assertions.cmake)
+
+## What copa_add_option remembered, in order, and the label it derived when none was given
+get_property(REMEMBERED GLOBAL PROPERTY COPA_OPTIONS_EXAMPLE)
+copa_expect(
+  "remembered options" "${REMEMBERED}"
+  "^EXAMPLE_USE_ASAN;EXAMPLE_USE_TSAN;EXAMPLE_USE_MSAN;EXAMPLE_USE_COVERAGE;EXAMPLE_COMPILE_COST;EXAMPLE_TIME_TRACE$")
+get_property(DERIVED GLOBAL PROPERTY COPA_OPTION_LABEL_EXAMPLE_COMPILE_COST)
+copa_expect("derived label" "${DERIVED}" "^Compile cost$")
 
 ##======================================================================================================================
 ## Setup Testing
