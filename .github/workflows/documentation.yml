@@ -191,7 +191,7 @@ jobs:
       ## something further up.
       - name: Upload the Doxygen log
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: doxygen-log
           path: |
