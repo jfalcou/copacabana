@@ -17,12 +17,22 @@ import sys
 JOB = re.compile(r"^  ([A-Za-z0-9_-]+):$", re.M)
 NEEDS = re.compile(r"needs:\s*\[([^\]]*)\]")
 CALLS = re.compile(r"uses:\s*\./\.github/workflows/([A-Za-z0-9._-]+)")
+READS = re.compile(r"file:\s*\.github/matrices/([A-Za-z0-9._-]+)")
+ROW = re.compile(r"^\s*- \{.*preset:", re.M)
 
 
 def main(root: str) -> int:
     directory = pathlib.Path(root) / ".github" / "workflows"
+    matrices = pathlib.Path(root) / ".github" / "matrices"
     present = {path.name for path in directory.glob("*.yml")}
+    readable = {path.name for path in matrices.glob("*.yml")}
     broken = 0
+
+    # A matrix file is read by copacabana's matrix.yml, which refuses one with no row to build
+    for matrix in sorted(matrices.glob("*.yml")):
+        if not ROW.search(matrix.read_text(encoding="utf-8")):
+            print(f"{matrix}: holds no row naming a preset")
+            broken += 1
 
     for workflow in sorted(directory.glob("*.yml")):
         text = workflow.read_text(encoding="utf-8")
@@ -39,7 +49,12 @@ def main(root: str) -> int:
                 print(f"{workflow}: calls {called}, which was not written")
                 broken += 1
 
-    print(f"[copacabana] - {len(present)} workflows read, {broken} dangling reference(s)")
+        for read in READS.findall(text):
+            if read not in readable:
+                print(f"{workflow}: reads {read}, which was not written")
+                broken += 1
+
+    print(f"[copacabana] - {len(present)} workflows and {len(readable)} matrices read, {broken} dangling reference(s)")
     return 1 if broken else 0
 
 
