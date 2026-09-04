@@ -15,6 +15,7 @@
 ##
 ## The file is YAML, or JSON, and holds the rows plus what the platform needs:
 ##
+##   directory: test/example                # where the presets are, default the repository root
 ##   runs-on: ubuntu-latest                 # default ubuntu-latest
 ##   image: v10                             # default tag for the rows naming none; none at all runs on the host
 ##   registry: ghcr.io/jfalcou/compilers    # where a tag is looked up
@@ -33,8 +34,7 @@
 ## wrapper to run cmake through, extra configure arguments as args, and test: false when its executables are built
 ## for another machine. The job of a row is called "<name> (<config>)", which is the context a ruleset requires.
 ##
-## A reusable workflow takes no list as input, which is why the matrix goes through a file: reading it is a job of a
-## few seconds, and the rows keep the shape they always had.
+## A reusable workflow takes no list as input, hence the file: reading it is a job of a few seconds.
 ##======================================================================================================================
 name: Matrix
 on:
@@ -59,6 +59,7 @@ jobs:
       build-targets: ${{ steps.read.outputs.build-targets }}
       test-targets: ${{ steps.read.outputs.test-targets }}
       memcheck: ${{ steps.read.outputs.memcheck }}
+      directory: ${{ steps.read.outputs.directory }}
     steps:
       - name: Fetch the matrix file
         uses: actions/checkout@v7
@@ -66,8 +67,7 @@ jobs:
           sparse-checkout: ${{ inputs.file }}
           sparse-checkout-cone-mode: false
 
-      ## Everything the matrix job needs comes out as a string: the rows and the configurations as JSON, the rest as
-      ## written. A key left out takes its default here, so the file says only what differs.
+      ## An output is a string: the rows and the configurations go out as JSON. A key left out takes its default.
       - name: Read it
         id: read
         shell: bash
@@ -95,13 +95,14 @@ jobs:
           print("build-targets=" + str(spec.get("build-targets", "")))
           print("test-targets=" + str(spec.get("test-targets", "")))
           print("memcheck=" + ("true" if spec.get("memcheck", False) else "false"))
+          print("directory=" + str(spec.get("directory", ".")))
           EOF
 
   matrix:
     name: ${{ matrix.compiler.name || matrix.compiler.preset }} (${{ matrix.options }})
     needs: read
     runs-on: ${{ needs.read.outputs.runs-on }}
-    ## An empty image is no container at all, which is how the same file serves a macOS or Windows runner.
+    ## An empty image is no container at all, which a macOS or Windows runner needs.
     container:
       image: ${{ (matrix.compiler.image || needs.read.outputs.image) && format('{0}:{1}', needs.read.outputs.registry, matrix.compiler.image || needs.read.outputs.image) || '' }}
       options: ${{ needs.read.outputs.container-options }}
@@ -115,9 +116,9 @@ jobs:
       - name: Fetch current branch
         uses: actions/checkout@v7
 
-      ## The same steps as the config action, inlined: a reusable workflow resolves a relative uses in the caller's
-      ## tree, and a pinned one would name a release of this repository from inside it.
+      ## These steps stay inlined: a reusable workflow resolves a relative uses in the caller's tree.
       - name: Configure CMake and Build
+        working-directory: ${{ needs.read.outputs.directory }}
         shell: bash
         env:
           PRESET: ${{ matrix.compiler.preset }}
@@ -135,6 +136,11 @@ jobs:
             source "$SETUP_SCRIPT"
           fi
 
+          # A row names the checkout root as $GITHUB_WORKSPACE, expanded here since the shell does not
+          # expand one variable inside another. CMake reads the Windows backslashes as escapes.
+          WORKSPACE="${GITHUB_WORKSPACE//\\//}"
+          CMAKE_ARGS="${CMAKE_ARGS//\$GITHUB_WORKSPACE/$WORKSPACE}"
+
           # Unquoted on purpose: the row passes a whole argument list, not a single argument.
           if [ -n "$WRAP" ]; then
             "$WRAP" cmake --preset "$PRESET" $CMAKE_ARGS
@@ -149,8 +155,8 @@ jobs:
 
           cmake "${args[@]}" --parallel 2
 
-      ## A row built for another machine, a cross compilation, says test: false and stops here.
       - name: Run Unit Tests
+        working-directory: ${{ needs.read.outputs.directory }}
         if: matrix.compiler.test != false
         shell: bash
         env:
@@ -167,6 +173,7 @@ jobs:
 
       ## MemCheck puts ctest in a mode the presets do not carry, hence the explicit test directory.
       - name: Run MemCheck
+        working-directory: ${{ needs.read.outputs.directory }}
         if: needs.read.outputs.memcheck == 'true' && matrix.compiler.test != false && matrix.compiler.memcheck != false
         shell: bash
         env:

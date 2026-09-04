@@ -1,0 +1,13 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Visual Studio builds both configurations from one configure, so the pair goes through configs.
+directory: test/example
+runs-on: windows-latest
+configs: [Debug, Release]
+build-targets: example-test
+rows:
+  - { name: "msvc"      , preset: "dev-normal", args: "-DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "msvc asan" , preset: "dev-asan"  , args: "-DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }

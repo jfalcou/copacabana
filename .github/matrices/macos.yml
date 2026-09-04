@@ -1,0 +1,14 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## No image: the host clang is what this platform tests.
+directory: test/example
+runs-on: macos-latest
+configs: [Debug]
+build-targets: example-test
+rows:
+  - { name: "clang++"      , preset: "dev-normal", args: "-DCMAKE_CXX_COMPILER=clang++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++ asan" , preset: "dev-asan"  , args: "-DCMAKE_CXX_COMPILER=clang++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
+  - { name: "clang++ tsan" , preset: "dev-tsan"  , args: "-DCMAKE_CXX_COMPILER=clang++ -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE" }
