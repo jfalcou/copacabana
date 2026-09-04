@@ -61,7 +61,7 @@
     { "name": "rvv128"          , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/clang.rvv128.cmake"     },
     { "name": "icpx"            , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/dpcpp.x86.cmake"        },
     { "name": "icpx-sycl"       , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/dpcpp.sycl.cmake"       },
-    { "name": "clang-macos"     , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/clang.aarch64.cmake"    },
+    { "name": "clang-macos"     , "inherits": ["unix-base"], "cacheVariables": { "CMAKE_CXX_COMPILER": "clang++" }             },
 
     { "name": "gcc-sanitize"    , "inherits": ["gcc"  , "sanitize"] },
     { "name": "gcc-coverage"    , "inherits": ["gcc"  , "coverage"] },
