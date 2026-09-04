@@ -1,11 +1,13 @@
 # Copacabana
 
-Recurring CMake and CI plumbing for C++ projects, written once so you never write it again:
+The CMake and CI plumbing a C++ project writes every time, written once here:
 
 - install rules and the package config `find_package` needs
 - unit-test generation, sanitizers, coverage
 - a styled Doxygen setup
 - single-header packaging, `.deb`, `.rpm` and `.tar.gz`
+
+The current release is [Version 7 - Garota de Ipanema](https://github.com/jfalcou/copacabana/releases/tag/v7).
 
 Copacabana gives you two independent halves:
 
@@ -16,15 +18,10 @@ Copacabana gives you two independent halves:
 Take either on its own. The CMake half needs nothing but CMake 3.24 and works with any CI, or
 none. The CI half assumes your project builds through CMake presets, and nothing else about it.
 
-**What it assumes about your project.** Two functions carry a shape: `copa_setup_install` creates an
-`INTERFACE` target and expects your headers under `<source>/include`, and `copa_setup_standalone` only
-makes sense for a library that can be flattened into one header. Everything else is indifferent to how
-your project is built.
-
 ## Getting it
 
 ```cmake
-CPMAddPackage(NAME COPACABANA GITHUB_REPOSITORY jfalcou/copacabana GIT_TAG v6)
+CPMAddPackage(NAME COPACABANA GITHUB_REPOSITORY jfalcou/copacabana GIT_TAG v7)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COPACABANA_SOURCE_DIR}/copacabana/cmake)
 include(${COPACABANA_SOURCE_DIR}/copacabana/cmake/copacabana.cmake)
@@ -79,6 +76,9 @@ copa_glob_unit(QUIET PATTERN "unit/*.cpp" INTERFACE mylib_test RELATIVE ${CMAKE_
 The package config is generated for you, so there is nothing else to write. The `test/example/`
 directory here is the same thing, kept building by Copacabana's own CI.
 
+One layout is required, and only by `copa_setup_install`: the headers live under `include/`, which is
+what the generated target exposes to a consumer. The rest of the tree is yours.
+
 ## Documentation
 
 The [wiki](https://github.com/jfalcou/copacabana/wiki) has the rest:
@@ -88,4 +88,4 @@ The [wiki](https://github.com/jfalcou/copacabana/wiki) has the rest:
 - [Composite Actions](https://github.com/jfalcou/copacabana/wiki/Composite-Actions): `config` and `test`, for the matrices a project keeps
 - [Project Anatomy](https://github.com/jfalcou/copacabana/wiki/Project-Anatomy): the targets, the install tree and the packages a project ends up with
 - [Starting A Project](https://github.com/jfalcou/copacabana/wiki/Starting-A-Project): the scaffolder
-- [Return Of Experiments](https://github.com/jfalcou/copacabana/wiki/Return-Of-Experiments): what six libraries adopting this measured
+- [What Adopting It Measured](https://github.com/jfalcou/copacabana/wiki/What-Adopting-It-Measured): what six libraries adopting this measured
