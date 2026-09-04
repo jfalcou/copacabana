@@ -140,8 +140,10 @@ jobs:
           fi
 
           # A row may name the checkout root as $GITHUB_WORKSPACE; the shell does not expand a
-          # variable inside another one, so it is done here, for that one name.
-          CMAKE_ARGS="${CMAKE_ARGS//\$GITHUB_WORKSPACE/$GITHUB_WORKSPACE}"
+          # variable inside another one, so it is done here, for that one name. Windows spells it
+          # with backslashes, which CMake reads as escapes, hence the slashes.
+          WORKSPACE="${GITHUB_WORKSPACE//\\//}"
+          CMAKE_ARGS="${CMAKE_ARGS//\$GITHUB_WORKSPACE/$WORKSPACE}"
 
           # Unquoted on purpose: the row passes a whole argument list, not a single argument.
           if [ -n "$WRAP" ]; then
