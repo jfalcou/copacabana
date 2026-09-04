@@ -34,8 +34,7 @@
 ## wrapper to run cmake through, extra configure arguments as args, and test: false when its executables are built
 ## for another machine. The job of a row is called "<name> (<config>)", which is the context a ruleset requires.
 ##
-## A reusable workflow takes no list as input, which is why the matrix goes through a file: reading it is a job of a
-## few seconds, and the rows keep the shape they always had.
+## A reusable workflow takes no list as input, hence the file: reading it is a job of a few seconds.
 ##======================================================================================================================
 name: Matrix
 on:
@@ -68,8 +67,7 @@ jobs:
           sparse-checkout: ${{ inputs.file }}
           sparse-checkout-cone-mode: false
 
-      ## Everything the matrix job needs comes out as a string: the rows and the configurations as JSON, the rest as
-      ## written. A key left out takes its default here, so the file says only what differs.
+      ## An output is a string: the rows and the configurations go out as JSON. A key left out takes its default.
       - name: Read it
         id: read
         shell: bash
@@ -104,7 +102,7 @@ jobs:
     name: ${{ matrix.compiler.name || matrix.compiler.preset }} (${{ matrix.options }})
     needs: read
     runs-on: ${{ needs.read.outputs.runs-on }}
-    ## An empty image is no container at all, which is how the same file serves a macOS or Windows runner.
+    ## An empty image is no container at all, which a macOS or Windows runner needs.
     container:
       image: ${{ (matrix.compiler.image || needs.read.outputs.image) && format('{0}:{1}', needs.read.outputs.registry, matrix.compiler.image || needs.read.outputs.image) || '' }}
       options: ${{ needs.read.outputs.container-options }}
@@ -118,8 +116,7 @@ jobs:
       - name: Fetch current branch
         uses: actions/checkout@v7
 
-      ## The same steps as the config action, inlined: a reusable workflow resolves a relative uses in the caller's
-      ## tree, and a pinned one would name a release of this repository from inside it.
+      ## These steps stay inlined: a reusable workflow resolves a relative uses in the caller's tree.
       - name: Configure CMake and Build
         working-directory: ${{ needs.read.outputs.directory }}
         shell: bash
@@ -139,9 +136,8 @@ jobs:
             source "$SETUP_SCRIPT"
           fi
 
-          # A row may name the checkout root as $GITHUB_WORKSPACE; the shell does not expand a
-          # variable inside another one, so it is done here, for that one name. Windows spells it
-          # with backslashes, which CMake reads as escapes, hence the slashes.
+          # A row names the checkout root as $GITHUB_WORKSPACE, expanded here since the shell does not
+          # expand one variable inside another. CMake reads the Windows backslashes as escapes.
           WORKSPACE="${GITHUB_WORKSPACE//\\//}"
           CMAKE_ARGS="${CMAKE_ARGS//\$GITHUB_WORKSPACE/$WORKSPACE}"
 
@@ -159,7 +155,6 @@ jobs:
 
           cmake "${args[@]}" --parallel 2
 
-      ## A row built for another machine, a cross compilation, says test: false and stops here.
       - name: Run Unit Tests
         working-directory: ${{ needs.read.outputs.directory }}
         if: matrix.compiler.test != false

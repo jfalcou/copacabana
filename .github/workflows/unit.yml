@@ -36,8 +36,7 @@ jobs:
     with:
       file: .github/matrices/windows.yml
 
-  ## gcc only: the image pairs clang 19 with llvm-cov 20, and llvm-cov reads no notes written by
-  ## another major.
+  ## gcc only: the image pairs clang 19 with llvm-cov 20, which reads no notes of another major.
   coverage:
     name: Coverage
     runs-on: [ubuntu-latest]
@@ -53,7 +52,7 @@ jobs:
           cmake --preset=dev-coverage -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
           cmake --build --preset=dev-coverage --target example-coverage-report --parallel 2
 
-  ## clang only: -fproc-stat-report and -ftime-trace are its flags, gcc has neither.
+  ## clang only: -fproc-stat-report and -ftime-trace are clang flags.
   compile-cost:
     name: Compile Cost
     runs-on: [ubuntu-latest]

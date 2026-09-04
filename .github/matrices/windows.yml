@@ -3,8 +3,7 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-## Visual Studio builds both configurations from one configure, so the pair goes through configs. No
-## generator is named: the presets carry none, so CMake takes the Visual Studio the runner ships.
+## Visual Studio builds both configurations from one configure, so the pair goes through configs.
 directory: test/example
 runs-on: windows-latest
 configs: [Debug, Release]

@@ -3,8 +3,7 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-## The example is what this repository tests, so the presets sit in its directory and CPM is pointed back at the
-## checkout rather than at a release.
+## The presets sit with the example, and CPM reads copacabana from the checkout rather than a release.
 directory: test/example
 image: v10
 configs: [Debug]
