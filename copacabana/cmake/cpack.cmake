@@ -65,6 +65,7 @@ function(copa_setup_cpack)
     message(STATUS "[${PROJECT_NAME}] - Configured CPack for generators: ${CPACK_GENERATOR}")
   endif()
 
-  # Include the native CPack module to finalize generation
-  include(CPack)
+  # By name, CPack resolves onto this very file wherever the filesystem ignores case, this directory being on
+  # CMAKE_MODULE_PATH. Windows and macOS then configured no CPack at all.
+  include("${CMAKE_ROOT}/Modules/CPack.cmake")
 endfunction()
