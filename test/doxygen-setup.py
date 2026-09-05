@@ -12,12 +12,7 @@ import pathlib
 import re
 import sys
 
-failures = []
-
-
-def expect(what, condition, saw=""):
-    if not condition:
-        failures.append(f"{what}{' - saw ' + saw if saw else ''}")
+from checks import expect, report
 
 
 def main(out):
@@ -89,10 +84,7 @@ def main(out):
     # The panel doxygen puts on the right of every page, which this fleet does not want.
     expect("no page outline panel", "PageOutline" not in index and 'id="page-nav"' not in index)
 
-    for f in failures:
-        print(f"  FAIL  {f}")
-    print(f"{len(failures)} failure(s)")
-    return 1 if failures else 0
+    return report("The shared Doxygen setup")
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ import tempfile
 
 SOURCE = "test/example/test/failure/clamp_needs_ordering.cpp"
 
-failures = []
+from checks import expect, report
 
 
 def ctest(build):
@@ -40,40 +40,30 @@ def main(source):
         try:
             # As written, it must pass: the source does not compile, and says what it fails with.
             passed, _ = ctest(build)
-            if not passed:
-                failures.append("the failure test does not pass on the source as written")
+            expect("the source as written passes the failure test", passed)
 
             # Made to compile. The point of the check is that this is a failure, not a success.
             watched.write_text(original.replace("== 0", "!= 0"), encoding="utf-8")
             passed, log = ctest(build)
-            if passed:
-                failures.append("a source that compiles is accepted, and it must not be")
-            elif "written to be rejected" not in log:
-                failures.append("a source that compiles fails for an unclear reason")
+            expect("a source that compiles is turned down", not passed)
+            expect("and turned down for compiling", passed or "written to be rejected" in log)
 
             # Still fails, for the wrong reason. This is the case a bare WILL_FAIL would let through.
             watched.write_text(original.replace("libexample/example.hpp", "libexample/nowhere.hpp"),
                                encoding="utf-8")
             passed, log = ctest(build)
-            if passed:
-                failures.append("a source failing for another reason is accepted, and it must not be")
-            elif "not for what it says" not in log:
-                failures.append("a source failing for another reason fails for an unclear reason")
+            expect("a source failing for another reason is turned down", not passed)
+            expect("and turned down for failing elsewhere", passed or "not for what it says" in log)
 
             # A source naming nothing cannot be checked, and saying so beats passing.
             watched.write_text(re.sub(r"^// build error:.*\n", "", original, flags=re.M), encoding="utf-8")
             passed, log = ctest(build)
-            if passed:
-                failures.append("a source naming no diagnostic is accepted, and it must not be")
-            elif "says nothing it should fail with" not in log:
-                failures.append("a source naming no diagnostic fails for an unclear reason")
+            expect("a source naming no diagnostic is turned down", not passed)
+            expect("and turned down for naming none", passed or "says nothing it should fail with" in log)
         finally:
             watched.write_text(original, encoding="utf-8")
 
-    for f in failures:
-        print(f"  FAIL  {f}")
-    print(f"{len(failures)} failure(s)")
-    return 1 if failures else 0
+    return report("Sources that must not compile")
 
 
 if __name__ == "__main__":

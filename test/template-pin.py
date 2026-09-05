@@ -17,6 +17,8 @@ import re
 import subprocess
 import sys
 
+from checks import expect, report
+
 PIN = re.compile(r"@([0-9a-f]{40})\s*#\s*(v[0-9]+)")
 CALL = re.compile(r"uses:\s*jfalcou/copacabana/(\.github/[A-Za-z0-9._/-]+)@([0-9a-f]{40})")
 
@@ -36,7 +38,7 @@ def exists(sha: str, path: str) -> bool:
 
 def main(root: str = ".") -> int:
     workflows = sorted((pathlib.Path(root) / "tools" / "template" / ".github" / "workflows").glob("*.yml"))
-    wrong = 0
+    print(f"{len(workflows)} template workflows read\n")
 
     for workflow in workflows:
         for line, text in enumerate(workflow.read_text(encoding="utf-8").splitlines(), 1):
@@ -46,21 +48,20 @@ def main(root: str = ".") -> int:
 
             pinned, tag = found.groups()
             actual = resolve(tag)
+            where = f"{workflow.name}:{line}"
 
             if actual is None:
-                print(f"{workflow}:{line}: {tag} is not a tag of this repository")
-                wrong += 1
-            elif actual != pinned:
-                print(f"{workflow}:{line}: pinned at {pinned[:7]}, {tag} is {actual[:7]}")
-                wrong += 1
+                expect(f"{where}: {tag} is a tag of this repository", False)
+            else:
+                expect(f"{where}: the pin names the commit {tag} points at", actual == pinned,
+                       f"{pinned[:7]} rather than {actual[:7]}")
 
             called = CALL.search(text)
-            if called and not exists(called.group(2), called.group(1)):
-                print(f"{workflow}:{line}: {called.group(1)} does not exist at {called.group(2)[:7]}, {tag} has no such file")
-                wrong += 1
+            if called:
+                expect(f"{where}: {called.group(1)} exists at {called.group(2)[:7]}",
+                       exists(called.group(2), called.group(1)))
 
-    print(f"[copacabana] - {len(workflows)} template workflows read, {wrong} pin(s) naming the wrong commit")
-    return 1 if wrong else 0
+    return report("The template's pins")
 
 
 if __name__ == "__main__":

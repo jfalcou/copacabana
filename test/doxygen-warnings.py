@@ -32,7 +32,7 @@ LINES = [
     (False, "Generating docs for page error_handling..."),
 ]
 
-failures = []
+from checks import expect, report
 
 
 def pattern_from(workflow):
@@ -49,16 +49,14 @@ def main(source):
     pattern = pattern_from(source / WORKFLOW)
 
     # Through grep itself rather than through python's re: what ships is a grep -E, and the two dialects differ.
+    print(f"The pattern read from {WORKFLOW}: {pattern}\n")
+
     for wanted, line in LINES:
         found = subprocess.run(["grep", "-E", pattern], input=line + "\n",
                                capture_output=True, text=True).returncode == 0
-        if found != wanted:
-            failures.append(f"{'missed' if wanted else 'counted'}: {line}")
+        expect(f"{'counts' if wanted else 'ignores'}: {line}", found == wanted)
 
-    for f in failures:
-        print(f"  FAIL  {f}")
-    print(f"{len(failures)} failure(s), over {len(LINES)} lines and the pattern in {WORKFLOW}")
-    return 1 if failures else 0
+    return report("What the documentation job counts as a warning")
 
 
 if __name__ == "__main__":
