@@ -15,14 +15,7 @@ report's job; this only says whether every piece of the chain ran.
 import pathlib
 import sys
 
-broken = 0
-
-
-def expect(what, ok):
-    global broken
-    print(("  ok    " if ok else "  FAIL  ") + what)
-    if not ok:
-        broken += 1
+from checks import expect, report
 
 
 def main():
@@ -62,8 +55,7 @@ def main():
     trace = build / "time-trace" / "capture.bin"
     expect("time-trace/capture.bin is aggregated", trace.is_file() and trace.stat().st_size > 0)
 
-    print("\n%d broken" % broken if broken else "\nall good")
-    return 1 if broken else 0
+    return report("The compile cost report")
 
 
 if __name__ == "__main__":

@@ -72,4 +72,4 @@ jobs:
             args+=(-R "$TARGETS")
           fi
 
-          ctest "${args[@]}" -j 2 --output-on-failure
+          ctest "${args[@]}" -j 2 --output-on-failure --no-tests=error

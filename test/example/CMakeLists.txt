@@ -115,9 +115,10 @@ get_property(DERIVED GLOBAL PROPERTY COPA_OPTION_LABEL_EXAMPLE_COMPILE_COST)
 copa_expect("derived label" "${DERIVED}" "^Compile cost$")
 
 ##======================================================================================================================
-## Setup Testing
+## Setup Testing - include(CTest) rather than enable_testing() alone: it is what finds valgrind and sets
+## MemoryCheckCommand, without which ctest -T MemCheck stops on "Memory checker not set".
 ##======================================================================================================================
-enable_testing()
+include(CTest)
 add_subdirectory(test)
 
 ##======================================================================================================================

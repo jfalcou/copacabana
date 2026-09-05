@@ -13,14 +13,16 @@ function(copa_setup_precommit_hooks)
 
   copa_check_arguments()
 
+  ## A tree with no .git is a tarball, which is how the package managers build: there is no hook to install there and
+  ## nothing to say about it.
   if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
     find_program(PRE_COMMIT_CMD NAMES pre-commit)
 
+    ## Named whether or not the target gets created, the advice below spelling it out either way.
+    string(TOLOWER "${PROJECT_NAME}" PROJECT_NAME_LOWER)
+    set(HOOK_TARGET "${PROJECT_NAME_LOWER}-setup-hooks")
+
     if(PRE_COMMIT_CMD)
-
-      string(TOLOWER "${PROJECT_NAME}" PROJECT_NAME_LOWER)
-      set(HOOK_TARGET "${PROJECT_NAME_LOWER}-setup-hooks")
-
       add_custom_target(
         "${HOOK_TARGET}"
         COMMAND ${PRE_COMMIT_CMD} install
@@ -51,10 +53,16 @@ function(copa_setup_precommit_hooks)
 
         if(NOT PRE_COMMIT_HOOKS_INSTALLED)
           message(STATUS "[${PROJECT_NAME}] -   2. Git hooks are NOT active for this repo.")
-          message(STATUS "[${PROJECT_NAME}] -     Run this command to fix it:")
-          message(STATUS "[${PROJECT_NAME}] -     --------------------------------------------------")
-          message(STATUS "[${PROJECT_NAME}] -     cmake --build . --target ${HOOK_TARGET}")
-          message(STATUS "[${PROJECT_NAME}] -     --------------------------------------------------")
+
+          if(PRE_COMMIT_CMD)
+            message(STATUS "[${PROJECT_NAME}] -     Run this command to fix it:")
+            message(STATUS "[${PROJECT_NAME}] -     --------------------------------------------------")
+            message(STATUS "[${PROJECT_NAME}] -     cmake --build . --target ${HOOK_TARGET}")
+            message(STATUS "[${PROJECT_NAME}] -     --------------------------------------------------")
+          else()
+            message(STATUS "[${PROJECT_NAME}] -     Install pre-commit, configure again, and the target")
+            message(STATUS "[${PROJECT_NAME}] -     '${HOOK_TARGET}' will be there to run.")
+          endif()
         endif()
 
         message(STATUS "[${PROJECT_NAME}] - ==================================================================")

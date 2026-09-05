@@ -28,6 +28,10 @@ on:
         description: 'Space-separated build targets. Empty builds the preset default target.'
         type: string
         default: ''
+      min-coverage:
+        description: 'Line coverage under this percentage fails the job. 0 only asks that something was measured.'
+        type: number
+        default: 0
 
 jobs:
   coverage:
@@ -64,12 +68,14 @@ jobs:
         shell: bash
         env:
           PROJECT: ${{ inputs.project }}
+          MIN_COVERAGE: ${{ inputs.min-coverage }}
         run: |
-          python3 - "build/gcc-coverage/coverage/summary.json" "$PROJECT" >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          python3 - "build/gcc-coverage/coverage/summary.json" "$PROJECT" "$MIN_COVERAGE" >> "$GITHUB_STEP_SUMMARY" <<'EOF'
           import json, sys
 
           report = json.load(open(sys.argv[1]))
           project = sys.argv[2]
+          floor = float(sys.argv[3])
 
           # gcovr reports no rate at all for a metric a header has no instance of - a branchless
           # header is not 0% covered, it simply has nothing to say on that metric.
@@ -98,6 +104,19 @@ jobs:
                   f"| {rate(entry['function_percent'])} | {rate(entry['branch_percent'])} |")
 
           print("\n</details>")
+
+          # A report of nothing is the shape a broken run takes: gcovr writes its summary whether or not any line was
+          # instrumented, and a table of zeroes reads like a clean one at a glance.
+          measured = report["line_total"]
+          percent = report["line_percent"]
+
+          if not measured or percent is None:
+            print(f"\n**No line was measured.** This run proves nothing about the coverage of `{project}`.")
+            sys.exit(1)
+
+          if percent < floor:
+            print(f"\n**Line coverage is {percent:.1f}%, under the {floor:.1f}% this project asks for.**")
+            sys.exit(1)
           EOF
 
       - name: Upload HTML Report

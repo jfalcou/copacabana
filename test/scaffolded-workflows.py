@@ -14,6 +14,8 @@ import pathlib
 import re
 import sys
 
+from checks import expect, report
+
 JOB = re.compile(r"^  ([A-Za-z0-9_-]+):$", re.M)
 NEEDS = re.compile(r"needs:\s*\[([^\]]*)\]")
 CALLS = re.compile(r"uses:\s*\./\.github/workflows/([A-Za-z0-9._-]+)")
@@ -26,13 +28,11 @@ def main(root: str) -> int:
     matrices = pathlib.Path(root) / ".github" / "matrices"
     present = {path.name for path in directory.glob("*.yml")}
     readable = {path.name for path in matrices.glob("*.yml")}
-    broken = 0
+    print(f"{len(present)} workflows and {len(readable)} matrices read\n")
 
     # A matrix file is read by copacabana's matrix.yml, which refuses one with no row to build
     for matrix in sorted(matrices.glob("*.yml")):
-        if not ROW.search(matrix.read_text(encoding="utf-8")):
-            print(f"{matrix}: holds no row naming a preset")
-            broken += 1
+        expect(f"{matrix.name} holds a row naming a preset", ROW.search(matrix.read_text(encoding="utf-8")))
 
     for workflow in sorted(directory.glob("*.yml")):
         text = workflow.read_text(encoding="utf-8")
@@ -40,22 +40,15 @@ def main(root: str) -> int:
 
         for names in NEEDS.findall(text):
             for name in (n.strip() for n in names.split(",") if n.strip()):
-                if name not in declared:
-                    print(f"{workflow}: needs {name}, which no job declares")
-                    broken += 1
+                expect(f"{workflow.name} needs {name}, which a job declares", name in declared)
 
         for called in CALLS.findall(text):
-            if called not in present:
-                print(f"{workflow}: calls {called}, which was not written")
-                broken += 1
+            expect(f"{workflow.name} calls {called}, which was written", called in present)
 
         for read in READS.findall(text):
-            if read not in readable:
-                print(f"{workflow}: reads {read}, which was not written")
-                broken += 1
+            expect(f"{workflow.name} reads {read}, which was written", read in readable)
 
-    print(f"[copacabana] - {len(present)} workflows and {len(readable)} matrices read, {broken} dangling reference(s)")
-    return 1 if broken else 0
+    return report("The scaffolded workflows")
 
 
 if __name__ == "__main__":

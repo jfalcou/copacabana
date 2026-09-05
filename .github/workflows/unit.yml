@@ -36,6 +36,38 @@ jobs:
     with:
       file: .github/matrices/windows.yml
 
+  ##====================================================================================================================
+  ## The regression test for the defect this repository shipped from v7 to v7.1: the test step of matrix.yml was gated
+  ## on an expression where a row saying nothing about test reads as null, which GitHub compares equal to false. Every
+  ## row of every consumer then built without testing, and stayed green, a skipped step being green. Nothing inside a
+  ## job can see that, so this reads the run back once the matrices are done.
+  ##====================================================================================================================
+  tested:
+    name: Tests really ran
+    needs: [linux, macosx, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read this run back
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --paginate                                                   \
+             -q '.jobs[] | select([.steps[].name] | index("Run Unit Tests"))
+                         | select([.steps[] | select(.name == "Run Unit Tests") | .conclusion] | index("skipped"))
+                         | .name'                                                                                     \
+             > skipped.txt
+
+          if [ -s skipped.txt ]; then
+            echo "These jobs never ran their tests:" >&2
+            cat skipped.txt >&2
+            exit 1
+          fi
+
+          echo "Every job of the platform matrices ran its tests."
+
   ## gcc only: the image pairs clang 19 with llvm-cov 20, which reads no notes of another major.
   coverage:
     name: Coverage

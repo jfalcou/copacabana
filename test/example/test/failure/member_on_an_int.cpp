@@ -5,6 +5,7 @@
 //======================================================================================================================
 // build error-gcc: which is of non-class type
 // build error-clang: is not a structure or union
+// build error-msvc: left of '.clear' must have class/struct/union
 
 int main()
 {
