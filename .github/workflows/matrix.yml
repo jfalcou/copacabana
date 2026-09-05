@@ -33,8 +33,9 @@
 ##     - { name: "arm64" , preset: "android-arm64", test: false }
 ##
 ## A row names its preset and, when it needs them, a name to show, an image tag, a setup script to source, a compiler
-## wrapper to run cmake through, extra configure arguments as args, and test: false when its executables are built
-## for another machine. The job of a row is called "<name> (<config>)", which is the context a ruleset requires.
+## wrapper to run cmake through, extra configure arguments as args, and test: false when the row is built and not
+## run - built for another machine, or built with something that does not run here. The job of a row is called
+## "<name> (<config>)", which is the context a ruleset requires.
 ##
 ## A reusable workflow takes no list as input, hence the file: reading it is a job of a few seconds.
 ##======================================================================================================================
@@ -164,7 +165,7 @@ jobs:
           cmake "${args[@]}" --parallel 2
 
       ## The row decides here and not in an if:, where an absent key reads as null, which GitHub compares equal to
-      ## false. That expression turned this step off for every row that said nothing, from v7 to v7.1.
+      ## false. That expression turned this step off for every row that said nothing, from v7 to v8.
       - name: Run Unit Tests
         working-directory: ${{ needs.read.outputs.directory }}
         shell: bash
@@ -176,7 +177,7 @@ jobs:
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
         run: |
           if [ "$RUN_TESTS" = "false" ]; then
-            echo "This row says test: false, its executables are built for another machine."
+            echo "This row says test: false, so nothing is run here."
             exit 0
           fi
 
