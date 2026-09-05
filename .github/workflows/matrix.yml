@@ -9,7 +9,7 @@
 ##   jobs:
 ##     linux:
 ##       name: Linux
-##       uses: jfalcou/copacabana/.github/workflows/matrix.yml@<sha> # v7
+##       uses: jfalcou/copacabana/.github/workflows/matrix.yml@<sha> # v8
 ##       with:
 ##         file: .github/matrices/linux.yml
 ##

@@ -7,7 +7,7 @@
 ##
 ##   jobs:
 ##     precommit:
-##       uses: jfalcou/copacabana/.github/workflows/precommit.yml@<sha> # v6
+##       uses: jfalcou/copacabana/.github/workflows/precommit.yml@<sha> # v8
 ##======================================================================================================================
 name: Pre-commit
 on:

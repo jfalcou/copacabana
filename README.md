@@ -7,7 +7,7 @@ The CMake and CI plumbing a C++ project writes every time, written once here:
 - a styled Doxygen setup
 - single-header packaging, `.deb`, `.rpm` and `.tar.gz`
 
-The current release is [Version 7 - Garota de Ipanema](https://github.com/jfalcou/copacabana/releases/tag/v7).
+The current release is [Version 8 - Ho-Ba-La-Lá](https://github.com/jfalcou/copacabana/releases/tag/v8).
 
 Copacabana gives you two independent halves:
 
@@ -21,7 +21,7 @@ none. The CI half assumes your project builds through CMake presets, and nothing
 ## Getting it
 
 ```cmake
-CPMAddPackage(NAME COPACABANA GITHUB_REPOSITORY jfalcou/copacabana GIT_TAG v7)
+CPMAddPackage(NAME COPACABANA GITHUB_REPOSITORY jfalcou/copacabana GIT_TAG v8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COPACABANA_SOURCE_DIR}/copacabana/cmake)
 include(${COPACABANA_SOURCE_DIR}/copacabana/cmake/copacabana.cmake)
