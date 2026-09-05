@@ -140,7 +140,7 @@ function(copa_setup_coverage target)
     ${OPT_PREFIX}-coverage
     COMMAND ${CMAKE_COMMAND} -DCOVERAGE_BUILD_DIR=${PROJECT_BINARY_DIR} -P
             "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/reset_coverage.cmake"
-    COMMAND ${CMAKE_CTEST_COMMAND} --build-config $<CONFIG> --output-on-failure
+    COMMAND ${CMAKE_CTEST_COMMAND} --build-config $<CONFIG> --output-on-failure --no-tests=error
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
     COMMENT "[${PROJECT_NAME}] - Running the test suite under coverage"
     VERBATIM)
