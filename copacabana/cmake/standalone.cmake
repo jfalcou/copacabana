@@ -65,5 +65,7 @@ function(copa_setup_standalone)
     endif()
 
     set(PROJECT_STANDALONE_TARGET "${OPT_TARGET}" PARENT_SCOPE)
+  elseif(NOT OPT_QUIET)
+    message(STATUS "[${PROJECT_NAME}] - No Python interpreter found, target ${OPT_TARGET} is not created")
   endif()
 endfunction()

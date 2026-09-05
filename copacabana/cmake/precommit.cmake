@@ -27,6 +27,8 @@ function(copa_setup_precommit_hooks)
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Installing pre-commit git hooks to ${CMAKE_SOURCE_DIR}/.git/hooks"
         VERBATIM)
+    elseif(NOT OPT_QUIET)
+      message(STATUS "[${PROJECT_NAME}] - No pre-commit found, the hook target is not created")
     endif()
 
     if(EXISTS "${CMAKE_SOURCE_DIR}/.git/hooks/pre-commit")
