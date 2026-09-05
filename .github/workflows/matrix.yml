@@ -155,35 +155,50 @@ jobs:
 
           cmake "${args[@]}" --parallel 2
 
+      ## The row decides here and not in an if:, where an absent key reads as null, which GitHub compares equal to
+      ## false. That expression turned this step off for every row that said nothing, from v7 to v7.1.
       - name: Run Unit Tests
         working-directory: ${{ needs.read.outputs.directory }}
-        if: matrix.compiler.test != false
         shell: bash
         env:
           PRESET: ${{ matrix.compiler.preset }}
           CONFIG: ${{ matrix.options }}
           TARGETS: ${{ needs.read.outputs.test-targets }}
+          RUN_TESTS: ${{ matrix.compiler.test }}
         run: |
+          if [ "$RUN_TESTS" = "false" ]; then
+            echo "This row says test: false, its executables are built for another machine."
+            exit 0
+          fi
+
           args=(--preset "$PRESET" --build-config "$CONFIG")
           if [ -n "$TARGETS" ]; then
             args+=(-R "$TARGETS")
           fi
 
-          ctest "${args[@]}" -j 2 --output-on-failure
+          ## --no-tests=error, because ctest exits 0 on an empty test set: a job that ran nothing would stay green.
+          ctest "${args[@]}" -j 2 --output-on-failure --no-tests=error
 
       ## MemCheck puts ctest in a mode the presets do not carry, hence the explicit test directory.
       - name: Run MemCheck
         working-directory: ${{ needs.read.outputs.directory }}
-        if: needs.read.outputs.memcheck == 'true' && matrix.compiler.test != false && matrix.compiler.memcheck != false
+        if: needs.read.outputs.memcheck == 'true'
         shell: bash
         env:
           PRESET: ${{ matrix.compiler.preset }}
           CONFIG: ${{ matrix.options }}
           TARGETS: ${{ needs.read.outputs.test-targets }}
+          RUN_TESTS: ${{ matrix.compiler.test }}
+          RUN_MEMCHECK: ${{ matrix.compiler.memcheck }}
         run: |
+          if [ "$RUN_TESTS" = "false" ] || [ "$RUN_MEMCHECK" = "false" ]; then
+            echo "This row opts out of memcheck."
+            exit 0
+          fi
+
           args=(--test-dir "build/$PRESET" --preset "$PRESET" --build-config "$CONFIG")
           if [ -n "$TARGETS" ]; then
             args+=(-R "$TARGETS")
           fi
 
-          ctest "${args[@]}" -T MemCheck -j 2 --output-on-failure
+          ctest "${args[@]}" -T MemCheck -j 2 --output-on-failure --no-tests=error
