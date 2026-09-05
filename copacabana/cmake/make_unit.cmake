@@ -103,8 +103,10 @@ function(copa_make_failure_unit)
       "-DCONFIG=$<CONFIG>" "-DCOMPILER=${CMAKE_CXX_COMPILER_ID}" -P
       "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/expect_failure.cmake")
 
-  ## A source naming only diagnostics of another compiler has nothing to check here, and saying so beats passing.
-  set_tests_properties(${OPT_NAME} PROPERTIES SKIP_RETURN_CODE 77)
+  ## SKIP_RETURN_CODE: a source naming only diagnostics of another compiler has nothing to check here, and saying so
+  ## beats passing. RESOURCE_LOCK: each of these tests drives a build of the tree they all share, and two builds at
+  ## once fight over the same files - MSBuild says so on ZERO_CHECK.tlog, ninja quietly interleaves.
+  set_tests_properties(${OPT_NAME} PROPERTIES SKIP_RETURN_CODE 77 RESOURCE_LOCK "copa-build-tree")
 
   if(NOT OPT_QUIET)
     message(STATUS "[${PROJECT_NAME}] - ${OPT_FILE} is expected not to compile")
