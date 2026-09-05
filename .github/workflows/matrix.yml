@@ -201,4 +201,10 @@ jobs:
             args+=(-R "$TARGETS")
           fi
 
-          ctest "${args[@]}" -T MemCheck -j 2 --output-on-failure --no-tests=error
+          ## Without these, valgrind returns 0 whatever it finds and ctest reports the defects beside a green run.
+          ## still reachable is left out: it fires on cmake itself, which the expect_failure tests run.
+          MEMCHECK_OPTIONS="--leak-check=full --errors-for-leak-kinds=definite,possible"
+          MEMCHECK_OPTIONS="$MEMCHECK_OPTIONS --error-exitcode=1 --num-callers=50"
+
+          ctest "${args[@]}" -T MemCheck -j 2 --output-on-failure --no-tests=error \
+                --overwrite MemoryCheckCommandOptions="$MEMCHECK_OPTIONS"
