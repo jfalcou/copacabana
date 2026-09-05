@@ -24,6 +24,8 @@
 ##   build-targets: unit.exe                # empty builds the preset default target
 ##   test-targets: ^unit.*                  # a ctest -R rule, empty runs everything
 ##   memcheck: true                         # valgrind as well, on the rows not saying otherwise
+##   test-timeout: 600                      # seconds one test may take, default 600
+##   timeout: 60                            # minutes a job may take, default 60
 ##   rows:
 ##     - { name: "gcc"   , preset: "gcc"   }
 ##     - { name: "wasm"  , preset: "wasm"  , wrapper: "emcmake" }
@@ -59,6 +61,8 @@ jobs:
       build-targets: ${{ steps.read.outputs.build-targets }}
       test-targets: ${{ steps.read.outputs.test-targets }}
       memcheck: ${{ steps.read.outputs.memcheck }}
+      test-timeout: ${{ steps.read.outputs.test-timeout }}
+      timeout: ${{ steps.read.outputs.timeout }}
       directory: ${{ steps.read.outputs.directory }}
     steps:
       - name: Fetch the matrix file
@@ -95,6 +99,8 @@ jobs:
           print("build-targets=" + str(spec.get("build-targets", "")))
           print("test-targets=" + str(spec.get("test-targets", "")))
           print("memcheck=" + ("true" if spec.get("memcheck", False) else "false"))
+          print("test-timeout=" + str(spec.get("test-timeout", 600)))
+          print("timeout=" + str(spec.get("timeout", 60)))
           print("directory=" + str(spec.get("directory", ".")))
           EOF
 
@@ -102,6 +108,8 @@ jobs:
     name: ${{ matrix.compiler.name || matrix.compiler.preset }} (${{ matrix.options }})
     needs: read
     runs-on: ${{ needs.read.outputs.runs-on }}
+    ## A step that never returns otherwise holds a runner until GitHub's six-hour ceiling.
+    timeout-minutes: ${{ fromJSON(needs.read.outputs.timeout) }}
     ## An empty image is no container at all, which a macOS or Windows runner needs.
     container:
       image: ${{ (matrix.compiler.image || needs.read.outputs.image) && format('{0}:{1}', needs.read.outputs.registry, matrix.compiler.image || needs.read.outputs.image) || '' }}
@@ -165,6 +173,7 @@ jobs:
           CONFIG: ${{ matrix.options }}
           TARGETS: ${{ needs.read.outputs.test-targets }}
           RUN_TESTS: ${{ matrix.compiler.test }}
+          TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
         run: |
           if [ "$RUN_TESTS" = "false" ]; then
             echo "This row says test: false, its executables are built for another machine."
@@ -177,7 +186,8 @@ jobs:
           fi
 
           ## --no-tests=error, because ctest exits 0 on an empty test set: a job that ran nothing would stay green.
-          ctest "${args[@]}" -j 2 --output-on-failure --no-tests=error
+          ## --timeout, so a test that never returns is named and fails rather than holding the job.
+          ctest "${args[@]}" -j 2 --output-on-failure --no-tests=error --timeout "$TEST_TIMEOUT"
 
       ## MemCheck puts ctest in a mode the presets do not carry, hence the explicit test directory.
       - name: Run MemCheck
@@ -190,6 +200,7 @@ jobs:
           TARGETS: ${{ needs.read.outputs.test-targets }}
           RUN_TESTS: ${{ matrix.compiler.test }}
           RUN_MEMCHECK: ${{ matrix.compiler.memcheck }}
+          TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
         run: |
           if [ "$RUN_TESTS" = "false" ] || [ "$RUN_MEMCHECK" = "false" ]; then
             echo "This row opts out of memcheck."
@@ -206,5 +217,7 @@ jobs:
           MEMCHECK_OPTIONS="--leak-check=full --errors-for-leak-kinds=definite,possible"
           MEMCHECK_OPTIONS="$MEMCHECK_OPTIONS --error-exitcode=1 --num-callers=50"
 
+          ## valgrind multiplies a run time, hence four times what a plain test is allowed.
           ctest "${args[@]}" -T MemCheck -j 2 --output-on-failure --no-tests=error \
+                --timeout "$((TEST_TIMEOUT * 4))" \
                 --overwrite MemoryCheckCommandOptions="$MEMCHECK_OPTIONS"
