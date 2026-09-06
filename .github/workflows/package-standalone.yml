@@ -8,7 +8,7 @@
 ##
 ##   jobs:
 ##     standalone:
-##       uses: jfalcou/copacabana/.github/workflows/package-standalone.yml@<sha> # v6
+##       uses: jfalcou/copacabana/.github/workflows/package-standalone.yml@<sha> # v8
 ##       with:
 ##         project: mylib
 ##======================================================================================================================

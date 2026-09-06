@@ -8,7 +8,7 @@
 ##
 ##   jobs:
 ##     compile-cost:
-##       uses: jfalcou/copacabana/.github/workflows/compile-cost.yml@<sha> # v7
+##       uses: jfalcou/copacabana/.github/workflows/compile-cost.yml@<sha> # v8
 ##       permissions:
 ##         actions: read
 ##         contents: read
