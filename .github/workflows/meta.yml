@@ -188,6 +188,29 @@ jobs:
       - name: Install the example three ways and look
         run: python3 test/install-layout.py $GITHUB_WORKSPACE
 
+  test-package-consumption:
+    name: Verify a Published Package Is Consumable
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      ## The published tree is laid out by the recipe, not by copa_setup_install, so it is checked
+      ## where it is published. spack is the one that carries copacabana today; vcpkg and conan
+      ## join with a step each once their ports land.
+      - name: Set up Spack
+        uses: spack/setup-spack@v3
+        with:
+          buildcache: true
+
+      - name: Install copacabana and consume what it installed
+        run: |
+          spack install copacabana
+          python3 test/package-consumption.py "$(spack location -i copacabana)"
+
   test-failure-units:
     name: Verify Sources That Must Not Compile
     runs-on: ubuntu-latest
