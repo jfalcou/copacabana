@@ -20,7 +20,7 @@ jobs:
     uses: ./.github/workflows/precommit.yml
 
   test-cpack:
-    name: Build and Verify System Installers
+    name: Package / System Installers
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -67,7 +67,7 @@ jobs:
           rpm -qpl "$RPM_FILE"
 
   test-assets:
-    name: Verify Documentation Assets
+    name: Docs / Assets
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -76,7 +76,7 @@ jobs:
         run: node --test test/*.test.js
 
   test-scaffolder:
-    name: Verify the Scaffolded Project
+    name: Scaffold / Project
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/jfalcou/compilers:v10
@@ -110,7 +110,7 @@ jobs:
   ## gate runs under: the container the builds use carries neither pip nor a venv. So this is precommit.yml's own
   ## setup, same Python, same pinned release, pointed at a tree the scaffolder just wrote.
   test-scaffolded-hooks:
-    name: Verify the Scaffolded Hooks
+    name: Scaffold / Hooks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -134,7 +134,7 @@ jobs:
           cd /tmp/narrow && pre-commit run --all-files --show-diff-on-failure --color=always
 
   test-template-pin:
-    name: Verify the Template's Pins
+    name: Scaffold / Template Pins
     runs-on: ubuntu-latest
     steps:
       ## The tags are what the pins are checked against, so the whole history is needed rather than one commit.
@@ -147,7 +147,7 @@ jobs:
         run: python3 test/template-pin.py .
 
   test-doxygen-warnings:
-    name: Verify the Doxygen Warning Count
+    name: Docs / Warning Count
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -157,7 +157,7 @@ jobs:
         run: python3 test/doxygen-warnings.py .
 
   test-doxygen-setup:
-    name: Verify the Shared Doxygen Setup
+    name: Docs / Shared Setup
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/jfalcou/compilers:v10
@@ -176,7 +176,7 @@ jobs:
         run: python3 test/doxygen-setup.py build/doc/doxygen-output
 
   test-install-layout:
-    name: Verify Where the Package Installs
+    name: Package / Install Layout
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -189,7 +189,7 @@ jobs:
         run: python3 test/install-layout.py $GITHUB_WORKSPACE
 
   test-package-consumption:
-    name: Verify a Published Package Is Consumable
+    name: Package / Consumption
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -212,7 +212,7 @@ jobs:
           python3 test/package-consumption.py "$(spack location -i copacabana)"
 
   test-failure-units:
-    name: Verify Sources That Must Not Compile
+    name: CMake / Sources That Must Not Compile
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/jfalcou/compilers:v10
@@ -224,7 +224,7 @@ jobs:
         run: python3 test/failure-units.py $GITHUB_WORKSPACE
 
   test-two-consumers:
-    name: Verify Two Consumers in One Build
+    name: CMake / Two Consumers in One Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -237,7 +237,7 @@ jobs:
         run: cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$GITHUB_WORKSPACE
 
   verify-hierarchy:
-    name: Verify Ninja Target Hierarchy
+    name: CMake / Ninja Target Hierarchy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
