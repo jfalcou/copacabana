@@ -13,14 +13,13 @@ written and say so, and the trace has to have been aggregated. Reading the numbe
 report's job; this only says whether every piece of the chain ran.
 """
 import pathlib
-import sys
 
-from checks import expect, report
+from checks import cli, expect, report
 
 
-def main():
-    build = pathlib.Path(sys.argv[1])
-    example = pathlib.Path(sys.argv[2])
+def main(build, example):
+    build = pathlib.Path(build)
+    example = pathlib.Path(example)
     cost = build / "compile-cost"
 
     units = sorted(p.relative_to(example / "test") for p in (example / "test" / "unit").rglob("*.cpp"))
@@ -61,4 +60,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    cli(main)

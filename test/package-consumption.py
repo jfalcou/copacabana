@@ -16,15 +16,9 @@ check that stops at `if(COMMAND)`.
 """
 import pathlib
 import re
-import subprocess
-import sys
 import tempfile
 
-from checks import expect, report
-
-
-def run(*args):
-    return subprocess.run(args, capture_output=True, text=True)
+from checks import cli, expect, report, run
 
 # The entry points every project in the family calls. copacabana.cmake includes its siblings through
 # COPACABANA_SOURCE_DIR, so a missing one means the packaged tree lost a file rather than a feature.
@@ -107,7 +101,4 @@ def main(root):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(__doc__)
-        sys.exit(2)
-    sys.exit(main(sys.argv[1]))
+    cli(main)

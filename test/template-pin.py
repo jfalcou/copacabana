@@ -17,10 +17,8 @@ to take along: it sat two versions behind the workflows once.
 """
 import pathlib
 import re
-import subprocess
-import sys
 
-from checks import expect, report
+from checks import cli, expect, report, run
 
 PIN = re.compile(r"@([0-9a-f]{40})\s*#\s*(v[0-9]+)")
 CALL = re.compile(r"uses:\s*jfalcou/copacabana/(\.github/[A-Za-z0-9._/-]+)@([0-9a-f]{40})")
@@ -28,14 +26,14 @@ GIT_TAG = re.compile(r"GIT_TAG\s+(v[0-9]+)")
 
 
 def resolve(tag: str) -> str | None:
-    result = subprocess.run(["git", "rev-parse", f"{tag}^{{commit}}"], capture_output=True, text=True)
+    result = run("git", "rev-parse", f"{tag}^{{commit}}")
     return result.stdout.strip() if result.returncode == 0 else None
 
 
 def exists(sha: str, path: str) -> bool:
     """Whether the commit carries the file, a composite action being its directory's action.yml."""
     for candidate in (path, f"{path}/action.yml"):
-        if subprocess.run(["git", "cat-file", "-e", f"{sha}:{candidate}"], capture_output=True).returncode == 0:
+        if run("git", "cat-file", "-e", f"{sha}:{candidate}").returncode == 0:
             return True
     return False
 
@@ -79,4 +77,4 @@ def main(root: str = ".") -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(*sys.argv[1:]))
+    cli(main)

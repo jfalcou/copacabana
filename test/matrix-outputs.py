@@ -9,11 +9,10 @@ out as its Python repr once, a label no runner carries, and the jobs sat queued 
 """
 import json
 import pathlib
-import subprocess
 import sys
 import tempfile
 
-from checks import expect, report
+from checks import cli, expect, report, run
 
 WORKFLOW = ".github/workflows/matrix.yml"
 
@@ -38,7 +37,7 @@ def outputs(script, spec):
     with tempfile.NamedTemporaryFile("w", suffix=".yml") as matrix:
         json.dump({"rows": [{"preset": "gcc"}], **spec}, matrix)
         matrix.flush()
-        written = subprocess.run([sys.executable, "-c", script, matrix.name], capture_output=True, text=True)
+        written = run(sys.executable, "-c", script, matrix.name)
 
     return dict(line.split("=", 1) for line in written.stdout.splitlines())
 
@@ -59,4 +58,4 @@ def main(root: str = ".") -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(*sys.argv[1:]))
+    cli(main)

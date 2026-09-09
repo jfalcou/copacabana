@@ -8,10 +8,8 @@ its own copy would keep passing after someone narrowed the real one.
 """
 import pathlib
 import re
-import subprocess
-import sys
 
-from checks import expect, report
+from checks import cli, expect, report, run
 
 WORKFLOW = ".github/workflows/documentation.yml"
 
@@ -50,15 +48,11 @@ def main(source):
     print(f"The pattern read from {WORKFLOW}: {pattern}\n")
 
     for wanted, line in LINES:
-        found = subprocess.run(["grep", "-E", pattern], input=line + "\n",
-                               capture_output=True, text=True).returncode == 0
+        found = run("grep", "-E", pattern, input=line + "\n").returncode == 0
         expect(f"{'counts' if wanted else 'ignores'}: {line}", found == wanted)
 
     return report("What the documentation job counts as a warning")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(__doc__)
-        sys.exit(2)
-    sys.exit(main(sys.argv[1]))
+    cli(main)
