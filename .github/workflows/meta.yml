@@ -19,6 +19,42 @@ jobs:
     name: Meta Checks
     uses: ./.github/workflows/precommit.yml
 
+  ## The checks that are a checkout and a command, in one job. A row says what it is called and what it runs; image
+  ## and depth are for the rows that need a container or the tags.
+  checks:
+    name: ${{ matrix.check.name }}
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.check.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - { name: "Docs / Assets"             , depth: 1, run: "node --test test/*.test.js" }
+          - { name: "Docs / Warning Count"      , depth: 1, run: "python3 test/doxygen-warnings.py ." }
+          - { name: "Scaffold / Template Pins"  , depth: 0, run: "python3 test/template-pin.py ." }
+          - { name: "Workflows / Matrix Outputs", depth: 1, run: "python3 test/matrix-outputs.py .", pyyaml: true }
+          - { name: "CMake / Pre-commit Banner" , depth: 1, run: "python3 test/precommit-banner.py .",
+              image: "ghcr.io/jfalcou/compilers:v10" }
+          - { name: "CMake / Sources That Must Not Compile", depth: 1,
+              run: "python3 test/failure-units.py .", image: "ghcr.io/jfalcou/compilers:v10" }
+    steps:
+      ## The tags are what the template pins are checked against, so that row asks for the whole history.
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: ${{ matrix.check.depth }}
+
+      - name: Install PyYAML
+        if: matrix.check.pyyaml
+        run: python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
+
+      ## A row is split into words and globbed, unquoted for that, but never expanded: it names a path, not a $VAR.
+      - name: Check
+        env:
+          COMMAND: ${{ matrix.check.run }}
+        run: $COMMAND
+
   test-cpack:
     name: Package / System Installers
     runs-on: ubuntu-latest
@@ -68,14 +104,6 @@ jobs:
           echo "--- RPM File Contents ---"
           rpm -qpl "$RPM_FILE"
 
-  test-assets:
-    name: Docs / Assets
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-      - name: Run Asset Tests
-        run: node --test test/*.test.js
 
   test-scaffolder:
     name: Scaffold / Project
@@ -135,52 +163,6 @@ jobs:
           git -C /tmp/narrow -c user.email=ci@example.org -c user.name=CI commit --quiet -m init
           cd /tmp/narrow && pre-commit run --all-files --show-diff-on-failure --color=always
 
-  test-precommit-banner:
-    name: CMake / Pre-commit Banner
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/jfalcou/compilers:v10
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Check who the banner reaches
-        run: python3 test/precommit-banner.py .
-
-  test-matrix-outputs:
-    name: Workflows / Matrix Outputs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Check what a matrix file becomes
-        run: |
-          python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
-          python3 test/matrix-outputs.py .
-
-  test-template-pin:
-    name: Scaffold / Template Pins
-    runs-on: ubuntu-latest
-    steps:
-      ## The tags are what the pins are checked against, so the whole history is needed rather than one commit.
-      - name: Checkout Code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Check every pin names the commit its tag points at
-        run: python3 test/template-pin.py .
-
-  test-doxygen-warnings:
-    name: Docs / Warning Count
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Check what the documentation job counts as a warning
-        run: python3 test/doxygen-warnings.py .
 
   test-doxygen-setup:
     name: Docs / Shared Setup
@@ -236,18 +218,6 @@ jobs:
         run: |
           spack install copacabana
           python3 test/package-consumption.py "$(spack location -i copacabana)"
-
-  test-failure-units:
-    name: CMake / Sources That Must Not Compile
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/jfalcou/compilers:v10
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Break the failing test three ways and read the verdict
-        run: python3 test/failure-units.py "$GITHUB_WORKSPACE"
 
   test-two-consumers:
     name: CMake / Two Consumers in One Build
