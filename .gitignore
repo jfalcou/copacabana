@@ -12,3 +12,4 @@ _deps
 build/*
 test/example/build/*
 example/include/libexample/*
+__pycache__/
