@@ -23,6 +23,9 @@ on:
         type: string
         default: '4.6.2'
 
+permissions:
+  contents: read
+
 jobs:
   precommit:
     name: Pre-commit

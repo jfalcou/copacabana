@@ -48,6 +48,9 @@ on:
         type: string
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   read:
     name: Read ${{ inputs.file }}
