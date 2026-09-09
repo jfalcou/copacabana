@@ -16,7 +16,7 @@
 ## The file is YAML, or JSON, and holds the rows plus what the platform needs:
 ##
 ##   directory: test/example                # where the presets are, default the repository root
-##   runs-on: ubuntu-latest                 # default ubuntu-latest
+##   runs-on: ubuntu-latest                 # default ubuntu-latest; a list of labels works too
 ##   image: v10                             # default tag for the rows naming none; none at all runs on the host
 ##   registry: ghcr.io/jfalcou/compilers    # where a tag is looked up
 ##   container-options: -u root             # handed to docker, when there is a container
@@ -93,7 +93,7 @@ jobs:
 
           print("rows=" + json.dumps(rows))
           print("configs=" + json.dumps(spec.get("configs", ["Debug", "Release"])))
-          print("runs-on=" + str(spec.get("runs-on", "ubuntu-latest")))
+          print("runs-on=" + json.dumps(spec.get("runs-on", "ubuntu-latest")))
           print("registry=" + str(spec.get("registry", "ghcr.io/jfalcou/compilers")))
           print("image=" + str(spec.get("image", "")))
           print("container-options=" + str(spec.get("container-options", "")))
@@ -108,7 +108,7 @@ jobs:
   matrix:
     name: ${{ matrix.compiler.name || matrix.compiler.preset }} (${{ matrix.options }})
     needs: read
-    runs-on: ${{ needs.read.outputs.runs-on }}
+    runs-on: ${{ fromJSON(needs.read.outputs.runs-on) }}
     ## A step that never returns otherwise holds a runner until GitHub's six-hour ceiling.
     timeout-minutes: ${{ fromJSON(needs.read.outputs.timeout) }}
     ## An empty image is no container at all, which a macOS or Windows runner needs.

@@ -145,6 +145,18 @@ jobs:
       - name: Check who the banner reaches
         run: python3 test/precommit-banner.py .
 
+  test-matrix-outputs:
+    name: Workflows / Matrix Outputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Check what a matrix file becomes
+        run: |
+          python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
+          python3 test/matrix-outputs.py .
+
   test-template-pin:
     name: Scaffold / Template Pins
     runs-on: ubuntu-latest
