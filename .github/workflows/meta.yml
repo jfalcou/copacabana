@@ -25,7 +25,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
-      - name: Setup CMake
+      - name: Setup CMake and Ninja
         uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Configure Project
         run: |
@@ -256,7 +256,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Setup CMake
+      - name: Setup CMake and Ninja
         uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
 
       - name: Configure Two Consumers
