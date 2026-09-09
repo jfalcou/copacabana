@@ -37,7 +37,9 @@ function(copa_setup_precommit_hooks)
       set(PRE_COMMIT_HOOKS_INSTALLED FALSE)
     endif()
 
-    if(NOT OPT_QUIET)
+    ## The banner is advice for someone at a keyboard: a runner has no reader and starts the next job from a
+    ## clean machine. GitHub sets CI on every runner.
+    if(NOT OPT_QUIET AND NOT DEFINED ENV{CI})
       if(NOT PRE_COMMIT_CMD OR NOT PRE_COMMIT_HOOKS_INSTALLED)
         message(STATUS "[${PROJECT_NAME}] -")
         message(STATUS "[${PROJECT_NAME}] - ==================================================================")
