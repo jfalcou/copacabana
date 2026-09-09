@@ -15,27 +15,12 @@
 ##
 ## The file is YAML, or JSON, and holds the rows plus what the platform needs:
 ##
-##   directory: test/example                # where the presets are, default the repository root
-##   runs-on: ubuntu-latest                 # default ubuntu-latest; a list of labels works too
-##   image: v10                             # default tag for the rows naming none; none at all runs on the host
-##   registry: ghcr.io/jfalcou/compilers    # where a tag is looked up
-##   container-options: -u root             # handed to docker, when there is a container
-##   configs: [Debug, Release]              # one job per row and configuration
-##   build-targets: unit.exe                # empty builds the preset default target
-##   test-targets: ^unit.*                  # a ctest -R rule, empty runs everything
-##   memcheck: true                         # valgrind as well, on the rows not saying otherwise
-##   test-timeout: 600                      # seconds one test may take, default 600
-##   timeout: 60                            # minutes a job may take, default 60
+##   image: v10
 ##   rows:
 ##     - { name: "gcc"   , preset: "gcc"   }
 ##     - { name: "wasm"  , preset: "wasm"  , wrapper: "emcmake" }
-##     - { name: "icpx"  , preset: "icpx"  , image: "sycl-v1", setup: "/opt/intel/oneapi/setvars.sh", memcheck: false }
-##     - { name: "arm64" , preset: "android-arm64", test: false }
 ##
-## A row names its preset and, when it needs them, a name to show, an image tag, a setup script to source, a compiler
-## wrapper to run cmake through, extra configure arguments as args, and test: false when the row is built and not
-## run - built for another machine, or built with something that does not run here. The job of a row is called
-## "<name> (<config>)", which is the context a ruleset requires.
+## Every key it takes, what a row may name, and the defaults are in the wiki, under Matrix-Workflow.
 ##
 ## A reusable workflow takes no list as input, hence the file: reading it is a job of a few seconds.
 ##======================================================================================================================
