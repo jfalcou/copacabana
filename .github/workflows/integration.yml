@@ -32,6 +32,10 @@ on:
         description: 'Extra flags handed to every configure step'
         type: string
         default: ''
+      timeout:
+        description: 'Minutes a job may take before the runner is taken back'
+        type: number
+        default: 120
 
 permissions:
   contents: read
@@ -39,6 +43,7 @@ permissions:
 jobs:
   install:
     runs-on: [ubuntu-latest]
+    timeout-minutes: ${{ inputs.timeout }}
     container:
       image: ${{ inputs.image }}
     strategy:
@@ -78,6 +83,7 @@ jobs:
     env:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: [ubuntu-latest]
+    timeout-minutes: ${{ inputs.timeout }}
     container:
       image: ${{ inputs.image }}
     strategy:
@@ -108,6 +114,7 @@ jobs:
     env:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: [ubuntu-latest]
+    timeout-minutes: ${{ inputs.timeout }}
     container:
       image: ${{ inputs.image }}
     strategy:

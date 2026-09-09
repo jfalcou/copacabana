@@ -24,10 +24,15 @@ on:
         description: 'Container image to build in'
         type: string
         default: 'ghcr.io/jfalcou/compilers:v10'
+      timeout:
+        description: 'Minutes a job may take before the runner is taken back'
+        type: number
+        default: 120
 
 jobs:
   package-standalone:
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
     permissions:
       contents: write
       pull-requests: write

@@ -45,11 +45,16 @@ on:
         description: 'Parallel compilations. Two is what a 4 core, 15 GiB runner carries for units peaking above 3 GiB.'
         type: number
         default: 2
+      timeout:
+        description: 'Minutes a job may take before the runner is taken back'
+        type: number
+        default: 120
 
 jobs:
   measure:
     name: Compile Cost
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
     container:
       image: ${{ inputs.image }}
     permissions:

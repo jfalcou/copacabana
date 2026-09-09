@@ -28,6 +28,10 @@ on:
         description: 'Test subset filtering rule for ctest (-R). Empty runs every registered test.'
         type: string
         default: ''
+      timeout:
+        description: 'Minutes a job may take before the runner is taken back'
+        type: number
+        default: 120
 
 permissions:
   contents: read
@@ -36,6 +40,7 @@ jobs:
   sanitizers:
     name: ${{ matrix.compiler.name }} (ASan+UBSan)
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
     container:
       image: ${{ inputs.image }}
     strategy:

@@ -22,6 +22,10 @@ on:
         description: 'pre-commit release to install, pinned rather than floating'
         type: string
         default: '4.6.2'
+      timeout:
+        description: 'Minutes a job may take before the runner is taken back'
+        type: number
+        default: 120
 
 permissions:
   contents: read
@@ -30,6 +34,7 @@ jobs:
   precommit:
     name: Pre-commit
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
