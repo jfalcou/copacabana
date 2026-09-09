@@ -10,9 +10,8 @@ import collections
 import colorsys
 import pathlib
 import re
-import sys
 
-from checks import expect, report
+from checks import cli, expect, report
 
 
 def main(out):
@@ -88,7 +87,4 @@ def main(out):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(__doc__)
-        sys.exit(2)
-    sys.exit(main(sys.argv[1]))
+    cli(main)

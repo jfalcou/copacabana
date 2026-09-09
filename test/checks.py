@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""One shape for what the meta checks print.
+"""One shape for what the meta checks print, how they run a command, and how they read their command line.
 
 A check that says nothing when it passes leaves a reader with a green square and no idea what was looked at, which is
 how a check that stopped looking goes unnoticed. Every check names itself, whether it holds or not, and the run ends
 on a count plus a table in the job summary when GitHub is watching.
 """
+import inspect
 import os
 import pathlib
+import subprocess
+import sys
 
 _results = []
 
@@ -39,3 +42,27 @@ def report(title):
             out.write("\n".join(lines) + "\n")
 
     return 1 if bad else 0
+
+
+def run(*command, **kwargs):
+    """Run a command and hand back its result, with the output captured as text.
+
+    The scripts read the return code themselves, so nothing here raises on a failure.
+    """
+    return subprocess.run(command, capture_output=True, text=True, **kwargs)
+
+
+def cli(main):
+    """Hand the command line to main and leave on what it gives back.
+
+    How many arguments a script takes is read off main itself, and the module docstring is the usage message.
+    """
+    wanted = inspect.signature(main).parameters
+    least = sum(1 for p in wanted.values() if p.default is p.empty)
+    given = sys.argv[1:]
+
+    if not least <= len(given) <= len(wanted):
+        print(sys.modules["__main__"].__doc__ or "")
+        sys.exit(2)
+
+    sys.exit(main(*given))

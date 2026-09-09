@@ -9,27 +9,22 @@ summary with it, which is what the CI guard exists to avoid.
 """
 import os
 import pathlib
-import subprocess
 import sys
 import tempfile
 
-from checks import expect, report
+from checks import cli, expect, report, run
 
 BANNER = "ATTENTION: DEVELOPMENT ENVIRONMENT SETUP"
 SUMMARY = "(via NARROW_BUILD_TEST)"
 
 
-def run(command, cwd=None, env=None):
-    return subprocess.run(command, cwd=cwd, env=env, capture_output=True, text=True)
-
-
 def scaffold(root, where):
     """A project the scaffolder wrote, turned into a git checkout with no hook installed."""
-    run([sys.executable, "tools/new-project.py", where, "--name", "narrow", "--brief", "A narrower library",
-         "--remote", "https://github.com/someone/narrow", "--presets", "gcc", "--no-standalone"], cwd=root)
-    run(["git", "init", "--quiet", "."], cwd=where)
-    run(["git", "add", "--all"], cwd=where)
-    run(["git", "-c", "user.email=ci@example.org", "-c", "user.name=CI", "commit", "--quiet", "-m", "init"], cwd=where)
+    run(sys.executable, "tools/new-project.py", where, "--name", "narrow", "--brief", "A narrower library",
+        "--remote", "https://github.com/someone/narrow", "--presets", "gcc", "--no-standalone", cwd=root)
+    run("git", "init", "--quiet", ".", cwd=where)
+    run("git", "add", "--all", cwd=where)
+    run("git", "-c", "user.email=ci@example.org", "-c", "user.name=CI", "commit", "--quiet", "-m", "init", cwd=where)
 
 
 def configure(root, where, build, ci):
@@ -39,7 +34,7 @@ def configure(root, where, build, ci):
     if ci:
         env["CI"] = "true"
 
-    result = run(["cmake", "-S", where, "-B", build, f"-DCPM_COPACABANA_SOURCE={root}"], env=env)
+    result = run("cmake", "-S", where, "-B", build, f"-DCPM_COPACABANA_SOURCE={root}", env=env)
     expect(f"the configure succeeds with CI {'set' if ci else 'unset'}", result.returncode == 0, result.stderr[-400:])
     return result.stdout
 
@@ -63,4 +58,4 @@ def main(root: str = ".") -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(*sys.argv[1:]))
+    cli(main)

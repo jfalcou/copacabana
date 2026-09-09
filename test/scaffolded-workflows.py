@@ -12,9 +12,8 @@ starts, and reports it as a run with no jobs and no logs, so it is worth catchin
 """
 import pathlib
 import re
-import sys
 
-from checks import expect, report
+from checks import cli, expect, report
 
 JOB = re.compile(r"^  ([A-Za-z0-9_-]+):$", re.M)
 NEEDS = re.compile(r"needs:\s*\[([^\]]*)\]")
@@ -52,4 +51,4 @@ def main(root: str) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(*sys.argv[1:]))
+    cli(main)

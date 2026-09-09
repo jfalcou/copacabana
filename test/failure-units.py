@@ -9,18 +9,15 @@ failure test three ways and reads the verdict each time.
 """
 import pathlib
 import re
-import subprocess
-import sys
 import tempfile
 
-from checks import expect, report
+from checks import cli, expect, report, run
 
 SOURCE = "test/example/test/failure/clamp_needs_ordering.cpp"
 
 
 def ctest(build):
-    out = subprocess.run(["ctest", "--test-dir", str(build), "-R", "failure", "--output-on-failure"],
-                         capture_output=True, text=True)
+    out = run("ctest", "--test-dir", str(build), "-R", "failure", "--output-on-failure")
     return out.returncode == 0, out.stdout + out.stderr
 
 
@@ -31,8 +28,8 @@ def main(source):
 
     with tempfile.TemporaryDirectory() as tmp:
         build = pathlib.Path(tmp, "build")
-        out = subprocess.run(["cmake", "-S", f"{source}/test/example", "-B", str(build), "-G", "Ninja",
-                              f"-DCPM_COPACABANA_SOURCE={source}"], capture_output=True, text=True)
+        out = run("cmake", "-S", f"{source}/test/example", "-B", str(build), "-G", "Ninja",
+                  f"-DCPM_COPACABANA_SOURCE={source}")
         if out.returncode:
             print(f"  FAIL  the example does not configure\n{out.stderr}")
             return 1
@@ -67,7 +64,4 @@ def main(source):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(__doc__)
-        sys.exit(2)
-    sys.exit(main(sys.argv[1]))
+    cli(main)
