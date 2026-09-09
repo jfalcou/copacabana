@@ -133,6 +133,18 @@ jobs:
           git -C /tmp/narrow -c user.email=ci@example.org -c user.name=CI commit --quiet -m init
           cd /tmp/narrow && pre-commit run --all-files --show-diff-on-failure --color=always
 
+  test-precommit-banner:
+    name: CMake / Pre-commit Banner
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/jfalcou/compilers:v10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Check who the banner reaches
+        run: python3 test/precommit-banner.py .
+
   test-template-pin:
     name: Scaffold / Template Pins
     runs-on: ubuntu-latest
