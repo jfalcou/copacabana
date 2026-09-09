@@ -53,6 +53,7 @@ jobs:
 
           args=(--build --preset gcc-coverage --config Debug)
           if [ -n "$TARGETS" ]; then
+            # shellcheck disable=SC2206 # a space-separated list of targets, split on purpose
             args+=(--target $TARGETS)
           fi
 

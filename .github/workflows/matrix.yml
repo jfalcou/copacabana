@@ -142,6 +142,7 @@ jobs:
               echo "Setup script not found: $SETUP_SCRIPT"
               exit 1
             fi
+            # shellcheck disable=SC1090 # the row names the script, so its path is only known here
             source "$SETUP_SCRIPT"
           fi
 
@@ -151,6 +152,7 @@ jobs:
           CMAKE_ARGS="${CMAKE_ARGS//\$GITHUB_WORKSPACE/$WORKSPACE}"
 
           # Unquoted on purpose: the row passes a whole argument list, not a single argument.
+          # shellcheck disable=SC2086
           if [ -n "$WRAP" ]; then
             "$WRAP" cmake --preset "$PRESET" $CMAKE_ARGS
           else
@@ -159,6 +161,7 @@ jobs:
 
           args=(--build --preset "$PRESET" --config "$CONFIG")
           if [ -n "$TARGETS" ]; then
+            # shellcheck disable=SC2206 # a space-separated list of targets, split on purpose
             args+=(--target $TARGETS)
           fi
 
