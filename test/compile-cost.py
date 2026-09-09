@@ -35,7 +35,8 @@ def main():
     ## and lands here too. What has to hold is that every unit is in, once at least, and that the report read one
     ## row per object, not per line.
     objects = {line.split(",")[1] for line in lines}
-    expect("one object per unit at least, %d units, %d objects" % (len(units), len(objects)), len(objects) >= len(units))
+    expect("one object per unit at least, %d units, %d objects" % (len(units), len(objects)),
+           len(objects) >= len(units))
     for unit in units:
         expect("%s is measured" % unit, any(str(unit) in obj for obj in objects))
 
@@ -44,7 +45,8 @@ def main():
     if summary.is_file():
         text = summary.read_text()
         expect("the summary counts the units", "translation units" in text)
-        expect("the summary names the project", "EXAMPLE compile cost" in text or "example compile cost" in text.lower())
+        expect("the summary names the project",
+               "EXAMPLE compile cost" in text or "example compile cost" in text.lower())
 
     full = cost / "example-compile-cost.md"
     expect("example-compile-cost.md is written", full.is_file())

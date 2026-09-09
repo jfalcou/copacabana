@@ -11,10 +11,10 @@ This script pre-processes files to aggregate every matching includes to
 create a single file by removing extra includes guard, C comments and other noises.
 """
 
+import argparse
+import os.path
 import re
 import sys
-import os.path
-import argparse
 
 # defaults paths to look for includes
 default_includes_path = ['.']

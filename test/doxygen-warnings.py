@@ -11,6 +11,8 @@ import re
 import subprocess
 import sys
 
+from checks import expect, report
+
 WORKFLOW = ".github/workflows/documentation.yml"
 
 # What doxygen actually writes, and whether the job has to count it. The first shape names a file and a line;
@@ -31,10 +33,6 @@ LINES = [
     (False, "  * `is_error`: reports whether the operation failed"),
     (False, "Generating docs for page error_handling..."),
 ]
-
-from checks import expect, report
-
-
 def pattern_from(workflow):
     """The grep -E pattern the job feeds doxygen.log, taken from the workflow itself."""
     text = pathlib.Path(workflow).read_text(encoding="utf-8")

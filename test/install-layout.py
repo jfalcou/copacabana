@@ -8,11 +8,11 @@ through each of the three ways of choosing, and ends by having a consumer find o
   python3 test/install-layout.py <copacabana source directory>
 """
 import pathlib
-import re
-import shutil
 import subprocess
 import sys
 import tempfile
+
+from checks import expect, report
 
 CONSUMER = """cmake_minimum_required(VERSION 3.22)
 project(consumer LANGUAGES CXX)
@@ -20,10 +20,6 @@ find_package(example 1.2 REQUIRED)
 add_executable(use main.cpp)
 target_link_libraries(use PRIVATE example::example)
 """
-
-from checks import expect, report
-
-
 def run(*args, **kwargs):
     return subprocess.run(args, capture_output=True, text=True, **kwargs)
 

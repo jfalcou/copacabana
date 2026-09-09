@@ -2,9 +2,10 @@
 # Copacabana - Common CMake Package Tools
 # Copyright : Copacabana Project Contributors
 # SPDX-License-Identifier: BSL-1.0
+import argparse
 import re
 import sys
-import argparse
+
 
 def process_text(text, prefix):
   """
