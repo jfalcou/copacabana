@@ -65,9 +65,8 @@ jobs:
       - name: Fetch current branch
         uses: actions/checkout@v7
 
-      ## Both steps are JavaScript actions, which the runner supplies its own node for, so they work inside a
-      ## container that carries none. The run looked up is one of the calling workflow's, whose file is read off its
-      ## reference: a called workflow knows no name of its own.
+      ## The run looked up is one of the calling workflow's, whose file is read off its reference: a called
+      ## workflow knows no name of its own.
       - name: Find the reference run
         id: reference
         if: github.event_name == 'pull_request'
@@ -88,6 +87,8 @@ jobs:
             });
             return runs.data.workflow_runs.length ? String(runs.data.workflow_runs[0].id) : '';
 
+      ## Both this step and the one above are JavaScript actions, which the runner supplies its own node for, so
+      ## they work inside a container that carries none.
       - name: Fetch the reference measured on main
         if: steps.reference.outputs.result != ''
         continue-on-error: true
