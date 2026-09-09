@@ -17,3 +17,16 @@ updates:
         patterns:
           - "*"
     open-pull-requests-limit: 3
+
+  ## The copacabana pins here stay ignored: a scaffolded project names a published tag, not the tip of main.
+  - package-ecosystem: "github-actions"
+    directory: "/tools/template"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "jfalcou/copacabana/*"
+    groups:
+      template-actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 3
