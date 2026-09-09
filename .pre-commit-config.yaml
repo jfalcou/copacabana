@@ -14,6 +14,20 @@ repos:
   - id: check-yaml
   - id: end-of-file-fixer
   - id: trailing-whitespace
+- repo: https://github.com/rhysd/actionlint
+  rev: v1.7.12
+  hooks:
+  - id: actionlint
+    # The template ships workflows of its own, which is what a scaffolded project starts from.
+    files: '^(\.github|tools/template/\.github)/workflows/'
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.16.6
+  hooks:
+  - id: ruff-check
+    # The .cmake-format.py files are read by cmake-format with section() and friends injected, so they are not
+    # importable modules and every name in them reads as undefined.
+    exclude: '\.cmake-format\.py$'
+    args: ["--select=E,F,W,I", "--line-length=120"]
 - repo: https://github.com/cheshirekow/cmake-format-precommit
   rev: v0.6.13
   hooks:

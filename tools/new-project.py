@@ -243,7 +243,8 @@ def settings(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--name", help="Project name, when it differs from the directory name")
     parser.add_argument("--brief", help="One line describing what the project is")
     parser.add_argument("--remote", help="Required. Where the repository will live, as a url")
-    parser.add_argument("--presets", help=f"Comma-separated groups or names ({', '.join(PRESET_GROUPS)}, default native)")
+    parser.add_argument("--presets",
+                        help=f"Comma-separated groups or names ({', '.join(PRESET_GROUPS)}, default native)")
     parser.add_argument("--standalone", action="store_true", default=None, help="Ship the standalone header target")
     parser.add_argument("--no-standalone", dest="standalone", action="store_false", help="Leave the standalone out")
     args = parser.parse_args(argv)

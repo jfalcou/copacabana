@@ -30,7 +30,7 @@ jobs:
       - name: Configure Project
         run: |
           cd test/example
-          cmake -B build -S . -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE
+          cmake -B build -S . -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE"
       - name: Build Project
         run: |
           cd test/example
@@ -42,7 +42,8 @@ jobs:
       - name: Verify DEB Package Validity
         run: |
           cd test/example
-          DEB_FILE=$(ls build/*.deb | head -n 1)
+          files=(build/*.deb)
+          DEB_FILE=${files[0]}
           echo "Validating DEB Package: $DEB_FILE"
 
           echo "--- DEB Metadata ---"
@@ -54,7 +55,8 @@ jobs:
       - name: Verify RPM Package Validity
         run: |
           cd test/example
-          RPM_FILE=$(ls build/*.rpm | head -n 1)
+          files=(build/*.rpm)
+          RPM_FILE=${files[0]}
           echo "Validating RPM Package: $RPM_FILE"
 
           echo "--- RPM Metadata ---"
@@ -89,7 +91,7 @@ jobs:
           python3 tools/new-project.py /tmp/scaffolded --name mylib --brief "A scaffolded library" \
                   --remote https://github.com/someone/mylib
           cmake -S /tmp/scaffolded -B /tmp/scaffolded/build -G Ninja \
-                -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE -DMYLIB_BUILD_DOCUMENTATION=ON
+                -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE" -DMYLIB_BUILD_DOCUMENTATION=ON
 
       - name: Build what it declares
         run: cmake --build /tmp/scaffolded/build --target mylib-test mylib-doxygen --parallel 2
@@ -192,7 +194,7 @@ jobs:
       - name: Generate the example documentation
         run: |
           cmake -S test/example -B build/doc -G Ninja \
-                -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE \
+                -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE" \
                 -DEXAMPLE_BUILD_TEST=OFF -DEXAMPLE_BUILD_DOCUMENTATION=ON
           cmake --build build/doc --target example-doxygen
 
@@ -210,7 +212,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Install the example three ways and look
-        run: python3 test/install-layout.py $GITHUB_WORKSPACE
+        run: python3 test/install-layout.py "$GITHUB_WORKSPACE"
 
   test-package-consumption:
     name: Package / Consumption
@@ -245,7 +247,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Break the failing test three ways and read the verdict
-        run: python3 test/failure-units.py $GITHUB_WORKSPACE
+        run: python3 test/failure-units.py "$GITHUB_WORKSPACE"
 
   test-two-consumers:
     name: CMake / Two Consumers in One Build
@@ -258,7 +260,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Configure Two Consumers
-        run: cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$GITHUB_WORKSPACE
+        run: cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR="$GITHUB_WORKSPACE"
 
   verify-hierarchy:
     name: CMake / Ninja Target Hierarchy
@@ -274,7 +276,7 @@ jobs:
         run: |
           cd test/example
           cmake -G Ninja -B build -S . \
-                -DCPM_COPACABANA_SOURCE=$GITHUB_WORKSPACE \
+                -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE" \
                 \
                 -DOPT_QUIET=ON
 

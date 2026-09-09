@@ -13,9 +13,9 @@ import subprocess
 import sys
 import tempfile
 
-SOURCE = "test/example/test/failure/clamp_needs_ordering.cpp"
-
 from checks import expect, report
+
+SOURCE = "test/example/test/failure/clamp_needs_ordering.cpp"
 
 
 def ctest(build):
