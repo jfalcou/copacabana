@@ -35,6 +35,10 @@ on:
         description: 'Below this many files parsed, the Doxygen run is treated as not having happened'
         type: number
         default: 10
+      timeout:
+        description: 'Minutes a job may take before the runner is taken back'
+        type: number
+        default: 120
 
 permissions:
   contents: write
@@ -45,6 +49,7 @@ jobs:
   generate-doc:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
     container:
       image: ${{ inputs.image }}
     strategy:
@@ -118,6 +123,7 @@ jobs:
     name: Doxygen warnings
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
     container:
       image: ${{ inputs.image }}
     steps:

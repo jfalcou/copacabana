@@ -104,7 +104,7 @@ jobs:
           print("test-targets=" + str(spec.get("test-targets", "")))
           print("memcheck=" + ("true" if spec.get("memcheck", False) else "false"))
           print("test-timeout=" + str(spec.get("test-timeout", 600)))
-          print("timeout=" + str(spec.get("timeout", 60)))
+          print("timeout=" + str(spec.get("timeout", 120)))
           print("directory=" + str(spec.get("directory", ".")))
           EOF
 
