@@ -50,6 +50,11 @@ on:
         type: number
         default: 120
 
+      series:
+        description: 'Keep every measurement of a push on the ct-measures branch, for a curve over time'
+        type: boolean
+        default: false
+
 jobs:
   measure:
     name: Compile Cost
@@ -129,6 +134,40 @@ jobs:
       ## Main leaves the reference every pull request is read against, kept long enough to see a trend. A pull request
       ## leaves its own table, kept while the review lasts. Both files sit at the artifact's root, which is where the
       ## download above looks.
+      ## The series a curve is read from. An artifact expires at 90 days and gh-pages is replaced by every
+      ## documentation deployment, so the measurements keep a branch of their own.
+      - name: Collect the measurement into the series
+        if: inputs.series && github.event_name == 'push'
+        shell: bash
+        env:
+          PROJECT: ${{ inputs.project }}
+          PRESET: ${{ inputs.preset }}
+          SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p series
+          cp "build/$PRESET/compile-cost/$PROJECT-compile-cost.csv" "series/$SHA.csv"
+          curl -sfL "https://raw.githubusercontent.com/$REPO/ct-measures/index.json" -o series/index.json \
+            || echo "[]" > series/index.json
+
+          python3 - "series/index.json" "build/$PRESET/compile-cost/$PROJECT-compile-cost.json" <<'EOF'
+          import datetime, json, os, sys
+
+          index = json.load(open(sys.argv[1]))
+          entry = json.load(open(sys.argv[2]))
+          entry["sha"] = os.environ["SHA"]
+          entry["branch"] = os.environ["BRANCH"]
+          entry["date"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          # A rerun measures the same commit again, and the last word is the one that counts.
+          index = [e for e in index if e.get("sha") != entry["sha"]]
+          index.append(entry)
+          index.sort(key=lambda e: e["date"])
+          json.dump(index, open(sys.argv[1], "w"), indent=1, sort_keys=True)
+          print(f"{len(index)} measurement(s) in the series")
+          EOF
+
       - name: Upload the measurement
         if: always()
         uses: actions/upload-artifact@v7
@@ -139,3 +178,37 @@ jobs:
             build/${{ inputs.preset }}/compile-cost/${{ inputs.project }}-compile-cost.csv
           if-no-files-found: warn
           retention-days: ${{ github.event_name == 'push' && 90 || 14 }}
+
+      - name: Hand the series to the job that publishes it
+        if: inputs.series && github.event_name == 'push'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.project }}-ct-measures
+          path: series
+          retention-days: 1
+
+  ## Publishing is a job of its own because it writes to the repository, which the measurement has no business
+  ## doing: a caller that leaves `series` alone never reaches this, and never has to grant more than a read.
+  publish:
+    name: Compile Cost Series
+    needs: measure
+    if: inputs.series && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch what the measurement collected
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.project }}-ct-measures
+          path: series
+
+      - name: Publish it on ct-measures
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: ct-measures
+          publish_dir: ./series
+          keep_files: true
+          commit_message: "Measurement of ${{ github.sha }}"
