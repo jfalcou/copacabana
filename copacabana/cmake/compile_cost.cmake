@@ -5,7 +5,7 @@
 ##======================================================================================================================
 
 ##======================================================================================================================
-## Record what every translation unit costs to compile, and report on it
+## Record what every translation unit costs to compile and every executable to link, and report on it
 ##
 ## copa_setup_compile_cost( <target>
 ##                          [PREFIX   <name>] # Prefix of the generated targets, defaults to the lowercased project name
@@ -46,13 +46,17 @@ function(copa_setup_compile_cost target)
 
   target_compile_options(${target} INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-fproc-stat-report=${COST_CSV}>)
 
+  ## The driver spawns the linker, which the same flag on the link line records under the linker's own name in the
+  ## first column. Without it every executable of the suite links unmeasured.
+  target_link_options(${target} INTERFACE -fproc-stat-report=${COST_CSV})
+
   # A multi-config generator files the objects under <target>.dir/<config>/, and that segment is build layout, not
   # something a reader recognises. A single-config generator has no such segment, and stripping one that is not there
   # does nothing.
   set(REPORT_COMMAND
       ${CMAKE_COMMAND} -E env python3 "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/compile_cost.py" "${COST_CSV}"
       --title "${PROJECT_NAME} compile cost" --strip "$<CONFIG>/" --summary "${COST_DIR}/summary.md" --full
-      "${COST_DIR}/${OPT_PREFIX}-compile-cost.md")
+      "${COST_DIR}/${OPT_PREFIX}-compile-cost.md" --entry "${COST_DIR}/${OPT_PREFIX}-compile-cost.json")
 
   if(OPT_BASELINE)
     list(APPEND REPORT_COMMAND --baseline "${OPT_BASELINE}")

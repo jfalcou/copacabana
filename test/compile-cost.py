@@ -33,11 +33,15 @@ def main(build, example):
     ## clang appends, and any build after the measurement adds its lines: the time trace target rebuilds the units
     ## and lands here too. What has to hold is that every unit is in, once at least, and that the report read one
     ## row per object, not per line.
-    objects = {line.split(",")[1] for line in lines}
+    ## The first column is the program the driver spawned: the linker's lines measure an executable, not a unit.
+    objects = {line.split(",")[1] for line in lines if "clang" in line.split(",")[0]}
+    linked = {line.split(",")[1] for line in lines if "clang" not in line.split(",")[0]}
     expect("one object per unit at least, %d units, %d objects" % (len(units), len(objects)),
            len(objects) >= len(units))
     for unit in units:
         expect("%s is measured" % unit, any(str(unit) in obj for obj in objects))
+
+    expect("the executables are measured too, %d of them" % len(linked), len(linked) > 0)
 
     summary = cost / "summary.md"
     expect("summary.md is written", summary.is_file())
@@ -46,6 +50,7 @@ def main(build, example):
         expect("the summary counts the units", "translation units" in text)
         expect("the summary names the project",
                "EXAMPLE compile cost" in text or "example compile cost" in text.lower())
+        expect("the summary counts the links", "link" in text and "### Linking" in text)
 
     full = cost / "example-compile-cost.md"
     expect("example-compile-cost.md is written", full.is_file())
