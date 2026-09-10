@@ -49,60 +49,47 @@ jobs:
         if: matrix.check.pyyaml
         run: python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
 
-      ## A row is split into words and globbed, unquoted for that, but never expanded: it names a path, not a $VAR.
+      ## Evaluated rather than run as one word, a row being a shell command: globs, pipes and $(...) all work.
       - name: Check
+        shell: bash
         env:
           COMMAND: ${{ matrix.check.run }}
-        run: $COMMAND
+        run: eval "$COMMAND"
 
-  test-cpack:
-    name: Package / System Installers
+  ## The package checks: each one builds what a manager would ship, then reads it. spack is for the row that
+  ## consumes a published tree rather than a local install.
+  packages:
+    name: ${{ matrix.package.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - { name: "Package / System Installers", run: "python3 test/system-installers.py ." }
+          - { name: "Package / Install Layout"   , run: "python3 test/install-layout.py ." }
+          - { name: "Package / Consumption"      , run: "spack install copacabana &&
+                                                         python3 test/package-consumption.py $(spack location -i copacabana)",
+              spack: true }
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
+
       - name: Setup CMake and Ninja
         uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-      - name: Configure Project
-        run: |
-          cd test/example
-          cmake -B build -S . -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE"
-      - name: Build Project
-        run: |
-          cd test/example
-          cmake --build build
-      - name: Generate CPack Installers
-        run: |
-          cd test/example
-          cmake --build build --target package
-      - name: Verify DEB Package Validity
-        run: |
-          cd test/example
-          files=(build/*.deb)
-          DEB_FILE=${files[0]}
-          echo "Validating DEB Package: $DEB_FILE"
 
-          echo "--- DEB Metadata ---"
-          dpkg-deb -I "$DEB_FILE"
+      ## The published tree is laid out by the recipe, not by copa_setup_install, so it is read where it is
+      ## published. vcpkg and conan join with a row each once their ports land.
+      - name: Set up Spack
+        if: matrix.package.spack
+        uses: spack/setup-spack@v3
+        with:
+          buildcache: true
 
-          echo "--- DEB File Contents ---"
-          dpkg-deb -c "$DEB_FILE"
-
-      - name: Verify RPM Package Validity
-        run: |
-          cd test/example
-          files=(build/*.rpm)
-          RPM_FILE=${files[0]}
-          echo "Validating RPM Package: $RPM_FILE"
-
-          echo "--- RPM Metadata ---"
-          rpm -qpi "$RPM_FILE"
-
-          echo "--- RPM Dependencies ---"
-          rpm -qpR "$RPM_FILE"
-
-          echo "--- RPM File Contents ---"
-          rpm -qpl "$RPM_FILE"
+      - name: Check
+        shell: bash
+        env:
+          COMMAND: ${{ matrix.package.run }}
+        run: eval "$COMMAND"
 
 
   test-scaffolder:
@@ -183,41 +170,7 @@ jobs:
       - name: Check what it produced
         run: python3 test/doxygen-setup.py build/doc/doxygen-output
 
-  test-install-layout:
-    name: Package / Install Layout
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
 
-      - name: Setup CMake and Ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-
-      - name: Install the example three ways and look
-        run: python3 test/install-layout.py "$GITHUB_WORKSPACE"
-
-  test-package-consumption:
-    name: Package / Consumption
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Setup CMake and Ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-
-      ## The published tree is laid out by the recipe, not by copa_setup_install, so it is checked
-      ## where it is published. spack is the one that carries copacabana today; vcpkg and conan
-      ## join with a step each once their ports land.
-      - name: Set up Spack
-        uses: spack/setup-spack@v3
-        with:
-          buildcache: true
-
-      - name: Install copacabana and consume what it installed
-        run: |
-          spack install copacabana
-          python3 test/package-consumption.py "$(spack location -i copacabana)"
 
   test-two-consumers:
     name: CMake / Two Consumers in One Build
