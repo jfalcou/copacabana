@@ -10,20 +10,12 @@
 ## copa_setup_compile_cost( <target>
 ##                          [PREFIX   <name>] # Prefix of the generated targets, defaults to the lowercased project name
 ##                          [DEPENDS  <name>] # Target building the units to measure, defaults to <prefix>-test
-##                          [BASELINE <csv>]  # An earlier measurement to report the delta against
+##                          [BASELINE <csv>]  # An earlier measurement, else COPA_COMPILE_COST_BASELINE
 ##                        )
 ##
-## Clang appends one line per compiler process to a CSV: the wall time, the CPU time and the peak resident memory of
-## that process. Being per process, the figures do not move with -j, and writing them costs nothing measurable. The
-## flag goes on the interface target so that every unit linking against it is measured, and nothing else is.
-##
-## Generates <prefix>-compile-cost, which drops the CSV and rebuilds DEPENDS from a clean tree so that every unit is
-## in it, and <prefix>-compile-cost-report, which turns the CSV into compile-cost/summary.md, written for a job
-## summary, and compile-cost/<prefix>-compile-cost.md, which holds every unit. Both land under the build tree, beside
-## the CSV, compile-cost/<prefix>-compile-cost.csv: what a run attaches carries the project's name.
-##
-## The rebuild takes its parallelism from CMAKE_BUILD_PARALLEL_LEVEL, as any cmake --build does. A CI hands the
-## reference it downloaded through COPA_COMPILE_COST_BASELINE, so a project has nothing to plumb for the delta.
+## Generates <prefix>-compile-cost, which drops the CSV and rebuilds DEPENDS from a clean tree, and
+## <prefix>-compile-cost-report, which turns the CSV into compile-cost/summary.md for a job summary and
+## compile-cost/<prefix>-compile-cost.md for every unit, both beside the CSV under the build tree.
 ##======================================================================================================================
 function(copa_setup_compile_cost target)
   set(oneValueArgs PREFIX DEPENDS BASELINE)
@@ -96,12 +88,6 @@ endfunction()
 ##                        [DEPENDS <name>] # Target building the units to trace, defaults to <prefix>-test
 ##                        [SCAN    <dir>]  # Tree the traces are collected from, defaults to <build>/test
 ##                      )
-##
-## -ftime-trace makes clang write one JSON per unit with a per-phase and per-template breakdown, and ClangBuildAnalyzer
-## turns a tree of those into a ranking of the costliest files, templates and functions. That ranking only means
-## something over a corpus, so the target aggregates whatever DEPENDS built rather than one file at a time. It slows
-## compilation down and writes about a megabyte per unit, which is why it is a local target and not something a CI
-## runs: peak memory and CPU time come from copa_setup_compile_cost, which is cheap enough for every pull request.
 ##
 ## Generates <prefix>-time-trace, which drops the traces and objects an earlier build left, rebuilds DEPENDS, and
 ## writes the ranking to time-trace/ under the build tree.
