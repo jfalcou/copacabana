@@ -17,6 +17,7 @@ A measurement lives 90 days when it was taken on main, 14 on a pull request, so 
 """
 import argparse
 import io
+import json
 import pathlib
 import subprocess
 import sys
@@ -67,12 +68,59 @@ def fetch(repo, artifact_id, into):
     return into
 
 
+def seed(repo, taken, into, strip=""):
+    """Turn what is still downloadable into the series a branch would hold, one CSV per commit and one index.
+
+    The measurements of a pull request measure a state nothing was released from, so only the ones taken on the
+    default branch are kept, which is what the -reference suffix says.
+    """
+    entry_of = pathlib.Path(__file__).resolve().parent.parent / "copacabana/cmake/asset/compile_cost.py"
+    index = []
+    into.mkdir(parents=True, exist_ok=True)
+
+    for artifact, name, sha, branch, when in reversed(taken):
+        if not name.endswith("-reference"):
+            continue
+
+        csv = fetch(repo, artifact, into / f"{sha}.csv")
+        if not csv:
+            print(f"{sha[:7]} could not be read", file=sys.stderr)
+            continue
+
+        written = into / f"{sha}.json"
+        made = subprocess.run([sys.executable, str(entry_of), str(csv), "--entry", str(written),
+                               "--strip", strip], capture_output=True)
+        if made.returncode:
+            print(f"{sha[:7]} has no readable measurement", file=sys.stderr)
+            csv.unlink()
+            continue
+
+        entry = json.loads(written.read_text())
+        written.unlink()
+        entry.update({"sha": sha, "branch": branch, "date": when})
+        index.append(entry)
+        print(f"{sha[:7]}  {when[:10]}  {entry['units']} units")
+
+    if not index:
+        print("nothing to seed", file=sys.stderr)
+        return 1
+
+    index.sort(key=lambda e: e["date"])
+    (into / "index.json").write_text(json.dumps(index, indent=1, sort_keys=True))
+    print(f"\n{len(index)} measurement(s) in {into}/index.json, ready for the ct-measures branch")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("refs", nargs="*", help="commits, branches or tags, one or two")
     ap.add_argument("--repo", help="owner/name, when not asking about the repository you are in")
     ap.add_argument("--into", default="compile-cost", help="where the CSV files are written")
     ap.add_argument("--list", action="store_true", help="show what is still downloadable")
+    ap.add_argument("--seed", help="write every measurement of the default branch, plus its index, into this "
+                                   "directory, ready to become the ct-measures branch")
+    ap.add_argument("--strip", default="", help="path segment a multi-config generator adds, e.g. Debug/, which the "
+                                                "workflow strips too")
     args = ap.parse_args()
 
     repo = args.repo or repository()
@@ -84,6 +132,9 @@ def main():
     if not taken:
         print(f"{repo} has no compile cost measurement left to download", file=sys.stderr)
         return 1
+
+    if args.seed:
+        return seed(repo, taken, pathlib.Path(args.seed), args.strip)
 
     if args.list or not args.refs:
         print(f"{len(taken)} measurement(s) still there in {repo}\n")
