@@ -49,24 +49,33 @@ def module_of(unit):
 
 
 def read(path, strip=""):
-    """Peak RSS in KiB and CPU microseconds, keyed by the translation unit.
+    """Peak RSS in KiB and CPU microseconds, keyed by the translation unit, and the same for the links.
 
     A multi-config generator files the objects under `<target>.dir/<config>/`, and that segment is
     build layout too: `strip` names it, and is left alone where it is not there.
+
+    The first column is the program the driver spawned, so a line whose program is not the compiler is
+    the linker's: an executable, not a unit, and a figure that has no business in either total.
     """
-    out = {}
+    units, links = {}, {}
     with open(path, newline="") as f:
         for row in csv.reader(f):
             if len(row) != FIELDS:
                 continue
             try:
-                unit = unit_of(row[1])
-                if strip and unit.startswith(strip):
-                    unit = unit[len(strip):]
-                out[unit] = (int(row[4]), int(row[3]))
+                measure = (int(row[4]), int(row[3]))
             except ValueError:
                 continue
-    return out
+
+            if "clang" not in row[0]:
+                links[os.path.basename(row[1])] = measure
+                continue
+
+            unit = unit_of(row[1])
+            if strip and unit.startswith(strip):
+                unit = unit[len(strip):]
+            units[unit] = measure
+    return units, links
 
 
 def mib(kib):
@@ -134,7 +143,7 @@ def by_module(measures):
     return groups
 
 
-def headline(measures, title, level, grew_line=None):
+def headline(measures, title, level, grew_line=None, linked=None):
     """The facts worth stating before any table, as a list rather than a paragraph."""
     peaks = sorted(m for m, _ in measures.values())
     total_cpu = sum(c for _, c in measures.values())
@@ -154,6 +163,12 @@ def headline(measures, title, level, grew_line=None):
     share = "%.0f %%" % (100.0 * top_cpu / total_cpu) if total_cpu else "n/a"
     out.append("- `%s` carries %s of that CPU on its own, %s of the build, over %d units."
                % (top_mod, duration(top_cpu), share, len(top_units)))
+    if linked:
+        link_cpu = sum(c for _, c in linked.values())
+        worst_link, (link_mem, _) = max(linked.items(), key=lambda kv: kv[1][0])
+        out.append("- **%d link%s**, %s of CPU, the heaviest `%s` peaking at %s."
+                   % (len(linked), "" if len(linked) == 1 else "s", duration(link_cpu), worst_link,
+                      size(link_mem)))
     if grew_line:
         out.append(grew_line)
     return "\n".join(out) + "\n"
@@ -172,12 +187,12 @@ def main():
 
     out = open(args.summary, "w") if args.summary else sys.stdout
 
-    now = read(args.current, args.strip)
+    now, linked = read(args.current, args.strip)
     if not now:
         print("No measurement in `%s`." % args.current, file=out)
         return 0
 
-    was = read(args.baseline, args.strip) if args.baseline else {}
+    was, linked_was = read(args.baseline, args.strip) if args.baseline else ({}, {})
     d = bool(was)
 
     # Regressions first: what changed is what gets acted on.
@@ -193,7 +208,13 @@ def main():
                      % (len(grew), "" if len(grew) == 1 else "s")) if grew \
                     else "- Nothing grew by more than 5 % against the baseline."
 
-    print(headline(now, args.title, 2, grew_line), file=out)
+    print(headline(now, args.title, 2, grew_line, linked), file=out)
+
+    if linked:
+        print("\n### Linking\n", file=out)
+        ranked = sorted(linked.items(), key=lambda kv: kv[1][0], reverse=True)
+        print(table([(k, v[0], v[1], delta_cell(v[0], linked_was.get(k, (None,))[0]))
+                     for k, v in ranked[: args.top]], "Executable", d), file=out)
 
     if grew:
         print("\n### What grew\n", file=out)

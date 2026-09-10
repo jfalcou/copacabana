@@ -5,7 +5,7 @@
 ##======================================================================================================================
 
 ##======================================================================================================================
-## Record what every translation unit costs to compile, and report on it
+## Record what every translation unit costs to compile and every executable to link, and report on it
 ##
 ## copa_setup_compile_cost( <target>
 ##                          [PREFIX   <name>] # Prefix of the generated targets, defaults to the lowercased project name
@@ -45,6 +45,10 @@ function(copa_setup_compile_cost target)
   file(MAKE_DIRECTORY "${COST_DIR}")
 
   target_compile_options(${target} INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-fproc-stat-report=${COST_CSV}>)
+
+  ## The driver spawns the linker, which the same flag on the link line records under the linker's own name in the
+  ## first column. Without it every executable of the suite links unmeasured.
+  target_link_options(${target} INTERFACE -fproc-stat-report=${COST_CSV})
 
   # A multi-config generator files the objects under <target>.dir/<config>/, and that segment is build layout, not
   # something a reader recognises. A single-config generator has no such segment, and stripping one that is not there
