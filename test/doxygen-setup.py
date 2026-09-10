@@ -10,6 +10,7 @@ import collections
 import colorsys
 import pathlib
 import re
+import shutil
 import tempfile
 
 from checks import cli, expect, report, run
@@ -84,8 +85,6 @@ def inspect(out):
     # The panel doxygen puts on the right of every page, which this fleet does not want.
     expect("no page outline panel", "PageOutline" not in index and 'id="page-nav"' not in index)
 
-    return report("The shared Doxygen setup")
-
 
 def main(root: str = ".") -> int:
     """Generate the example documentation, then read what came out."""
@@ -102,7 +101,18 @@ def main(root: str = ".") -> int:
         if not expect("doxygen runs", out.returncode == 0, out.stderr[-300:]):
             return report("What the shared Doxygen setup produced")
 
-        return inspect(f"{tmp}/doxygen-output")
+        site = pathlib.Path(tmp, "doxygen-output")
+        inspect(site)
+        expect("the godbolt configuration reaches the pages", (site / "godbolt-config.js").exists())
+
+        ## Everything a page loads has to come back from a build alone: what only generate time writes is lost the
+        ## first time the output is cleaned, and the button disappears with nothing saying so.
+        shutil.rmtree(site)
+        out = run("cmake", "--build", tmp, "--target", "example-doxygen")
+        expect("doxygen runs again on a cleaned output", out.returncode == 0, out.stderr[-300:])
+        expect("the godbolt configuration comes back", (site / "godbolt-config.js").exists())
+
+    return report("What the shared Doxygen setup produced")
 
 
 if __name__ == "__main__":
