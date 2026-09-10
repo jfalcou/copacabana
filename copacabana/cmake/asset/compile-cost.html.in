@@ -302,6 +302,7 @@ footer a { color: var(--primary-color); }
       <button type="button" role="tab" id="tab-scatter" aria-controls="panel-scatter" aria-selected="false">Time against memory</button>
       <button type="button" role="tab" id="tab-modules-cpu" aria-controls="panel-modules-cpu" aria-selected="false">Modules by CPU time</button>
       <button type="button" role="tab" id="tab-modules-rss" aria-controls="panel-modules-rss" aria-selected="false">Modules by peak RSS</button>
+      <button type="button" role="tab" id="tab-links" aria-controls="panel-links" aria-selected="false">Linking</button>
       <button type="button" role="tab" id="tab-units" aria-controls="panel-units" aria-selected="false">Every unit</button>
     </div>
 
@@ -321,6 +322,15 @@ footer a { color: var(--primary-color); }
       <button type="button" class="icon save" data-chart="modules-rss" title="Save as PNG" aria-label="Save as PNG"></button>
       <svg id="modules-rss" viewBox="0 0 1080 320" role="img" aria-label="Peak memory per module"></svg>
     </div>
+    <div class="panel" id="panel-links" role="tabpanel" aria-labelledby="tab-links" hidden>
+      <div class="tablewrap">
+        <table>
+          <thead><tr id="link-head"></tr></thead>
+          <tbody id="link-body"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="panel" id="panel-units" role="tabpanel" aria-labelledby="tab-units" hidden>
       <div class="controls">
         <input type="search" id="q" placeholder="Filter by name" aria-label="Filter units"/>
@@ -378,8 +388,10 @@ function splitRow(line) {
   return out;
 }
 
+// The first column is the program the driver spawned, so a line whose program is not the compiler is
+// the linker's: an executable, not a unit, and a figure that belongs in neither total.
 function parse(text) {
-  var rows = [], seen = Object.create(null);
+  var rows = [], links = [], seen = Object.create(null), linked = Object.create(null);
   var lines = text.split(/\r?\n/);
   for (var i = 0; i < lines.length; i++) {
     if (!lines[i]) continue;
@@ -387,11 +399,17 @@ function parse(text) {
     if (f.length !== 5) continue;
     var rss = parseInt(f[4], 10), cpu = parseInt(f[3], 10);
     if (!isFinite(rss) || !isFinite(cpu)) continue;
+    if (f[0].indexOf("clang") < 0) {
+      var exe = f[1].split("/").pop();
+      linked[exe] = { unit: exe, rss: rss, cpu: cpu };
+      continue;
+    }
     var unit = unitOf(f[1]);
     seen[unit] = { unit: unit, module: moduleOf(unit), rss: rss, cpu: cpu };
   }
   for (var k in seen) rows.push(seen[k]);
-  return rows;
+  for (var e in linked) links.push(linked[e]);
+  return { rows: rows, links: links };
 }
 
 // ---- formatting --------------------------------------------------------------------------------
@@ -456,7 +474,8 @@ function moduleColor(i, n) {
 }
 
 // ---- state -------------------------------------------------------------------------------------
-var state = { rows: [], base: null, sort: { key: "rss", dir: -1 }, q: "", mod: "", colors: {} };
+var state = { rows: [], links: [], base: null, linkBase: null, sort: { key: "rss", dir: -1 },
+              q: "", mod: "", colors: {} };
 var SVGNS = "http://www.w3.org/2000/svg";
 
 function el(name, attrs, text) {
@@ -502,6 +521,14 @@ function renderFacts() {
   out.push("<span class=\"mono\">" + esc(top.module) + "</span> carries " + duration(top.cpu) +
            " of that CPU on its own, " + (100 * top.cpu / totalCpu).toFixed(0) +
            " % of the build, over " + top.units.length + " units.");
+
+  if (state.links.length) {
+    var linkCpu = state.links.reduce(function (a, r) { return a + r.cpu; }, 0);
+    var worstLink = state.links.reduce(function (a, r) { return r.rss > a.rss ? r : a; }, state.links[0]);
+    out.push("<b>" + state.links.length + " link" + (state.links.length === 1 ? "" : "s") + "</b>, " +
+             duration(linkCpu) + " of CPU, the heaviest <span class=\"mono\">" + esc(worstLink.unit) +
+             "</span> peaking at " + size(worstLink.rss) + ".");
+  }
 
   if (state.base) {
     var grew = rows.filter(function (r) {
@@ -790,26 +817,63 @@ function renderAll() {
   renderModuleFilter();
   renderHead();
   renderTable();
+  renderLinks();
+}
+
+// ---- linking ------------------------------------------------------------------------------------
+// One row per executable, heaviest first: an executable is not a unit, so it has no module and its
+// figures stay out of every total above.
+function renderLinks() {
+  var head = document.getElementById("link-head"), body = document.getElementById("link-body");
+  head.innerHTML = "";
+  body.innerHTML = "";
+  document.getElementById("tab-links").hidden = !state.links.length;
+  if (!state.links.length) return;
+
+  var cols = ["Executable", "Peak RSS", "CPU"];
+  if (state.linkBase) cols.push("\u0394 RSS");
+  cols.forEach(function (label, i) {
+    var th = document.createElement("th");
+    th.textContent = label;
+    if (i) th.className = "num";
+    head.appendChild(th);
+  });
+
+  state.links.slice().sort(function (a, b) { return b.rss - a.rss; }).forEach(function (r) {
+    var tr = document.createElement("tr");
+    tr.innerHTML = '<td class="mono">' + esc(r.unit) + "</td>" +
+                   '<td class="num">' + size(r.rss) + "</td>" +
+                   '<td class="num">' + duration(r.cpu) + "</td>";
+    if (state.linkBase) {
+      var p = pct(r.rss, state.linkBase[r.unit]);
+      tr.innerHTML += '<td class="num ' + p.cls + '">' + p.text + "</td>";
+    }
+    body.appendChild(tr);
+  });
 }
 
 // ---- loading -------------------------------------------------------------------------------
 function load(file, which) {
   var reader = new FileReader();
   reader.onload = function () {
-    var rows = parse(String(reader.result));
-    if (!rows.length) {
+    var read = parse(String(reader.result)), rows = read.rows;
+    if (!rows.length && !read.links.length) {
       document.getElementById("name-" + which).textContent =
         "no -fproc-stat-report line in that file";
       return;
     }
     if (which === "now") {
       state.rows = rows;
+      state.links = read.links;
     } else {
       state.base = {};
+      state.linkBase = {};
       rows.forEach(function (r) { state.base[r.unit] = r.rss; });
+      read.links.forEach(function (r) { state.linkBase[r.unit] = r.rss; });
     }
     document.getElementById("slot-" + which).classList.add("filled");
-    document.getElementById("name-" + which).textContent = file.name + " — " + rows.length + " units";
+    document.getElementById("name-" + which).textContent =
+      file.name + " — " + rows.length + " units, " + read.links.length + " links";
     renderAll();
   };
   reader.readAsText(file);
