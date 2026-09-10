@@ -19,35 +19,73 @@ jobs:
     name: Meta Checks
     uses: ./.github/workflows/precommit.yml
 
-  ## The checks that are a checkout and a command, in one job. A row says what it is called and what it runs; image
-  ## and depth are for the rows that need a container or the tags.
+  ## Every check the repository runs, in one job: a row says what it is called and what it runs, and names what it
+  ## needs to run it.
   checks:
     name: ${{ matrix.check.name }}
     runs-on: ubuntu-latest
     container:
-      image: ${{ matrix.check.image }}
+      image: ${{ matrix.check.image && format('ghcr.io/jfalcou/compilers:{0}', matrix.check.image) || '' }}
     strategy:
       fail-fast: false
       matrix:
         check:
-          - { name: "Docs / Assets"             , depth: 1, run: "node --test test/*.test.js" }
-          - { name: "Docs / Warning Count"      , depth: 1, run: "python3 test/doxygen-warnings.py ." }
-          - { name: "Scaffold / Template Pins"  , depth: 0, run: "python3 test/template-pin.py ." }
-          - { name: "Workflows / Matrix Outputs", depth: 1, run: "python3 test/matrix-outputs.py .", pyyaml: true }
-          - { name: "CMake / Pre-commit Banner" , depth: 1, run: "python3 test/precommit-banner.py .",
-              image: "ghcr.io/jfalcou/compilers:v10" }
-          - { name: "CMake / Sources That Must Not Compile", depth: 1,
-              run: "python3 test/failure-units.py .", image: "ghcr.io/jfalcou/compilers:v10" }
+          - { name: "Docs / Assets"             , run: "node --test test/*.test.js" }
+          - { name: "Docs / Warning Count"      , run: "python3 test/doxygen-warnings.py ." }
+          - { name: "Docs / Shared Setup"       , run: "python3 test/doxygen-setup.py ."   , image: "v10" }
+          - { name: "Scaffold / Project"        , run: "python3 test/scaffolder.py ."      , image: "v10" }
+          - { name: "Scaffold / Hooks"          , run: "python3 test/scaffolded-hooks.py .", python: true }
+          - { name: "Scaffold / Template Pins"  , run: "python3 test/template-pin.py ."    , tags: true }
+          - { name: "Workflows / Matrix Outputs", run: "python3 test/matrix-outputs.py ."  , pyyaml: true }
+          - { name: "CMake / Pre-commit Banner" , run: "python3 test/precommit-banner.py .", image: "v10" }
+          - { name: "CMake / Ninja Target Hierarchy", run: "python3 test/target-hierarchy.py .", cmake: true }
+          - { name: "CMake / Sources That Must Not Compile", run: "python3 test/failure-units.py .", image: "v10" }
+          - { name: "CMake / Two Consumers in One Build", cmake: true,
+              run: "cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$PWD" }
+          - { name: "Package / System Installers", run: "python3 test/system-installers.py .", cmake: true }
+          - { name: "Package / Install Layout"   , run: "python3 test/install-layout.py ."  , cmake: true }
+          - { name: "Package / Consumption"      , cmake: true, spack: true,
+              run: "spack install copacabana &&
+                    python3 test/package-consumption.py $(spack location -i copacabana)" }
     steps:
-      ## The tags are what the template pins are checked against, so that row asks for the whole history.
       - name: Checkout Code
+        if: ${{ !matrix.check.tags }}
+        uses: actions/checkout@v7
+
+      ## The tags are what the template pins are checked against, so that row asks for the whole history.
+      - name: Checkout Code and its tags
+        if: matrix.check.tags
         uses: actions/checkout@v7
         with:
-          fetch-depth: ${{ matrix.check.depth }}
+          fetch-depth: 0
+
+      - name: Setup CMake and Ninja
+        if: matrix.check.cmake
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+
+      ## The container the builds use carries neither pip nor a venv, so a row needing pre-commit runs outside it,
+      ## on the Python and the pinned release of the shared gate.
+      - name: Set up Python
+        if: matrix.check.python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Install pre-commit
+        if: matrix.check.python
+        run: pip install --only-binary ":all:" pre-commit==4.6.2
 
       - name: Install PyYAML
         if: matrix.check.pyyaml
         run: python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
+
+      ## The published tree is laid out by the recipe, not by copa_setup_install, so it is read where it is
+      ## published. vcpkg and conan join with a row each once their ports land.
+      - name: Set up Spack
+        if: matrix.check.spack
+        uses: spack/setup-spack@v3
+        with:
+          buildcache: true
 
       ## Evaluated rather than run as one word, a row being a shell command: globs, pipes and $(...) all work.
       - name: Check
@@ -55,176 +93,3 @@ jobs:
         env:
           COMMAND: ${{ matrix.check.run }}
         run: eval "$COMMAND"
-
-  ## The package checks: each one builds what a manager would ship, then reads it. spack is for the row that
-  ## consumes a published tree rather than a local install.
-  packages:
-    name: ${{ matrix.package.name }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package:
-          - { name: "Package / System Installers", run: "python3 test/system-installers.py ." }
-          - { name: "Package / Install Layout"   , run: "python3 test/install-layout.py ." }
-          - { name: "Package / Consumption"      , run: "spack install copacabana &&
-                                                         python3 test/package-consumption.py $(spack location -i copacabana)",
-              spack: true }
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Setup CMake and Ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-
-      ## The published tree is laid out by the recipe, not by copa_setup_install, so it is read where it is
-      ## published. vcpkg and conan join with a row each once their ports land.
-      - name: Set up Spack
-        if: matrix.package.spack
-        uses: spack/setup-spack@v3
-        with:
-          buildcache: true
-
-      - name: Check
-        shell: bash
-        env:
-          COMMAND: ${{ matrix.package.run }}
-        run: eval "$COMMAND"
-
-
-  test-scaffolder:
-    name: Scaffold / Project
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/jfalcou/compilers:v10
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Scaffold a project and configure it
-        run: |
-          python3 tools/new-project.py /tmp/scaffolded --name mylib --brief "A scaffolded library" \
-                  --remote https://github.com/someone/mylib
-          cmake -S /tmp/scaffolded -B /tmp/scaffolded/build -G Ninja \
-                -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE" -DMYLIB_BUILD_DOCUMENTATION=ON
-
-      - name: Build what it declares
-        run: cmake --build /tmp/scaffolded/build --target mylib-test mylib-doxygen --parallel 2
-
-      ## What the caller leaves out has to leave with it. Asking for neither the standalone nor a Windows preset is
-      ## what turns a job into a name nothing declares, and a workflow into a call to a file that was not written.
-      - name: Scaffold what asks for less, and read what it wrote
-        run: |
-          python3 tools/new-project.py /tmp/narrow --name narrow --brief "A narrower library" \
-                  --remote https://github.com/someone/narrow --presets gcc,clang --no-standalone
-          python3 test/scaffolded-workflows.py /tmp/narrow
-          test ! -f /tmp/narrow/.github/matrices/windows.yml
-          test ! -f /tmp/narrow/.github/workflows/standalone.yml
-          ## Two rows survive out of ten: a matrix keeps its file while one preset holds, not its every row.
-          test "$(grep -c -- '- {' /tmp/narrow/.github/matrices/linux.yml)" = 2
-
-  ## The hooks a scaffolded project ships have to pass on what was scaffolded, and they need the Python the shared
-  ## gate runs under: the container the builds use carries neither pip nor a venv. So this is precommit.yml's own
-  ## setup, same Python, same pinned release, pointed at a tree the scaffolder just wrote.
-  test-scaffolded-hooks:
-    name: Scaffold / Hooks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.x'
-
-      - name: Install pre-commit
-        run: pip install --only-binary ":all:" pre-commit==4.6.2
-
-      - name: Scaffold a project and run its hooks on it
-        run: |
-          python3 tools/new-project.py /tmp/narrow --name narrow --brief "A narrower library" \
-                  --remote https://github.com/someone/narrow --presets gcc,clang --no-standalone
-          git -C /tmp/narrow init --quiet .
-          git -C /tmp/narrow add --all
-          git -C /tmp/narrow -c user.email=ci@example.org -c user.name=CI commit --quiet -m init
-          cd /tmp/narrow && pre-commit run --all-files --show-diff-on-failure --color=always
-
-
-  test-doxygen-setup:
-    name: Docs / Shared Setup
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/jfalcou/compilers:v10
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Generate the example documentation
-        run: |
-          cmake -S test/example -B build/doc -G Ninja \
-                -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE" \
-                -DEXAMPLE_BUILD_TEST=OFF -DEXAMPLE_BUILD_DOCUMENTATION=ON
-          cmake --build build/doc --target example-doxygen
-
-      - name: Check what it produced
-        run: python3 test/doxygen-setup.py build/doc/doxygen-output
-
-
-
-  test-two-consumers:
-    name: CMake / Two Consumers in One Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Setup CMake and Ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-
-      - name: Configure Two Consumers
-        run: cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR="$GITHUB_WORKSPACE"
-
-  verify-hierarchy:
-    name: CMake / Ninja Target Hierarchy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Setup CMake and Ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-
-      - name: Configure Project
-        run: |
-          cd test/example
-          cmake -G Ninja -B build -S . \
-                -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE" \
-                \
-                -DOPT_QUIET=ON
-
-      - name: Check Hierarchical Phony Targets
-        run: |
-          cd test/example/build
-          ninja -t targets > all_targets.txt
-
-          EXPECTED=(
-            "unit.exe"
-            "unit.types.exe"
-            "unit.types.structure.exe"
-            "unit.values.exe"
-            "unit.values.value.exe"
-            "unit.values.version.exe"
-          )
-
-          STATUS=0
-          for target in "${EXPECTED[@]}"; do
-            if grep -q "^$target:" all_targets.txt; then
-              echo "✅ Found $target"
-            else
-              echo "❌ Missing $target"
-              STATUS=1
-            fi
-          done
-
-          exit $STATUS
