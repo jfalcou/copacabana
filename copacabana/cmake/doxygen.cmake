@@ -114,6 +114,23 @@ macro(copa_doxygen_defaults)
 endmacro()
 
 ##======================================================================================================================
+## Where the reader finds the series of measurements, derived from where the project lives
+##
+## The raw view of the ct-measures branch needs no token on a public repository. A project hosted elsewhere, or one
+## that never said where it lives, leaves it empty and the reader hides its curve.
+##======================================================================================================================
+function(copa_doxygen_measures_url)
+  set(COPA_MEASURES_URL "" PARENT_SCOPE)
+
+  if(COPA_PROJECT_REPOSITORY MATCHES "github.com[:/]([^/]+)/([^/]+)")
+    ## Both captures are read first: a string(REGEX) of its own rewrites CMAKE_MATCH_*.
+    set(OWNER "${CMAKE_MATCH_1}")
+    string(REGEX REPLACE "\\.git$" "" REPO "${CMAKE_MATCH_2}")
+    set(COPA_MEASURES_URL "https://raw.githubusercontent.com/${OWNER}/${REPO}/ct-measures" PARENT_SCOPE)
+  endif()
+endfunction()
+
+##======================================================================================================================
 ## Add Doxygen building target
 ##======================================================================================================================
 function(copa_setup_doxygen)
@@ -197,6 +214,11 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
 
     ## The compile cost reader carries the project's name in its title, and nothing else of the project: the colours
     ## reach it through color.css once it sits beside the pages.
+    ##
+    ## Where the series of measurements is read from, when the project keeps one: the raw view of the ct-measures
+    ## branch, which needs no token on a public repository. Left empty, the reader hides its curve.
+    copa_doxygen_measures_url()
+
     configure_file("${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/compile-cost.html.in"
                    "${DOXYGEN_GENERATED}/compile-cost.html" @ONLY)
 
