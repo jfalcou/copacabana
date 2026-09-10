@@ -158,15 +158,18 @@ function(copa_setup_doxygen)
     ## built on another does not compile there without it beside. The shared header reads this rather than naming
     ## them, so one header serves every project.
     string(JOIN ":" GODBOLT_LIBRARIES ${OPT_GODBOLT_LIBRARIES})
-    file(
-      GENERATE
-      OUTPUT "${OPT_DESTINATION}/godbolt-config.js"
-      CONTENT "const GODBOLT_LIBRARIES = \"${GODBOLT_LIBRARIES}\"\n\
-const GODBOLT_COMPILER  = \"${OPT_GODBOLT_COMPILER}\"\n\
-const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
 
     ## Where copacabana writes what it makes, outside what doxygen publishes.
     set(DOXYGEN_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/copa-doxygen")
+
+    ## Written here rather than in the output, which HTML_EXTRA_FILES then copies on every run: generated straight
+    ## into the output, the file appears once and a cleaned output never gets it back.
+    file(
+      GENERATE
+      OUTPUT "${DOXYGEN_GENERATED}/godbolt-config.js"
+      CONTENT "const GODBOLT_LIBRARIES = \"${GODBOLT_LIBRARIES}\"\n\
+const GODBOLT_COMPILER  = \"${OPT_GODBOLT_COMPILER}\"\n\
+const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
 
     copa_doxygen_tagfiles()
 
