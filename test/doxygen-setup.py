@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
-"""What base.doxyfile and base.html are supposed to have produced, checked against a generated site.
+"""What base.doxyfile and base.html are supposed to have produced, checked against a site it generates.
 
 Read the output rather than the configuration: a setting can be right and still not reach the page, and what ships is
-the page. Run it on the directory copa_setup_doxygen wrote:
+the page.
 
-  python3 test/doxygen-setup.py <doxygen output directory>
+  python3 test/doxygen-setup.py <copacabana source directory>
 """
 import collections
 import colorsys
 import pathlib
 import re
+import tempfile
 
-from checks import cli, expect, report
+from checks import cli, expect, report, run
 
 
-def main(out):
+def inspect(out):
     out = pathlib.Path(out)
     index = (out / "index.html").read_text(encoding="utf-8")
 
@@ -84,6 +85,24 @@ def main(out):
     expect("no page outline panel", "PageOutline" not in index and 'id="page-nav"' not in index)
 
     return report("The shared Doxygen setup")
+
+
+def main(root: str = ".") -> int:
+    """Generate the example documentation, then read what came out."""
+    root = pathlib.Path(root).resolve()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        out = run("cmake", "-S", f"{root}/test/example", "-B", tmp, "-G", "Ninja",
+                  f"-DCPM_COPACABANA_SOURCE={root}", "-DEXAMPLE_BUILD_TEST=OFF",
+                  "-DEXAMPLE_BUILD_DOCUMENTATION=ON")
+        if not expect("the example configures for documentation", out.returncode == 0, out.stderr[-300:]):
+            return report("What the shared Doxygen setup produced")
+
+        out = run("cmake", "--build", tmp, "--target", "example-doxygen")
+        if not expect("doxygen runs", out.returncode == 0, out.stderr[-300:]):
+            return report("What the shared Doxygen setup produced")
+
+        return inspect(f"{tmp}/doxygen-output")
 
 
 if __name__ == "__main__":
