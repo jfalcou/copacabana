@@ -19,63 +19,78 @@ jobs:
     name: Meta Checks
     uses: ./.github/workflows/precommit.yml
 
-  test-cpack:
-    name: Package / System Installers
+  ## The checks that are a checkout and a command, in one job. A row says what it is called and what it runs; image
+  ## and depth are for the rows that need a container or the tags.
+  checks:
+    name: ${{ matrix.check.name }}
     runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.check.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - { name: "Docs / Assets"             , depth: 1, run: "node --test test/*.test.js" }
+          - { name: "Docs / Warning Count"      , depth: 1, run: "python3 test/doxygen-warnings.py ." }
+          - { name: "Scaffold / Template Pins"  , depth: 0, run: "python3 test/template-pin.py ." }
+          - { name: "Workflows / Matrix Outputs", depth: 1, run: "python3 test/matrix-outputs.py .", pyyaml: true }
+          - { name: "CMake / Pre-commit Banner" , depth: 1, run: "python3 test/precommit-banner.py .",
+              image: "ghcr.io/jfalcou/compilers:v10" }
+          - { name: "CMake / Sources That Must Not Compile", depth: 1,
+              run: "python3 test/failure-units.py .", image: "ghcr.io/jfalcou/compilers:v10" }
+    steps:
+      ## The tags are what the template pins are checked against, so that row asks for the whole history.
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: ${{ matrix.check.depth }}
+
+      - name: Install PyYAML
+        if: matrix.check.pyyaml
+        run: python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
+
+      ## Evaluated rather than run as one word, a row being a shell command: globs, pipes and $(...) all work.
+      - name: Check
+        shell: bash
+        env:
+          COMMAND: ${{ matrix.check.run }}
+        run: eval "$COMMAND"
+
+  ## The package checks: each one builds what a manager would ship, then reads it. spack is for the row that
+  ## consumes a published tree rather than a local install.
+  packages:
+    name: ${{ matrix.package.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - { name: "Package / System Installers", run: "python3 test/system-installers.py ." }
+          - { name: "Package / Install Layout"   , run: "python3 test/install-layout.py ." }
+          - { name: "Package / Consumption"      , run: "spack install copacabana &&
+                                                         python3 test/package-consumption.py $(spack location -i copacabana)",
+              spack: true }
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
+
       - name: Setup CMake and Ninja
         uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-      - name: Configure Project
-        run: |
-          cd test/example
-          cmake -B build -S . -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE"
-      - name: Build Project
-        run: |
-          cd test/example
-          cmake --build build
-      - name: Generate CPack Installers
-        run: |
-          cd test/example
-          cmake --build build --target package
-      - name: Verify DEB Package Validity
-        run: |
-          cd test/example
-          files=(build/*.deb)
-          DEB_FILE=${files[0]}
-          echo "Validating DEB Package: $DEB_FILE"
 
-          echo "--- DEB Metadata ---"
-          dpkg-deb -I "$DEB_FILE"
+      ## The published tree is laid out by the recipe, not by copa_setup_install, so it is read where it is
+      ## published. vcpkg and conan join with a row each once their ports land.
+      - name: Set up Spack
+        if: matrix.package.spack
+        uses: spack/setup-spack@v3
+        with:
+          buildcache: true
 
-          echo "--- DEB File Contents ---"
-          dpkg-deb -c "$DEB_FILE"
+      - name: Check
+        shell: bash
+        env:
+          COMMAND: ${{ matrix.package.run }}
+        run: eval "$COMMAND"
 
-      - name: Verify RPM Package Validity
-        run: |
-          cd test/example
-          files=(build/*.rpm)
-          RPM_FILE=${files[0]}
-          echo "Validating RPM Package: $RPM_FILE"
-
-          echo "--- RPM Metadata ---"
-          rpm -qpi "$RPM_FILE"
-
-          echo "--- RPM Dependencies ---"
-          rpm -qpR "$RPM_FILE"
-
-          echo "--- RPM File Contents ---"
-          rpm -qpl "$RPM_FILE"
-
-  test-assets:
-    name: Docs / Assets
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-      - name: Run Asset Tests
-        run: node --test test/*.test.js
 
   test-scaffolder:
     name: Scaffold / Project
@@ -135,52 +150,6 @@ jobs:
           git -C /tmp/narrow -c user.email=ci@example.org -c user.name=CI commit --quiet -m init
           cd /tmp/narrow && pre-commit run --all-files --show-diff-on-failure --color=always
 
-  test-precommit-banner:
-    name: CMake / Pre-commit Banner
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/jfalcou/compilers:v10
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Check who the banner reaches
-        run: python3 test/precommit-banner.py .
-
-  test-matrix-outputs:
-    name: Workflows / Matrix Outputs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Check what a matrix file becomes
-        run: |
-          python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
-          python3 test/matrix-outputs.py .
-
-  test-template-pin:
-    name: Scaffold / Template Pins
-    runs-on: ubuntu-latest
-    steps:
-      ## The tags are what the pins are checked against, so the whole history is needed rather than one commit.
-      - name: Checkout Code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Check every pin names the commit its tag points at
-        run: python3 test/template-pin.py .
-
-  test-doxygen-warnings:
-    name: Docs / Warning Count
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Check what the documentation job counts as a warning
-        run: python3 test/doxygen-warnings.py .
 
   test-doxygen-setup:
     name: Docs / Shared Setup
@@ -201,53 +170,7 @@ jobs:
       - name: Check what it produced
         run: python3 test/doxygen-setup.py build/doc/doxygen-output
 
-  test-install-layout:
-    name: Package / Install Layout
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
 
-      - name: Setup CMake and Ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-
-      - name: Install the example three ways and look
-        run: python3 test/install-layout.py "$GITHUB_WORKSPACE"
-
-  test-package-consumption:
-    name: Package / Consumption
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Setup CMake and Ninja
-        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
-
-      ## The published tree is laid out by the recipe, not by copa_setup_install, so it is checked
-      ## where it is published. spack is the one that carries copacabana today; vcpkg and conan
-      ## join with a step each once their ports land.
-      - name: Set up Spack
-        uses: spack/setup-spack@v3
-        with:
-          buildcache: true
-
-      - name: Install copacabana and consume what it installed
-        run: |
-          spack install copacabana
-          python3 test/package-consumption.py "$(spack location -i copacabana)"
-
-  test-failure-units:
-    name: CMake / Sources That Must Not Compile
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/jfalcou/compilers:v10
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Break the failing test three ways and read the verdict
-        run: python3 test/failure-units.py "$GITHUB_WORKSPACE"
 
   test-two-consumers:
     name: CMake / Two Consumers in One Build
