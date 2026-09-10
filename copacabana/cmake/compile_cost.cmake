@@ -56,7 +56,7 @@ function(copa_setup_compile_cost target)
   set(REPORT_COMMAND
       ${CMAKE_COMMAND} -E env python3 "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/compile_cost.py" "${COST_CSV}"
       --title "${PROJECT_NAME} compile cost" --strip "$<CONFIG>/" --summary "${COST_DIR}/summary.md" --full
-      "${COST_DIR}/${OPT_PREFIX}-compile-cost.md")
+      "${COST_DIR}/${OPT_PREFIX}-compile-cost.md" --entry "${COST_DIR}/${OPT_PREFIX}-compile-cost.json")
 
   if(OPT_BASELINE)
     list(APPEND REPORT_COMMAND --baseline "${OPT_BASELINE}")

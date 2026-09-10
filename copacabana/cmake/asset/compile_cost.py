@@ -23,6 +23,7 @@ largest single unit and the shape of the distribution behind it.
 
 import argparse
 import csv
+import json
 import os
 import sys
 
@@ -174,6 +175,26 @@ def headline(measures, title, level, grew_line=None, linked=None):
     return "\n".join(out) + "\n"
 
 
+def entry(units, links):
+    """What a series keeps of one measurement: the totals and the modules, never the units themselves.
+
+    A curve over two years is five hundred points; drawing it from five hundred whole CSV files would
+    move fourteen mebibytes to show one line, so what the curve reads is written once, here.
+    """
+    modules = {}
+    for module, group in by_module(units).items():
+        modules[module] = {"units": len(group),
+                           "cpu_us": sum(u[2] for u in group),
+                           "peak_kib": max(u[1] for u in group)}
+    return {"units": len(units),
+            "cpu_us": sum(c for _, c in units.values()),
+            "peak_kib": max((m for m, _ in units.values()), default=0),
+            "links": len(links),
+            "link_cpu_us": sum(c for _, c in links.values()),
+            "link_peak_kib": max((m for m, _ in links.values()), default=0),
+            "modules": modules}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("current")
@@ -183,6 +204,7 @@ def main():
     ap.add_argument("--full", help="write the complete per-unit table, as Markdown, to this file")
     ap.add_argument("--summary", help="write the summary to this file rather than to stdout")
     ap.add_argument("--strip", default="", help="path segment a multi-config generator adds, e.g. Debug/")
+    ap.add_argument("--entry", help="write the totals and the per-module aggregates, as JSON, to this file")
     args = ap.parse_args()
 
     out = open(args.summary, "w") if args.summary else sys.stdout
@@ -193,6 +215,10 @@ def main():
         return 0
 
     was, linked_was = read(args.baseline, args.strip) if args.baseline else ({}, {})
+
+    if args.entry:
+        with open(args.entry, "w") as f:
+            json.dump(entry(now, linked), f, indent=1, sort_keys=True)
     d = bool(was)
 
     # Regressions first: what changed is what gets acted on.
