@@ -27,6 +27,9 @@ copa_add_option(SAMPLE_ENABLE_COVERAGE "Build tests with code coverage instrumen
 
 if(SAMPLE_BUILD_TEST)
   include(${PROJECT_SOURCE_DIR}/cmake/compiler.cmake)
+
+  ## Where a package declared in dependencies.cmake is fetched: the option exists here and not before.
+  ## CPMGetPackage(TTS)
 endif()
 
 ##======================================================================================================================
