@@ -4,74 +4,47 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-"""Check that every pin the template carries points at the tag written beside it, and at a file that tag has.
+"""Check that what the template calls exists here, and that both of its pins say the same thing.
 
-A workflow reference is a commit followed by the tag it is meant to be, as `@<sha> # <tag>`. Nothing moves the first
-half when the second is retagged, so a scaffolded project is born on a version it only claims to be. And a workflow
-added here is not at any earlier tag: a template calling it through the previous pin scaffolds a project whose call
-GitHub refuses, without anything in this repository building it. This reads the tags and the trees of the checkout
-it runs in, so the CI step calling it needs them fetched.
+A scaffolded project follows main, so the file it names has to be on main: a workflow renamed or moved breaks every
+project the scaffolder ever wrote, and nothing in this repository builds them. The second pin is the GIT_TAG that
+brings in the cmake functions, which has to follow the workflows rather than drift behind them.
 
-The template carries a second pin, the GIT_TAG that brings in the cmake functions, which a move to a new version has
-to take along: it sat two versions behind the workflows once.
+  python3 test/template-pin.py <copacabana source directory>
 """
 import pathlib
 import re
 
-from checks import cli, expect, report, run
+from checks import cli, expect, report
 
-PIN = re.compile(r"@([0-9a-f]{40})\s*#\s*(v[0-9]+)")
-CALL = re.compile(r"uses:\s*jfalcou/copacabana/(\.github/[A-Za-z0-9._/-]+)@([0-9a-f]{40})")
-GIT_TAG = re.compile(r"GIT_TAG\s+(v[0-9]+)")
-
-
-def resolve(tag: str) -> str | None:
-    result = run("git", "rev-parse", f"{tag}^{{commit}}")
-    return result.stdout.strip() if result.returncode == 0 else None
-
-
-def exists(sha: str, path: str) -> bool:
-    """Whether the commit carries the file, a composite action being its directory's action.yml."""
-    for candidate in (path, f"{path}/action.yml"):
-        if run("git", "cat-file", "-e", f"{sha}:{candidate}").returncode == 0:
-            return True
-    return False
+CALL = re.compile(r"uses:\s*jfalcou/copacabana/(\.github/[A-Za-z0-9._/-]+)@(\S+)")
+GIT_TAG = re.compile(r"GIT_TAG\s+(\S+)")
 
 
 def main(root: str = ".") -> int:
-    workflows = sorted((pathlib.Path(root) / "tools" / "template" / ".github" / "workflows").glob("*.yml"))
+    root = pathlib.Path(root)
+    workflows = sorted((root / "tools" / "template" / ".github" / "workflows").glob("*.yml"))
     print(f"{len(workflows)} template workflows read\n")
 
-    tags = set()
+    refs = set()
     for workflow in workflows:
         for line, text in enumerate(workflow.read_text(encoding="utf-8").splitlines(), 1):
-            found = PIN.search(text)
+            found = CALL.search(text)
             if not found:
                 continue
 
-            pinned, tag = found.groups()
-            tags.add(tag)
-            actual = resolve(tag)
+            called, ref = found.groups()
+            refs.add(ref)
             where = f"{workflow.name}:{line}"
+            expect(f"{where}: {called} is a file of this repository", (root / called).is_file())
 
-            if actual is None:
-                expect(f"{where}: {tag} is a tag of this repository", False)
-            else:
-                expect(f"{where}: the pin names the commit {tag} points at", actual == pinned,
-                       f"{pinned[:7]} rather than {actual[:7]}")
+    expect("the template's workflows all name one reference", len(refs) == 1, sorted(refs))
 
-            called = CALL.search(text)
-            if called:
-                expect(f"{where}: {called.group(1)} exists at {called.group(2)[:7]}",
-                       exists(called.group(2), called.group(1)))
-
-    dependencies = pathlib.Path(root) / "tools" / "template" / "cmake" / "dependencies.cmake"
+    dependencies = root / "tools" / "template" / "cmake" / "dependencies.cmake"
     found = GIT_TAG.search(dependencies.read_text(encoding="utf-8"))
-    version = found.group(1) if found else None
-
-    if expect("the template's workflows name one version", len(tags) == 1, sorted(tags)):
-        wanted = tags.pop()
-        expect(f"dependencies.cmake brings in the cmake functions of {wanted}", version == wanted, version)
+    version = found.group(1).rstrip(")") if found else None
+    expect("dependencies.cmake brings in the cmake functions from the same one",
+           refs and version == next(iter(refs)), version)
 
     return report("The template's pins")
 
