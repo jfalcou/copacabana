@@ -11,14 +11,17 @@
 ##                          [PREFIX   <name>] # Prefix of the generated targets, defaults to the lowercased project name
 ##                          [DEPENDS  <name>] # Target building the units to measure, defaults to <prefix>-test
 ##                          [BASELINE <csv>]  # An earlier measurement, else COPA_COMPILE_COST_BASELINE
+##                          [EXCLUDE  <expr>] # Regex matching the unit targets to skip, else COPA_COMPILE_COST_EXCLUDE
 ##                        )
 ##
 ## Generates <prefix>-compile-cost, which drops the CSV and rebuilds DEPENDS from a clean tree, and
 ## <prefix>-compile-cost-report, which turns the CSV into compile-cost/summary.md for a job summary and
 ## compile-cost/<prefix>-compile-cost.md for every unit, both beside the CSV under the build tree.
+##
+## With EXCLUDE, the rebuild covers <prefix>-compile-cost-units: the units of DEPENDS the regex does not match.
 ##======================================================================================================================
 function(copa_setup_compile_cost target)
-  set(oneValueArgs PREFIX DEPENDS BASELINE)
+  set(oneValueArgs PREFIX DEPENDS BASELINE EXCLUDE)
   cmake_parse_arguments(OPT "" "${oneValueArgs}" "" ${ARGN})
 
   copa_check_arguments()
@@ -35,9 +38,32 @@ function(copa_setup_compile_cost target)
     set(OPT_BASELINE "${COPA_COMPILE_COST_BASELINE}")
   endif()
 
+  if(NOT OPT_EXCLUDE AND COPA_COMPILE_COST_EXCLUDE)
+    set(OPT_EXCLUDE "${COPA_COMPILE_COST_EXCLUDE}")
+  endif()
+
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "[${PROJECT_NAME}] - Compile cost requires Clang, ${CMAKE_CXX_COMPILER_ID} has no "
                         "-fproc-stat-report")
+  endif()
+
+  # A unit added to DEPENDS after this call is not measured.
+  if(OPT_EXCLUDE)
+    get_target_property(UNITS ${OPT_DEPENDS} MANUALLY_ADDED_DEPENDENCIES)
+    set(KEPT ${UNITS})
+    list(FILTER KEPT EXCLUDE REGEX "${OPT_EXCLUDE}")
+
+    if(NOT KEPT)
+      message(FATAL_ERROR "[${PROJECT_NAME}] - '${OPT_EXCLUDE}' leaves no unit of ${OPT_DEPENDS} to measure")
+    endif()
+
+    list(LENGTH UNITS NB_UNITS)
+    list(LENGTH KEPT NB_KEPT)
+    add_custom_target(${OPT_PREFIX}-compile-cost-units COMMENT "[${PROJECT_NAME}] - Building the measured units")
+    add_dependencies(${OPT_PREFIX}-compile-cost-units ${KEPT})
+    message(STATUS "[${PROJECT_NAME}] - Compile cost measures ${NB_KEPT} of the ${NB_UNITS} units of ${OPT_DEPENDS}, "
+                   "skipping '${OPT_EXCLUDE}'")
+    set(OPT_DEPENDS ${OPT_PREFIX}-compile-cost-units)
   endif()
 
   set(COST_DIR "${PROJECT_BINARY_DIR}/compile-cost")

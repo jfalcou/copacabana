@@ -102,6 +102,14 @@ jobs:
           cmake --build --preset=dev-compile-cost --target example-time-trace --parallel 2
           python3 "$GITHUB_WORKSPACE/test/compile-cost.py" build/dev-compile-cost .
 
+      - name: Measuring the compile cost with part of the suite left out
+        working-directory: test/example
+        run: |
+          cmake --preset=dev-compile-cost -B build/dev-compile-cost-exclude -DCMAKE_CXX_COMPILER=clang++ \
+                -DCPM_COPACABANA_SOURCE="$GITHUB_WORKSPACE" -DCOPA_COMPILE_COST_EXCLUDE='^unit\.values\.'
+          CMAKE_BUILD_PARALLEL_LEVEL=2 cmake --build build/dev-compile-cost-exclude --target example-compile-cost-report
+          python3 "$GITHUB_WORKSPACE/test/compile-cost.py" build/dev-compile-cost-exclude . '^unit\.values\.'
+
   ## The NDK ships its own toolchain file, which no preset here carries.
   android:
     name: Android NDK
