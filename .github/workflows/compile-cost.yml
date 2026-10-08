@@ -14,6 +14,9 @@
 ##         contents: read
 ##       with:
 ##         project: mylib
+##         exclude: '^doc\.'
+##
+## The units whose target name matches exclude are neither built nor measured.
 ##
 ## A push to main leaves a reference artifact, <project>-compile-cost-reference, kept 90 days. A pull request looks up
 ## the last successful run of the calling workflow on main, downloads that artifact and reports the delta against it; until the first merge there is
@@ -37,6 +40,10 @@ on:
         description: 'Configure and build preset, the one that turns the measurement on'
         type: string
         default: 'clang-compile-cost'
+      exclude:
+        description: 'Regex matching the unit targets to skip'
+        type: string
+        default: ''
       image:
         description: 'Container image to build in'
         type: string
@@ -111,13 +118,17 @@ jobs:
           PRESET: ${{ inputs.preset }}
           PROJECT: ${{ inputs.project }}
           JOBS: ${{ inputs.jobs }}
+          EXCLUDE: ${{ inputs.exclude }}
         run: |
-          baseline=()
+          options=()
           if [ -f "reference/${PROJECT}-compile-cost.csv" ]; then
-            baseline=(-DCOPA_COMPILE_COST_BASELINE="$PWD/reference/${PROJECT}-compile-cost.csv")
+            options+=(-DCOPA_COMPILE_COST_BASELINE="$PWD/reference/${PROJECT}-compile-cost.csv")
+          fi
+          if [ -n "$EXCLUDE" ]; then
+            options+=(-DCOPA_COMPILE_COST_EXCLUDE="$EXCLUDE")
           fi
 
-          cmake --preset "$PRESET" "${baseline[@]}"
+          cmake --preset "$PRESET" "${options[@]}"
           CMAKE_BUILD_PARALLEL_LEVEL="$JOBS" cmake --build --preset "$PRESET" --target "${PROJECT}-compile-cost-report"
 
       - name: Report
@@ -125,9 +136,13 @@ jobs:
         env:
           PRESET: ${{ inputs.preset }}
           PROJECT: ${{ inputs.project }}
+          EXCLUDE: ${{ inputs.exclude }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ] && [ ! -f "reference/${PROJECT}-compile-cost.csv" ]; then
             echo "> No reference from main was found, so this run has no delta." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -n "$EXCLUDE" ]; then
+            printf '> The units whose target name matches %s are left out.\n' "\`$EXCLUDE\`" >> "$GITHUB_STEP_SUMMARY"
           fi
           cat "build/$PRESET/compile-cost/summary.md" >> "$GITHUB_STEP_SUMMARY"
 
