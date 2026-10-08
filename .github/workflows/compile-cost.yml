@@ -11,7 +11,7 @@
 ##       uses: jfalcou/copacabana/.github/workflows/compile-cost.yml@<sha> # v8
 ##       permissions:
 ##         actions: read
-##         contents: read
+##         contents: write
 ##       with:
 ##         project: mylib
 ##         exclude: '^doc\.'
@@ -21,7 +21,8 @@
 ## A push to main leaves a reference artifact, <project>-compile-cost-reference, kept 90 days. A pull request looks up
 ## the last successful run of the calling workflow on main, downloads that artifact and reports the delta against it; until the first merge there is
 ## none, and the report says so. Reading an artifact off another run is outside the contents scope the token defaults
-## to, hence the permissions above: a called workflow gets no more than its caller grants.
+## to, hence actions: read above; contents: write is the publishing job's, which GitHub checks before any job runs,
+## series or not. A called workflow gets no more than its caller grants.
 ##
 ## The measurement runs in the pinned image on a hosted runner. Two runs weeks apart stay comparable only under the
 ## same compiler, and a peak recorded beside other builds on a shared machine belongs to them as much as to the code.
@@ -203,7 +204,7 @@ jobs:
           retention-days: 1
 
   ## Publishing is a job of its own because it writes to the repository, which the measurement has no business
-  ## doing: a caller that leaves `series` alone never reaches this, and never has to grant more than a read.
+  ## doing. Its write is checked before anything runs, so every caller grants it, `series` or not.
   publish:
     name: Compile Cost Series
     needs: measure
