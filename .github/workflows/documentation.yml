@@ -27,6 +27,10 @@ on:
         description: 'Container image to build in'
         type: string
         default: 'ghcr.io/jfalcou/compilers:v10'
+      deploy-options:
+        description: 'CMake options added to the build gh-pages receives, which a pull request does not run'
+        type: string
+        default: ''
       coverage:
         description: 'Ship a coverage report alongside the documentation'
         type: boolean
@@ -62,8 +66,10 @@ jobs:
         shell: bash
         env:
           PROJECT: ${{ inputs.project }}
+          DEPLOY_OPTIONS: ${{ inputs.deploy-options }}
         run: |
-          cmake -S . -B build -G Ninja "-D${PROJECT^^}_BUILD_TEST=OFF" "-D${PROJECT^^}_BUILD_DOCUMENTATION=ON"
+          # Unquoted so that several options split into several arguments.
+          cmake -S . -B build -G Ninja "-D${PROJECT^^}_BUILD_TEST=OFF" "-D${PROJECT^^}_BUILD_DOCUMENTATION=ON" $DEPLOY_OPTIONS
 
       - name: Generate Doxygen
         shell: bash
