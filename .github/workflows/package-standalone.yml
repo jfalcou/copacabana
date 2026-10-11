@@ -55,7 +55,7 @@ jobs:
           DEPLOY_OPTIONS: ${{ inputs.deploy-options }}
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          # Unquoted so that several options split into several arguments.
+          # shellcheck disable=SC2086 # a whole argument list, split on purpose
           cmake -S . -B build -G Ninja "-D${PROJECT^^}_BUILD_TEST=OFF" "-D${PROJECT^^}_BUILD_DOCUMENTATION=OFF" $DEPLOY_OPTIONS
 
       - name: Generate standalone ${{ inputs.project }} header
