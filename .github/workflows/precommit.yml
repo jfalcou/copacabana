@@ -13,10 +13,11 @@ name: Pre-commit
 on:
   workflow_call:
     inputs:
+      ## A fixed minor: '3.x' takes a new Python the day it ships, before the wheels --only-binary needs.
       python-version:
         description: 'Python the hooks run under'
         type: string
-        default: '3.x'
+        default: '3.14'
 
       pre-commit-version:
         description: 'pre-commit release to install, pinned rather than floating'
