@@ -113,7 +113,7 @@ jobs:
   ## The NDK ships its own toolchain file, which no preset here carries.
   android:
     name: Android NDK
-    runs-on: [macos-14]
+    runs-on: [macos-15]
     steps:
       - name: Fetch current branch
         uses: actions/checkout@v7
