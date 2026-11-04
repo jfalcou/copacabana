@@ -8,7 +8,7 @@
 ## job is eligible for no runner at all and sits pending forever with nothing saying why.
 default:
   tags: ["docker"]
-  image: ghcr.io/jfalcou/compilers:v10
+  image: ghcr.io/jfalcou/compilers:v11
 
 stages: [build, test]
 
@@ -29,7 +29,7 @@ gcc:
 clang:
   extends: .build
   variables:
-    COMPILER: clang++-20
+    COMPILER: clang++-22
 
 unit:
   stage: test

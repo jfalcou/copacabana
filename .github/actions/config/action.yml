@@ -38,7 +38,7 @@ inputs:
     default: ''
 
   cmake-args:
-    description: 'Extra configure arguments, e.g. -DCMAKE_CXX_COMPILER=g++-14. They override the preset.'
+    description: 'Extra configure arguments, e.g. -DCMAKE_CXX_COMPILER=g++-16. They override the preset.'
     default: ''
 
 runs:
