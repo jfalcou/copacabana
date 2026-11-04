@@ -31,7 +31,7 @@ jobs:
     name: Standalone Generation
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/jfalcou/compilers:v10
+      image: ghcr.io/jfalcou/compilers:v11
     steps:
       - name: Fetch current branch
         uses: actions/checkout@v7

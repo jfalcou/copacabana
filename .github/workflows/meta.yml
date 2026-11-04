@@ -32,15 +32,15 @@ jobs:
         check:
           - { name: "Docs / Assets"             , run: "node --test test/*.test.js" }
           - { name: "Docs / Warning Count"      , run: "python3 test/doxygen-warnings.py ." }
-          - { name: "Docs / Shared Setup"       , run: "python3 test/doxygen-setup.py ."   , image: "v10" }
-          - { name: "Scaffold / Project"        , run: "python3 test/scaffolder.py ."      , image: "v10" }
+          - { name: "Docs / Shared Setup"       , run: "python3 test/doxygen-setup.py ."   , image: "v11" }
+          - { name: "Scaffold / Project"        , run: "python3 test/scaffolder.py ."      , image: "v11" }
           - { name: "Scaffold / Hooks"          , run: "python3 test/scaffolded-hooks.py .", python: true }
           - { name: "Scaffold / Cold Configure" , run: "python3 test/cold-configure.py ."  , cmake: true }
           - { name: "Scaffold / Template Pins"  , run: "python3 test/template-pin.py ."    , tags: true }
           - { name: "Workflows / Matrix Outputs", run: "python3 test/matrix-outputs.py ."  , pyyaml: true }
-          - { name: "CMake / Pre-commit Banner" , run: "python3 test/precommit-banner.py .", image: "v10" }
+          - { name: "CMake / Pre-commit Banner" , run: "python3 test/precommit-banner.py .", image: "v11" }
           - { name: "CMake / Ninja Target Hierarchy", run: "python3 test/target-hierarchy.py .", cmake: true }
-          - { name: "CMake / Sources That Must Not Compile", run: "python3 test/failure-units.py .", image: "v10" }
+          - { name: "CMake / Sources That Must Not Compile", run: "python3 test/failure-units.py .", image: "v11" }
           - { name: "CMake / Two Consumers in One Build", cmake: true,
               run: "cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$PWD" }
           - { name: "Package / System Installers", run: "python3 test/system-installers.py .", cmake: true }
