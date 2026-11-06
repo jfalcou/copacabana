@@ -53,6 +53,8 @@ jobs:
   sanitizer-tests:
     name: Sanitizers
     uses: jfalcou/copacabana/.github/workflows/sanitizers.yml@main
+    with:
+      image: ghcr.io/jfalcou/compilers:v11
 
   ##################################################################################################
   ## Coverage report - informational, runs alongside the gate without blocking the matrix
@@ -62,6 +64,7 @@ jobs:
     uses: jfalcou/copacabana/.github/workflows/coverage.yml@main
     with:
       project: sample
+      image: ghcr.io/jfalcou/compilers:v11
 
   ##################################################################################################
   ## Unit Tests - the full compiler matrix, gated behind the fast checks above all passing

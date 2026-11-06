@@ -23,7 +23,7 @@ on:
       image:
         description: 'Container image to build in'
         type: string
-        default: 'ghcr.io/jfalcou/compilers:v10'
+        required: true
       cxx-compiler:
         description: 'Compiler to configure with, left to CMake when empty'
         type: string

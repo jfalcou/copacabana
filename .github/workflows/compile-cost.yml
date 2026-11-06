@@ -48,7 +48,7 @@ on:
       image:
         description: 'Container image to build in'
         type: string
-        default: 'ghcr.io/jfalcou/compilers:v10'
+        required: true
       jobs:
         description: 'Parallel compilations. Two is what a 4 core, 15 GiB runner carries for units peaking above 3 GiB.'
         type: number

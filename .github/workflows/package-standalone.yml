@@ -23,7 +23,7 @@ on:
       image:
         description: 'Container image to build in'
         type: string
-        default: 'ghcr.io/jfalcou/compilers:v10'
+        required: true
       deploy-options:
         description: 'CMake options added to the build the standalone branch receives'
         type: string
