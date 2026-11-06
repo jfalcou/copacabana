@@ -26,7 +26,7 @@ on:
       image:
         description: 'Container image to build in'
         type: string
-        default: 'ghcr.io/jfalcou/compilers:v10'
+        required: true
       deploy-options:
         description: 'CMake options added to the build gh-pages receives, which a pull request does not run'
         type: string
