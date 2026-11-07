@@ -81,7 +81,7 @@ jobs:
         run: python3 -c "import yaml" 2>/dev/null || pip install --quiet pyyaml
 
       ## The published tree is laid out by the recipe, not by copa_setup_install, so it is read where it is
-      ## published. vcpkg and conan join with a row each once their ports land.
+      ## published. vcpkg joins with a row once its port lands.
       - name: Set up Spack
         if: matrix.check.spack
         uses: spack/setup-spack@v3
