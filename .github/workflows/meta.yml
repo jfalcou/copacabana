@@ -38,6 +38,7 @@ jobs:
           - { name: "Scaffold / Cold Configure" , run: "python3 test/cold-configure.py ."  , cmake: true }
           - { name: "Scaffold / Template Pins"  , run: "python3 test/template-pin.py ."    , tags: true }
           - { name: "Workflows / Matrix Outputs", run: "python3 test/matrix-outputs.py ."  , pyyaml: true }
+          - { name: "Workflows / CI Cycle"      , run: "python3 -m doctest tools/ci_cycle.py" }
           - { name: "CMake / Pre-commit Banner" , run: "python3 test/precommit-banner.py .", image: "v11" }
           - { name: "CMake / Ninja Target Hierarchy", run: "python3 test/target-hierarchy.py .", cmake: true }
           - { name: "CMake / Sources That Must Not Compile", run: "python3 test/failure-units.py .", image: "v11" }

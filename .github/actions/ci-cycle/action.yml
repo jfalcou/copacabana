@@ -1,0 +1,123 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Once every unit workflow of a commit has ended, one comment on its pull request gives the wall time of the cycle,
+## the end of each workflow and its longest job, and a chart of every job, an SVG kept on the branch ci-cycle.
+##
+##   on:
+##     workflow_run:
+##       workflows: [Unit Tests]
+##       types: [completed]
+##   concurrency:
+##     group: ci-cycle-${{ github.event.workflow_run.head_sha }}
+##     cancel-in-progress: true
+##   permissions:
+##     actions: read
+##     contents: write
+##     pull-requests: write
+##   jobs:
+##     cycle:
+##       if: github.event.workflow_run.conclusion != 'cancelled'
+##       runs-on: ubuntu-latest
+##       steps:
+##         - uses: jfalcou/copacabana/.github/actions/ci-cycle@<sha> # vN
+##           with:
+##             sha: ${{ github.event.workflow_run.head_sha }}
+##             pr: ${{ github.event.workflow_run.pull_requests[0].number }}
+##
+##======================================================================================================================
+name: 'CI Cycle'
+description: 'Report the wall time of the CI cycle of a commit on its pull request'
+
+inputs:
+  sha:
+    description: 'Commit whose cycle to report'
+    required: true
+
+  pr:
+    description: 'Pull request to comment, empty for none'
+    default: ''
+
+  workflow:
+    description: 'Text the name of every unit workflow contains'
+    default: 'Unit Tests'
+
+  token:
+    description: 'Token reading the runs, pushing the chart and writing the comment'
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    ## The compilers images carry no gh, which the tool and the comment call.
+    - name: Fetch gh
+      shell: bash
+      run: |
+        command -v gh > /dev/null && exit 0
+        curl -sSL https://github.com/cli/cli/releases/download/v2.102.0/gh_2.102.0_linux_amd64.tar.gz \
+          | tar -xz -C /usr/local --strip-components=1
+
+    ## Exit 3 says a job still runs, and the next completion will report. Exit 4 says a newer push cancelled the
+    ## cycle, which has no report. The files stay out of the workspace, which a self-hosted runner keeps for the
+    ## next job of the project. @CHART@ stands for the commit that keeps the charts until they are pushed.
+    - name: Measure the cycle
+      id: cycle
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        SHA: ${{ inputs.sha }}
+        UNIT: ${{ inputs.workflow }}
+      run: |
+        rm -rf "$RUNNER_TEMP/ci-cycle" && mkdir "$RUNNER_TEMP/ci-cycle" && cd "$RUNNER_TEMP/ci-cycle"
+        set +e
+        python3 "$GITHUB_ACTION_PATH/../../../tools/ci_cycle.py" "$GITHUB_REPOSITORY" "$SHA" --workflow "$UNIT" \
+          --svg "$SHA.svg" --markdown ci-cycle.md --chart-url "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/@CHART@/" \
+          | tee -a "$GITHUB_STEP_SUMMARY"
+        status=${PIPESTATUS[0]}
+        if [ "$status" = "3" ] || [ "$status" = "4" ]; then echo "complete=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+        echo "complete=true" >> "$GITHUB_OUTPUT"
+        exit "$status"
+
+    ## The comment embeds the chart by its raw URL, which GitHub serves for a file of a commit.
+    - name: Keep the chart
+      id: chart
+      if: steps.cycle.outputs.complete == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        SHA: ${{ inputs.sha }}
+      run: |
+        cd "$RUNNER_TEMP/ci-cycle"
+        remote="https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY"
+        git init -q chart && cd chart
+        git fetch -q --depth 1 "$remote" ci-cycle && git checkout -q FETCH_HEAD || git checkout -q --orphan ci-cycle
+        cp ../"$SHA"*.svg .
+        git add "$SHA"*.svg
+        ## A run on a cycle already kept stages nothing, and an empty commit fails.
+        if ! git diff --cached --quiet; then
+          git -c user.name=github-actions -c user.email=github-actions@github.com commit -q -m "Cycle of $SHA"
+          git push -q "$remote" HEAD:ci-cycle
+        fi
+        ## Do not name the chart by the branch: a rerun keeps the URL, and the caches serve the previous chart.
+        echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+    - name: Comment the pull request
+      if: steps.cycle.outputs.complete == 'true' && inputs.pr != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        SHA: ${{ inputs.sha }}
+        PR: ${{ inputs.pr }}
+        CHART: ${{ steps.chart.outputs.commit }}
+      run: |
+        cd "$RUNNER_TEMP/ci-cycle"
+        sed -i "s|@CHART@|$CHART|g" ci-cycle.md
+        existing=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments?per_page=100" \
+          --jq '[.[] | select(.body | startswith("<!-- ci-cycle -->"))][0].id')
+        if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -F body=@ci-cycle.md > /dev/null
+        else
+          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@ci-cycle.md > /dev/null
+        fi
