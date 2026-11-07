@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """What a package manager ships, checked by consuming it the way its users are told to.
 
-The install tree is covered by install-layout.py, which drives copa_setup_install here. What spack,
-vcpkg and conan publish is a different tree, laid out by the recipe rather than by CMake, and a
+The install tree is covered by install-layout.py, which drives copa_setup_install here. What spack
+and vcpkg publish is a different tree, laid out by the recipe rather than by CMake, and a
 consumer reaches it by pointing COPACABANA_SOURCE_DIR at a prefix and including copacabana.cmake
 from it. Nothing else here exercises that path, so a change of layout would reach users through a
 release before anyone noticed.
