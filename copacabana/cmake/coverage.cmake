@@ -105,7 +105,9 @@ function(copa_setup_coverage target)
     message(FATAL_ERROR "[${PROJECT_NAME}] - Coverage requires GCC or Clang, got ${CMAKE_CXX_COMPILER_ID}")
   endif()
 
-  set(COVERAGE_FLAGS --coverage)
+  # Do not drop -fprofile-update=atomic: the threads of a test race on the counters, and gcovr stops
+  # on the negative hits gcov then reports.
+  set(COVERAGE_FLAGS --coverage -fprofile-update=atomic)
 
   # Without this, GCC stores the notes' paths relative to the object file and gcov resolves none
   # of the library headers - which, for a header-only library, is the entirety of the report.
