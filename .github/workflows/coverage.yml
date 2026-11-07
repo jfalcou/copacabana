@@ -36,6 +36,14 @@ on:
         description: 'Minutes a job may take before the runner is taken back'
         type: number
         default: 120
+      runs-on:
+        description: 'Runner label, or a JSON list of labels such as ["self-hosted", "x64"]'
+        type: string
+        default: 'ubuntu-latest'
+      parallel:
+        description: 'Compilations the build runs at once'
+        type: number
+        default: 2
 
 permissions:
   contents: read
@@ -43,7 +51,7 @@ permissions:
 jobs:
   coverage:
     name: Coverage
-    runs-on: ubuntu-latest
+    runs-on: ${{ startsWith(inputs.runs-on, '[') && fromJSON(inputs.runs-on) || inputs.runs-on }}
     timeout-minutes: ${{ inputs.timeout }}
     container:
       image: ${{ inputs.image }}
@@ -56,6 +64,7 @@ jobs:
         shell: bash
         env:
           TARGETS: ${{ inputs.build-targets }}
+          PARALLEL: ${{ inputs.parallel }}
         run: |
           cmake --preset gcc-coverage
 
@@ -65,7 +74,7 @@ jobs:
             args+=(--target $TARGETS)
           fi
 
-          cmake "${args[@]}" --parallel 2
+          cmake "${args[@]}" --parallel "$PARALLEL"
 
       - name: Run Unit Tests and Collect Coverage
         shell: bash
