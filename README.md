@@ -35,7 +35,7 @@ Pin a tag rather than tracking `main`, which also carries Copacabana's own CI an
 carries **two** pins (the `GIT_TAG` here and the SHA in its `uses:` lines) and only the second is
 moved by Dependabot. Change them together.
 
-## A minimal consumer
+## Minimal consumer
 
 ```cmake
 cmake_minimum_required(VERSION 3.24)
