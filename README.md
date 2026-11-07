@@ -35,7 +35,7 @@ Pin a tag rather than tracking `main`, which also carries Copacabana's own CI an
 carries **two** pins (the `GIT_TAG` here and the SHA in its `uses:` lines) and only the second is
 moved by Dependabot. Change them together.
 
-## A minimal consumer
+## Minimal consumer
 
 ```cmake
 cmake_minimum_required(VERSION 3.24)
@@ -85,7 +85,7 @@ The [wiki](https://github.com/jfalcou/copacabana/wiki) has the rest:
 
 - [CMake Functions](https://github.com/jfalcou/copacabana/wiki/CMake-Functions): the `copa_*` functions, one reference page per family
 - [Reusable Workflows](https://github.com/jfalcou/copacabana/wiki/Reusable-Workflows): the workflows a consumer calls by `uses:`
-- [Composite Actions](https://github.com/jfalcou/copacabana/wiki/Composite-Actions): `config` and `test`, for the matrices a project keeps
+- [Composite Actions](https://github.com/jfalcou/copacabana/wiki/Composite-Actions): `config` and `test`, for the matrices a project keeps, and `ci-cycle`, the CI cycle of a commit on its pull request
 - [Project Anatomy](https://github.com/jfalcou/copacabana/wiki/Project-Anatomy): the targets, the install tree and the packages a project ends up with
 - [Starting A Project](https://github.com/jfalcou/copacabana/wiki/Starting-A-Project): the scaffolder
 - [What Adopting It Measured](https://github.com/jfalcou/copacabana/wiki/What-Adopting-It-Measured): what six libraries adopting this measured
