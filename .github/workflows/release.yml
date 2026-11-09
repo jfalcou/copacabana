@@ -1,0 +1,37 @@
+##==================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##==================================================================================================
+## A published release runs the pins workflow of minato, which moves to the new tag every library
+## whose pins are frozen on an earlier tag of copacabana.
+name: Release
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  minato:
+    name: Run minato
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Take a token of minato-sendo for minato
+        id: token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.MINATO_APP_ID }}
+          private-key: ${{ secrets.MINATO_APP_KEY }}
+          owner: jfalcou
+          repositories: minato
+
+      - name: Send the release to minato
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh api "repos/jfalcou/minato/dispatches" -f event_type=release \
+            -f "client_payload[repository]=${GITHUB_REPOSITORY}" -f "client_payload[tag]=${TAG}"
