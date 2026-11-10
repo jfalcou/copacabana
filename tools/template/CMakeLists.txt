@@ -14,16 +14,21 @@ include(${PROJECT_SOURCE_DIR}/cmake/dependencies.cmake)
 ##======================================================================================================================
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake ${COPACABANA_SOURCE_DIR}/copacabana/cmake)
 include(${COPACABANA_SOURCE_DIR}/copacabana/cmake/copacabana.cmake)
-copa_project_version(MAJOR 0 MINOR 1 PATCH 0 REPOSITORY @remote@)
+copa_project_version(
+  MAJOR 0
+  MINOR 1
+  PATCH 0
+  REPOSITORY @remote@)
 
 ##======================================================================================================================
 ## Options, each remembered for the summary below
 ##======================================================================================================================
 copa_add_option(SAMPLE_BUILD_TEST "Build tests for SAMPLE" ON LABEL "Unit tests")
 copa_add_option(SAMPLE_BUILD_DOCUMENTATION "Build Doxygen for SAMPLE" OFF LABEL "Doxygen")
-copa_add_option(SAMPLE_ENABLE_SANITIZERS "Build tests with AddressSanitizer + UndefinedBehaviorSanitizer" OFF LABEL
-                "Sanitizers")
+copa_add_option(SAMPLE_ENABLE_SANITIZERS "Build tests with AddressSanitizer + UndefinedBehaviorSanitizer" OFF
+                LABEL "Sanitizers")
 copa_add_option(SAMPLE_ENABLE_COVERAGE "Build tests with code coverage instrumentation" OFF LABEL "Coverage")
+copa_add_option(SAMPLE_COMPILE_COST "Measure what every test unit costs to compile" OFF LABEL "Compile cost")
 
 if(SAMPLE_BUILD_TEST)
   include(${PROJECT_SOURCE_DIR}/cmake/compiler.cmake)
@@ -96,5 +101,10 @@ if(SAMPLE_BUILD_TEST)
   # After the test targets exist, so the coverage targets can depend on them
   if(SAMPLE_ENABLE_COVERAGE)
     copa_setup_coverage(sample_tests)
+  endif()
+
+  # clang only: -fproc-stat-report is its flag. After the test targets, as the measurement rebuilds them.
+  if(SAMPLE_COMPILE_COST)
+    copa_setup_compile_cost(sample_tests)
   endif()
 endif()

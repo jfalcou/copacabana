@@ -4,14 +4,14 @@
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
 ## Republishes the single header on the standalone branch, which has to exist before the first run.
-name: SAMPLE Standalone
+name: SAMPLE Standalone Generation
 on:
   push:
     branches:
       - main
 
 jobs:
-  standalone:
+  package-standalone:
     permissions:
       contents: write
       pull-requests: write
