@@ -82,7 +82,7 @@ html.dark-mode {
   --tablehead-background: #2a2c2f;
   --blockquote-background: #222325;
   --code-background: #2a2c2f;
-  --box-shadow: 0 2px 8px 0 rgba(0,0,0,.30);
+  --box-shadow: 0 2px 8px 0 rgba(0,0,0,.35);
   --grid-color: rgba(255,255,255,.10);
   --drop-hint: rgba(255,255,255,.03);
 }
@@ -115,7 +115,6 @@ header h1 {
   font-weight: 600;
   color: var(--page-foreground-color);
 }
-header p { margin: 0; color: var(--page-secondary-foreground-color); font-size: 14px; }
 header .spacer { flex: 1 1 auto; }
 
 button, label.filebtn {
@@ -135,8 +134,6 @@ button, label.filebtn {
 button:hover, label.filebtn:hover { color: var(--page-foreground-color); background: var(--odd-color); }
 button:focus-visible, label.filebtn:focus-within,
 input:focus-visible, select:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }
-button.primary { background: var(--primary-color); color: var(--page-background-color); border-color: transparent; }
-button.primary:hover { background: var(--primary-light-color); color: var(--page-background-color); }
 
 /* ---- the two drop slots ------------------------------------------------------------------- */
 .slots { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-large); margin: var(--spacing-large) 0; }
@@ -167,11 +164,6 @@ button.primary:hover { background: var(--primary-light-color); color: var(--page
 .facts b { font-weight: 600; }
 code, .mono { font-family: var(--font-family-monospace); font-size: var(--code-font-size); }
 code { background: var(--code-background); border-radius: var(--border-radius-small); padding: 1px 5px; }
-
-h2.section {
-  font-size: 17px; font-weight: 600; margin: 32px 0 var(--spacing-medium);
-  padding-bottom: var(--spacing-small); border-bottom: 1px solid var(--separator-color);
-}
 
 .tabs { display: flex; gap: var(--spacing-small); margin: 28px 0 0; border-bottom: 1px solid var(--separator-color); }
 .tabs [role=tab] {
@@ -254,8 +246,6 @@ td.swatch-cell { width: 1px; padding-right: 0; }
 .empty { text-align: center; padding: 48px var(--spacing-large); color: var(--page-secondary-foreground-color); }
 .empty code { display: inline-block; margin-top: var(--spacing-medium); text-align: left; white-space: pre; padding: var(--spacing-medium); }
 
-.panel .controls { margin-top: 0; }
-
 #tip {
   position: fixed; pointer-events: none; z-index: 10; display: none;
   background: var(--page-background-color); color: var(--page-foreground-color);
@@ -264,9 +254,6 @@ td.swatch-cell { width: 1px; padding-right: 0; }
   font-size: 12.5px; max-width: 340px;
 }
 #tip .mono { display: block; word-break: break-all; }
-footer { margin-top: 40px; padding-top: var(--spacing-large); border-top: 1px solid var(--separator-color);
-         font-size: 13px; color: var(--page-secondary-foreground-color); }
-footer a { color: var(--primary-color); }
 </style>
 <!-- Served beside a documentation, this is the sheet copa_setup_doxygen wrote and the page takes the
      project's colours. Opened from a disk it is missing, and the values above stand. -->
@@ -312,19 +299,15 @@ footer a { color: var(--primary-color); }
     </div>
 
     <div class="panel chart" id="panel-hist" role="tabpanel" aria-labelledby="tab-hist">
-      <button type="button" class="icon save" data-chart="hist" title="Save as PNG" aria-label="Save as PNG"></button>
       <svg id="hist" viewBox="0 0 1080 380" role="img" aria-label="Histogram of peak memory"></svg>
     </div>
     <div class="panel chart" id="panel-scatter" role="tabpanel" aria-labelledby="tab-scatter" hidden>
-      <button type="button" class="icon save" data-chart="scatter" title="Save as PNG" aria-label="Save as PNG"></button>
       <svg id="scatter" viewBox="0 0 1080 380" role="img" aria-label="Peak memory against CPU time"></svg>
     </div>
     <div class="panel chart" id="panel-modules-cpu" role="tabpanel" aria-labelledby="tab-modules-cpu" hidden>
-      <button type="button" class="icon save" data-chart="modules-cpu" title="Save as PNG" aria-label="Save as PNG"></button>
       <svg id="modules-cpu" viewBox="0 0 1080 320" role="img" aria-label="CPU time per module"></svg>
     </div>
     <div class="panel chart" id="panel-modules-rss" role="tabpanel" aria-labelledby="tab-modules-rss" hidden>
-      <button type="button" class="icon save" data-chart="modules-rss" title="Save as PNG" aria-label="Save as PNG"></button>
       <svg id="modules-rss" viewBox="0 0 1080 320" role="img" aria-label="Peak memory per module"></svg>
     </div>
     <div class="panel chart" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
@@ -455,6 +438,7 @@ function duration(usec) {
   if (r) parts.push(r + " s");
   return parts.join(" ");
 }
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
 function quantile(sorted, q) {           // nearest-rank, as the report generator does it
   return sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
 }
@@ -549,7 +533,7 @@ function renderFacts() {
   if (state.links.length) {
     var linkCpu = state.links.reduce(function (a, r) { return a + r.cpu; }, 0);
     var worstLink = state.links.reduce(function (a, r) { return r.rss > a.rss ? r : a; }, state.links[0]);
-    out.push("<b>" + state.links.length + " link" + (state.links.length === 1 ? "" : "s") + "</b>, " +
+    out.push("<b>" + plural(state.links.length, "link") + "</b>, " +
              duration(linkCpu) + " of CPU, the heaviest <span class=\"mono\">" + esc(worstLink.unit) +
              "</span> peaking at " + size(worstLink.rss) + ".");
   }
@@ -560,8 +544,7 @@ function renderFacts() {
       return b !== undefined && r.rss > b * 1.05 && r.rss - b > 16 * 1024;
     });
     out.push(grew.length
-      ? "<b>" + grew.length + " unit" + (grew.length === 1 ? "" : "s") +
-        " grew</b> by more than 5 % and 16 MiB against the baseline."
+      ? "<b>" + plural(grew.length, "unit") + " grew</b> by more than 5 % and 16 MiB against the baseline."
       : "Nothing grew by more than 5 % against the baseline.");
   }
 
@@ -594,29 +577,51 @@ function groupByModule(rows) {
 // ---- charts ------------------------------------------------------------------------------------
 function clear(svg) { while (svg.firstChild) svg.removeChild(svg.firstChild); }
 
+// The drawing every chart over time or memory shares, in viewBox units: the left margin varies with the width
+// of the labels the vertical axis carries, the rest does not.
+var W = 1080, H = 380, R = 12, T = 16, B = 38;
+
+function yOf(v, hi) { return T + (H - T - B) * (1 - v / hi); }
+
+// The vertical scale: the top on a whole step, and one gridline per step from zero.
+function scale(top, step) {
+  var hi = Math.max(step, Math.ceil(top / step) * step), values = [];
+  for (var v = 0; v <= hi + step / 2; v += step) values.push(v);
+  return { hi: hi, values: values };
+}
+
+// What a chart draws around its marks: a gridline and a label per step of its scale, the horizontal axis, the
+// labels of its two ends, and its title.
+function frame(svg, o) {
+  o.scale.values.forEach(function (v) {
+    var y = yOf(v, o.scale.hi);
+    svg.appendChild(el("line", { class: "grid", x1: o.left, y1: y, x2: W - R, y2: y }));
+    svg.appendChild(el("text", { x: o.left - 6, y: y + 4, "text-anchor": "end" }, o.write(v)));
+  });
+  svg.appendChild(el("line", { class: "axis", x1: o.left, y1: H - B, x2: W - R, y2: H - B }));
+  svg.appendChild(el("text", { x: o.left, y: H - B + 16 }, o.from));
+  svg.appendChild(el("text", { x: W - R, y: H - B + 16, "text-anchor": "end" }, o.to));
+  if (o.title) svg.appendChild(el("text", { x: (o.left + W - R) / 2, y: H - 4, "text-anchor": "middle" }, o.title));
+}
+
 function histogram() {
   var svg = document.getElementById("hist");
   clear(svg);
-  var W = 1080, H = 380, L = 44, R = 8, T = 14, B = 34;
+  var L = 54;
   var peaks = state.rows.map(function (r) { return r.rss; }).sort(function (a, b) { return a - b; });
   var max = peaks[peaks.length - 1], bins = 48, counts = new Array(bins).fill(0);
   peaks.forEach(function (v) { counts[Math.min(bins - 1, Math.floor(v / max * bins))]++; });
-  var top = Math.max.apply(null, counts);
+  var top = Math.max.apply(null, counts), sc = scale(top, Math.max(1, niceStep(top / 4)));
 
-  for (var g = 0; g <= 4; g++) {
-    var y = T + (H - T - B) * g / 4;
-    svg.appendChild(el("line", { class: "grid", x1: L, y1: y, x2: W - R, y2: y }));
-    svg.appendChild(el("text", { x: L - 6, y: y + 4, "text-anchor": "end" },
-                       Math.round(top * (1 - g / 4))));
-  }
+  frame(svg, { left: L, scale: sc, write: String, from: "0", to: size(max), title: "peak resident memory" });
 
   var bw = (W - L - R) / bins;
   counts.forEach(function (c, i) {
     if (!c) return;
-    var h = (H - T - B) * c / top;
+    var h = (H - T - B) * c / sc.hi;
     var rect = el("rect", { class: "bar", x: L + i * bw + 0.5, y: H - B - h,
                             width: Math.max(1, bw - 1), height: h, rx: 1 });
-    attachTip(rect, "<b>" + c + " unit" + (c === 1 ? "" : "s") + "</b><br/>between " +
+    attachTip(rect, "<b>" + plural(c, "unit") + "</b><br/>between " +
                     size(max * i / bins) + " and " + size(max * (i + 1) / bins));
     svg.appendChild(rect);
   });
@@ -626,44 +631,29 @@ function histogram() {
     svg.appendChild(el("line", { class: "mark", x1: x, y1: T, x2: x, y2: H - B }));
     svg.appendChild(el("text", { x: x + 4, y: T + 10 }, m[1]));
   });
-
-  svg.appendChild(el("line", { class: "axis", x1: L, y1: H - B, x2: W - R, y2: H - B }));
-  svg.appendChild(el("text", { x: L, y: H - B + 16 }, "0"));
-  svg.appendChild(el("text", { x: W - R, y: H - B + 16, "text-anchor": "end" }, size(max)));
-  svg.appendChild(el("text", { x: (L + W - R) / 2, y: H - 4, "text-anchor": "middle" },
-                     "peak resident memory"));
 }
 
 function scatter() {
   var svg = document.getElementById("scatter");
   clear(svg);
-  var W = 1080, H = 380, L = 64, R = 8, T = 14, B = 34;
+  var L = 74;
   var maxRss = 0, maxCpu = 0;
   state.rows.forEach(function (r) {
     if (r.rss > maxRss) maxRss = r.rss;
     if (r.cpu > maxCpu) maxCpu = r.cpu;
   });
+  var sc = scale(maxRss, axisStep("peak_kib", maxRss / 4));
 
-  for (var g = 0; g <= 4; g++) {
-    var y = T + (H - T - B) * g / 4;
-    svg.appendChild(el("line", { class: "grid", x1: L, y1: y, x2: W - R, y2: y }));
-    svg.appendChild(el("text", { x: L - 6, y: y + 4, "text-anchor": "end" },
-                       size(maxRss * (1 - g / 4))));
-  }
+  frame(svg, { left: L, scale: sc, write: size, from: "0", to: duration(maxCpu), title: "CPU time" });
 
   state.rows.forEach(function (r) {
     var x = L + (W - L - R) * (r.cpu / maxCpu);
-    var y = T + (H - T - B) * (1 - r.rss / maxRss);
+    var y = yOf(r.rss, sc.hi);
     var c = el("circle", { class: "dot", cx: x, cy: y, r: 3.4, fill: state.colors[r.module] });
     attachTip(c, "<span class=\"mono\">" + esc(r.unit) + "</span>" +
                  size(r.rss) + " &middot; " + duration(r.cpu));
     svg.appendChild(c);
   });
-
-  svg.appendChild(el("line", { class: "axis", x1: L, y1: H - B, x2: W - R, y2: H - B }));
-  svg.appendChild(el("text", { x: L, y: H - B + 16 }, "0"));
-  svg.appendChild(el("text", { x: W - R, y: H - B + 16, "text-anchor": "end" }, duration(maxCpu)));
-  svg.appendChild(el("text", { x: (L + W - R) / 2, y: H - 4, "text-anchor": "middle" }, "CPU time"));
 }
 
 // One bar per module, ranked either by the CPU it adds up to or by the heaviest unit it holds. The
@@ -741,16 +731,30 @@ function delta(r) {
   return b === undefined || b === 0 ? 0 : (r.rss - b) / b;
 }
 
+function cell(tr, text, cls) {
+  var td = document.createElement("td");
+  td.textContent = text;
+  if (cls) td.className = cls;
+  tr.appendChild(td);
+  return td;
+}
+
+function headCell(tr, label, num) {
+  var th = document.createElement("th");
+  th.textContent = label;
+  if (num) th.className = "num";
+  tr.appendChild(th);
+  return th;
+}
+
 function renderHead() {
   var tr = document.getElementById("head");
   tr.innerHTML = "";
   tr.appendChild(document.createElement("th")).className = "swatch-cell";
   var cols = COLS.slice();
-  if (state.base) cols.push({ key: "delta", label: "Δ RSS", num: true });
+  if (state.base) cols.push({ key: "delta", label: "\u0394 RSS", num: true });
   cols.forEach(function (c) {
-    var th = document.createElement("th");
-    th.textContent = c.label;
-    if (c.num) th.className = "num";
+    var th = headCell(tr, c.label, c.num);
     if (state.sort.key === c.key) th.setAttribute("aria-sort", state.sort.dir < 0 ? "descending" : "ascending");
     th.addEventListener("click", function () {
       if (state.sort.key === c.key) state.sort.dir = -state.sort.dir;
@@ -758,7 +762,6 @@ function renderHead() {
       renderHead();
       renderTable();
     });
-    tr.appendChild(th);
   });
 }
 
@@ -770,48 +773,28 @@ function renderTable() {
 
   rows.forEach(function (r) {
     var tr = document.createElement("tr");
-
-    var sw = document.createElement("td");
-    sw.className = "swatch-cell";
     var dot = document.createElement("span");
     dot.className = "swatch";
     dot.style.background = state.colors[r.module];
-    sw.appendChild(dot);
-    tr.appendChild(sw);
-
-    var u = document.createElement("td");
-    u.className = "unit";
-    u.textContent = r.unit;
-    tr.appendChild(u);
-
-    var m = document.createElement("td");
-    m.textContent = r.module;
-    tr.appendChild(m);
-
-    var a = document.createElement("td");
-    a.className = "num";
-    a.textContent = size(r.rss);
-    tr.appendChild(a);
-
-    var c = document.createElement("td");
-    c.className = "num";
-    c.textContent = duration(r.cpu);
-    tr.appendChild(c);
-
-    if (state.base) {
-      var d = document.createElement("td");
-      d.className = "num";
-      var p = pct(r.rss, state.base[r.unit]);
-      d.textContent = p.text;
-      if (p.cls) d.className += " " + p.cls;
-      tr.appendChild(d);
-    }
+    cell(tr, "", "swatch-cell").appendChild(dot);
+    cell(tr, r.unit, "unit");
+    cell(tr, r.module);
+    measures(tr, r, state.base);
     frag.appendChild(tr);
   });
 
   body.appendChild(frag);
   document.getElementById("count").textContent =
     rows.length + " of " + state.rows.length + " units shown";
+}
+
+// The peak, the CPU, and against a baseline the change of the peak: the columns a unit and a link share.
+function measures(tr, r, base) {
+  cell(tr, size(r.rss), "num");
+  cell(tr, duration(r.cpu), "num");
+  if (!base) return;
+  var p = pct(r.rss, base[r.unit]);
+  cell(tr, p.text, "num" + (p.cls ? " " + p.cls : ""));
 }
 
 function renderModuleFilter() {
@@ -825,6 +808,28 @@ function renderModuleFilter() {
     sel.appendChild(o);
   });
   sel.value = keep;
+}
+
+function peaksByUnit(list) {
+  var by = {};
+  list.forEach(function (r) { by[r.unit] = r.rss; });
+  return by;
+}
+
+// A measurement goes into one of the two slots, read from a file or from the series alike: the one shown, or
+// the baseline its deltas are taken against.
+function apply(read, which, label) {
+  if (which === "now") {
+    state.rows = read.rows;
+    state.links = read.links;
+  } else {
+    state.base = peaksByUnit(read.rows);
+    state.linkBase = peaksByUnit(read.links);
+  }
+  document.getElementById("slot-" + which).classList.add("filled");
+  document.getElementById("name-" + which).textContent =
+    label + " \u2014 " + read.rows.length + " units, " + read.links.length + " links";
+  renderAll();
 }
 
 function renderAll() {
@@ -858,22 +863,12 @@ function renderLinks() {
 
   var cols = ["Executable", "Peak RSS", "CPU"];
   if (state.linkBase) cols.push("\u0394 RSS");
-  cols.forEach(function (label, i) {
-    var th = document.createElement("th");
-    th.textContent = label;
-    if (i) th.className = "num";
-    head.appendChild(th);
-  });
+  cols.forEach(function (label, i) { headCell(head, label, i > 0); });
 
   state.links.slice().sort(function (a, b) { return b.rss - a.rss; }).forEach(function (r) {
     var tr = document.createElement("tr");
-    tr.innerHTML = '<td class="mono">' + esc(r.unit) + "</td>" +
-                   '<td class="num">' + size(r.rss) + "</td>" +
-                   '<td class="num">' + duration(r.cpu) + "</td>";
-    if (state.linkBase) {
-      var p = pct(r.rss, state.linkBase[r.unit]);
-      tr.innerHTML += '<td class="num ' + p.cls + '">' + p.text + "</td>";
-    }
+    cell(tr, r.unit, "mono");
+    measures(tr, r, state.linkBase);
     body.appendChild(tr);
   });
 }
@@ -1004,21 +999,16 @@ function drawSeries() {
   // What a curve is read for is a regression, so the axis starts at zero: fitted to its own spread, a build that
   // never moved fills the panel with the noise of a shared runner. The spread is written out instead.
   var count = document.getElementById("hist-count");
-  count.textContent = shown.length + " measurement" + (shown.length === 1 ? "" : "s") +
+  count.textContent = plural(shown.length, "measurement") +
                       (shown.length > 1 ? " \u00b7 " + write(low) + " to " + write(top) : "");
   if (shown.length < 2) return;
 
-  var W = 1080, H = 380, L = 74, R = 12, T = 16, B = 38;
-  var lo = 0, step = axisStep(metric, top / 4), hi = Math.ceil(top / step) * step;
+  var L = 74, sc = scale(top, axisStep(metric, top / 4));
+  frame(svg, { left: L, scale: sc, write: write, from: shown[0].date.slice(0, 10),
+               to: shown[shown.length - 1].date.slice(0, 10) });
 
-  for (var v = 0; v <= hi + step / 2; v += step) {
-    var y = T + (H - T - B) * (1 - v / hi);
-    svg.appendChild(el("line", { class: "grid", x1: L, y1: y, x2: W - R, y2: y }));
-    svg.appendChild(el("text", { x: L - 6, y: y + 4, "text-anchor": "end" }, write(v)));
-  }
-
-  var x = function (i) { return L + (W - L - R) * (shown.length === 1 ? 0.5 : i / (shown.length - 1)); };
-  var y = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
+  var x = function (i) { return L + (W - L - R) * i / (shown.length - 1); };
+  var y = function (v) { return yOf(v, sc.hi); };
 
   var d = shown.map(function (e, i) { return (i ? "L" : "M") + x(i) + " " + y(values[i]); }).join(" ");
   svg.appendChild(el("path", { class: "line", d: d, fill: "none" }));
@@ -1032,11 +1022,6 @@ function drawSeries() {
     c.addEventListener("click", function () { pick(e); });
     svg.appendChild(c);
   });
-
-  svg.appendChild(el("line", { class: "axis", x1: L, y1: H - B, x2: W - R, y2: H - B }));
-  svg.appendChild(el("text", { x: L, y: H - B + 16 }, shown[0].date.slice(0, 10)));
-  svg.appendChild(el("text", { x: W - R, y: H - B + 16, "text-anchor": "end" },
-                     shown[shown.length - 1].date.slice(0, 10)));
 }
 
 // A first click reads that commit, a second compares it against the first: the two slots the page
@@ -1049,25 +1034,12 @@ function pick(entry, opening) {
   }).then(function (text) {
     // Do not let the opening read overwrite a file dropped while it was in flight.
     if (opening && state.rows.length) return;
-    var read = parse(text), which = state.picked.length ? "base" : "now";
-    if (which === "now") {
-      state.rows = read.rows;
-      state.links = read.links;
-      state.picked = [entry.sha];
-    } else {
-      state.base = {};
-      state.linkBase = {};
-      read.rows.forEach(function (r) { state.base[r.unit] = r.rss; });
-      read.links.forEach(function (r) { state.linkBase[r.unit] = r.rss; });
-      state.picked.push(entry.sha);
-    }
-    document.getElementById("slot-" + which).classList.add("filled");
-    document.getElementById("name-" + which).textContent =
-      entry.sha.slice(0, 7) + " — " + read.rows.length + " units, " + read.links.length + " links";
+    var which = state.picked.length ? "base" : "now";
+    state.picked = which === "now" ? [entry.sha] : state.picked.concat(entry.sha);
     help.textContent = state.picked.length === 1
       ? "Reading " + entry.sha.slice(0, 7) + ". Click another point to compare it against this one."
       : "Comparing " + state.picked[0].slice(0, 7) + " against " + state.picked[1].slice(0, 7) + ".";
-    renderAll();
+    apply(parse(text), which, entry.sha.slice(0, 7));
     if (opening) showTab("tab-hist");
   }).catch(function () {
     help.textContent = "The measurement of " + entry.sha.slice(0, 7) + " is no longer on the branch.";
@@ -1082,25 +1054,12 @@ function pick(entry, opening) {
 function load(file, which) {
   var reader = new FileReader();
   reader.onload = function () {
-    var read = parse(String(reader.result)), rows = read.rows;
-    if (!rows.length && !read.links.length) {
-      document.getElementById("name-" + which).textContent =
-        "no -fproc-stat-report line in that file";
+    var read = parse(String(reader.result));
+    if (!read.rows.length && !read.links.length) {
+      document.getElementById("name-" + which).textContent = "no -fproc-stat-report line in that file";
       return;
     }
-    if (which === "now") {
-      state.rows = rows;
-      state.links = read.links;
-    } else {
-      state.base = {};
-      state.linkBase = {};
-      rows.forEach(function (r) { state.base[r.unit] = r.rss; });
-      read.links.forEach(function (r) { state.linkBase[r.unit] = r.rss; });
-    }
-    document.getElementById("slot-" + which).classList.add("filled");
-    document.getElementById("name-" + which).textContent =
-      file.name + " — " + rows.length + " units, " + read.links.length + " links";
-    renderAll();
+    apply(read, which, file.name);
   };
   reader.readAsText(file);
 }
@@ -1152,10 +1111,7 @@ var turns = 0;
 document.getElementById("theme").addEventListener("click", function () {
   turns += 1;
   document.querySelector("#theme svg").style.transform = "rotate(" + (turns * 180) + "deg)";
-  var root = document.documentElement;
-  var dark = root.classList.contains("dark-mode") ||
-             (window.matchMedia("(prefers-color-scheme: dark)").matches &&
-              !root.classList.contains("light-mode"));
+  var root = document.documentElement, dark = darkTheme();
   root.classList.remove("dark-mode", "light-mode");
   root.classList.add(dark ? "light-mode" : "dark-mode");
   if (state.rows.length) renderAll();
@@ -1230,11 +1186,16 @@ function savePng(svg, name) {
   img.src = url;
 }
 
-Array.prototype.slice.call(document.querySelectorAll("button.save")).forEach(function (btn) {
+// One export button per chart, written here rather than once per panel in the markup.
+Array.prototype.slice.call(document.querySelectorAll(".panel.chart > svg")).forEach(function (svg) {
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "icon save";
+  btn.title = "Save as PNG";
+  btn.setAttribute("aria-label", "Save as PNG");
   btn.innerHTML = SAVE_ICON;
-  btn.addEventListener("click", function () {
-    savePng(document.getElementById(btn.getAttribute("data-chart")), "compile-cost-" + btn.getAttribute("data-chart"));
-  });
+  btn.addEventListener("click", function () { savePng(svg, "compile-cost-" + svg.id); });
+  svg.parentNode.insertBefore(btn, svg.parentNode.firstChild);
 });
 
 // Dropping anywhere else must not navigate the browser away from the page.
