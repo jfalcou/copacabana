@@ -247,6 +247,7 @@ td.swatch-cell { width: 1px; padding-right: 0; }
 .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: middle; }
 .up { color: var(--growth-color); font-weight: 600; }
 .down { color: var(--primary-color); }
+.noise { color: var(--page-secondary-foreground-color); }
 
 .empty { text-align: center; padding: 48px var(--spacing-large); color: var(--page-secondary-foreground-color); }
 .empty code { display: inline-block; margin-top: var(--spacing-medium); text-align: left; white-space: pre; padding: var(--spacing-medium); }
@@ -449,11 +450,19 @@ function plural(n, word) { return `${n} ${word}${n === 1 ? "" : "s"}`; }
 function quantile(sorted, q) {           // nearest-rank, as the report generator does it
   return sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
 }
+// A peak moves by a few percent between two runs of the same code on a shared runner, so a change counts only
+// past both bounds: a share of the peak, and an amount a machine notices.
+const NOISE_RATIO = 0.05, NOISE_KIB = 16 * 1024;
+
+function significant(now, before) {
+  return Math.abs(now - before) > before * NOISE_RATIO && Math.abs(now - before) > NOISE_KIB;
+}
+
 function pct(now, before) {
   if (before === undefined) return { text: "new", cls: "" };
   if (before === 0) return { text: "n/a", cls: "" };
+  if (!significant(now, before)) return { text: "noise", cls: "noise" };
   const p = 100 * (now - before) / before;
-  if (Math.abs(p) < 1) return { text: "=", cls: "" };
   return { text: `${p > 0 ? "+" : ""}${p.toFixed(0)} %`, cls: p > 0 ? "up" : "down" };
 }
 
@@ -544,11 +553,11 @@ function renderFacts() {
   if (state.base) {
     const grew = rows.filter(r => {
       const b = state.base[r.unit];
-      return b !== undefined && r.rss > b * 1.05 && r.rss - b > 16 * 1024;
+      return b !== undefined && r.rss > b && significant(r.rss, b);
     });
     out.push(grew.length
       ? `<b>${plural(grew.length, "unit")} grew</b> by more than 5 % and 16 MiB against the baseline.`
-      : "Nothing grew by more than 5 % against the baseline.");
+      : "Nothing grew by more than 5 % and 16 MiB against the baseline.");
   }
 
   const ul = document.getElementById("facts");
@@ -733,7 +742,7 @@ function visible() {
 function delta(r) {
   if (!state.base) return 0;
   const b = state.base[r.unit];
-  return b === undefined || b === 0 ? 0 : (r.rss - b) / b;
+  return b === undefined || b === 0 || !significant(r.rss, b) ? 0 : (r.rss - b) / b;
 }
 
 function cell(tr, text, cls) {
