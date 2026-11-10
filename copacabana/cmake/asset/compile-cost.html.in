@@ -180,6 +180,8 @@ h2.section {
 }
 .tabs [role=tab]:hover { background: none; color: var(--page-foreground-color); }
 .tabs [role=tab][aria-selected=true] { color: var(--page-foreground-color); border-bottom-color: var(--primary-color); }
+/* The display above overrides the hidden attribute, which the page sets on a tab with nothing to draw. */
+.tabs [role=tab][hidden] { display: none; }
 .panel {
   position: relative;
   border: 1px solid var(--separator-color); border-top: none;
@@ -331,6 +333,7 @@ footer a { color: var(--primary-color); }
         <select id="hist-scope" aria-label="What the curve follows"></select>
         <select id="hist-metric" aria-label="What the curve measures">
           <option value="cpu_us">CPU time</option>
+          <option value="cpu_per_unit">CPU time per unit</option>
           <option value="peak_kib">Peak memory</option>
         </select>
         <span class="count" id="hist-count"></span>
@@ -890,7 +893,7 @@ function loadSeries() {
     document.getElementById("tab-history").hidden = false;
     fillSeriesControls();
     drawSeries();
-    if (!state.rows.length) openOnSeries();
+    if (!state.rows.length) openOnLatest();
   }).catch(function () { /* no series published yet, and the tab stays hidden */ });
 }
 
@@ -906,15 +909,31 @@ function openOnSeries() {
   showTab("tab-history");
 }
 
+// Opened from the published site with no file chosen, the page reads the last measurement of the branch the curve
+// shows. The curve stays the fallback when that CSV is gone from the branch.
+function openOnLatest() {
+  openOnSeries();
+  var shown = seriesShown();
+  if (shown.length) pick(shown[shown.length - 1], true);
+}
+
 function seriesShown() {
   var branch = document.getElementById("hist-branch").value;
   return state.series.filter(function (e) { return !branch || e.branch === branch; });
 }
 
+// The total grows with every unit a commit adds, so a curve of it reads a new test as a regression. Divided by
+// the units the same measurement counts, it follows what one unit costs.
 function seriesValue(entry, scope, metric) {
-  if (scope === "") return entry[metric];
-  var m = entry.modules && entry.modules[scope];
-  return m ? m[metric] : undefined;
+  var from = scope === "" ? entry : entry.modules && entry.modules[scope];
+  if (!from) return undefined;
+  if (metric === "cpu_per_unit") return from.units ? from.cpu_us / from.units : undefined;
+  return from[metric];
+}
+
+// Hundredths of a second, which the mean of a unit needs where a total reads in tenths.
+function unitDuration(usec) {
+  return usec < 9.995e6 ? (usec / 1e6).toFixed(2) + " s" : duration(usec);
 }
 
 function fillSeriesControls() {
@@ -959,8 +978,9 @@ function niceStep(rough) {
 var CLOCK = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600];
 
 function axisStep(metric, rough) {
-  if (metric === "cpu_us") {
+  if (metric !== "peak_kib") {
     var seconds = rough / 1e6;
+    if (seconds < 1) return niceStep(seconds) * 1e6;
     for (var i = 0; i < CLOCK.length; i++) if (CLOCK[i] >= seconds) return CLOCK[i] * 1e6;
     return niceStep(seconds) * 1e6;
   }
@@ -975,7 +995,7 @@ function drawSeries() {
   var shown = seriesShown().filter(function (e) { return seriesValue(e, scope, metric) !== undefined; });
 
   var values = shown.map(function (e) { return seriesValue(e, scope, metric); });
-  var write = metric === "cpu_us" ? duration : size;
+  var write = metric === "peak_kib" ? size : (metric === "cpu_per_unit" ? unitDuration : duration);
   var top = Math.max.apply(null, values), low = Math.min.apply(null, values);
 
   // What a curve is read for is a regression, so the axis starts at zero: fitted to its own spread, a build that
@@ -1018,12 +1038,14 @@ function drawSeries() {
 
 // A first click reads that commit, a second compares it against the first: the two slots the page
 // already has, filled from the branch rather than from a file someone downloaded.
-function pick(entry) {
+function pick(entry, opening) {
   var help = document.getElementById("hist-help");
   fetch(seriesUrl(entry.sha + ".csv")).then(function (r) {
     if (!r.ok) throw new Error("gone");
     return r.text();
   }).then(function (text) {
+    // Do not let the opening read overwrite a file dropped while it was in flight.
+    if (opening && state.rows.length) return;
     var read = parse(text), which = state.picked.length ? "base" : "now";
     if (which === "now") {
       state.rows = read.rows;
@@ -1043,6 +1065,7 @@ function pick(entry) {
       ? "Reading " + entry.sha.slice(0, 7) + ". Click another point to compare it against this one."
       : "Comparing " + state.picked[0].slice(0, 7) + " against " + state.picked[1].slice(0, 7) + ".";
     renderAll();
+    if (opening) showTab("tab-hist");
   }).catch(function () {
     help.textContent = "The measurement of " + entry.sha.slice(0, 7) + " is no longer on the branch.";
   });
