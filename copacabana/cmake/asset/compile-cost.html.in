@@ -44,7 +44,11 @@ html {
   --font-family-monospace: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
   --page-font-size: 15.6px;
   --code-font-size: 14px;
+  --control-font-size: 14px;
+  --small-font-size: 13px;
+  --label-font-size: 12px;
   --title-font-size: 22px;
+  --growth-color: #b61825;
   color-scheme: light;
 }
 
@@ -67,6 +71,7 @@ html {
     --box-shadow: 0 2px 8px 0 rgba(0,0,0,.35);
     --grid-color: rgba(255,255,255,.10);
     --drop-hint: rgba(255,255,255,.03);
+    --growth-color: #f06b6b;
   }
 }
 html.dark-mode {
@@ -85,6 +90,7 @@ html.dark-mode {
   --box-shadow: 0 2px 8px 0 rgba(0,0,0,.35);
   --grid-color: rgba(255,255,255,.10);
   --drop-hint: rgba(255,255,255,.03);
+  --growth-color: #f06b6b;
 }
 
 * { box-sizing: border-box; }
@@ -122,7 +128,7 @@ button, label.filebtn {
   overflow: hidden;
   display: inline-block;
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--control-font-size);
   cursor: pointer;
   border: 1px solid var(--separator-color);
   background: var(--page-background-color);
@@ -149,9 +155,8 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--primary-col
 }
 .slot.over { border-color: var(--primary-color); background: var(--odd-color); }
 .slot.filled { border-style: solid; border-color: var(--primary-light-color); }
-.slot h2 { margin: 0 0 var(--spacing-small); font-size: 15px; font-weight: 600; }
-.slot p { margin: 0 0 var(--spacing-medium); font-size: 13px; color: var(--page-secondary-foreground-color); }
-.slot .name { font-family: var(--font-family-monospace); font-size: 13px; word-break: break-all; }
+.slot h2 { margin: 0 0 var(--spacing-small); font-size: var(--page-font-size); font-weight: 600; }
+.slot .name { font-family: var(--font-family-monospace); font-size: var(--small-font-size); word-break: break-all; }
 .slot input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
 
 /* ---- summary ------------------------------------------------------------------------------ */
@@ -165,7 +170,7 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--primary-col
 code, .mono { font-family: var(--font-family-monospace); font-size: var(--code-font-size); }
 code { background: var(--code-background); border-radius: var(--border-radius-small); padding: 1px 5px; }
 
-.tabs { display: flex; gap: var(--spacing-small); margin: 28px 0 0; border-bottom: 1px solid var(--separator-color); }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--spacing-small); margin: 28px 0 0; border-bottom: 1px solid var(--separator-color); }
 .tabs [role=tab] {
   border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none;
   padding: var(--spacing-medium) var(--spacing-large); margin-bottom: -1px;
@@ -200,7 +205,7 @@ button.save {
 .panel:hover button.save, button.save:focus-visible { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { #theme svg { transition: none; } }
 svg { display: block; width: 100%; height: auto; overflow: visible; }
-svg text { font-family: var(--font-family); font-size: 12px; fill: var(--page-secondary-foreground-color); }
+svg text { font-family: var(--font-family); font-size: var(--label-font-size); fill: var(--page-secondary-foreground-color); }
 svg .grid { stroke: var(--grid-color); stroke-width: 1; }
 svg .axis { stroke: var(--separator-color); stroke-width: 1; }
 svg .mark { stroke: var(--primary-color); stroke-width: 1; stroke-dasharray: 3 3; }
@@ -215,16 +220,16 @@ svg .dot:hover { opacity: 1; stroke: var(--page-foreground-color); stroke-width:
 /* ---- controls and table ------------------------------------------------------------------- */
 .controls { display: flex; gap: var(--spacing-medium); align-items: center; flex-wrap: wrap; margin-bottom: var(--spacing-medium); }
 input[type=search], select {
-  font-family: inherit; font-size: 14px;
+  font-family: inherit; font-size: var(--control-font-size);
   color: var(--page-foreground-color); background: var(--page-background-color);
   border: 1px solid var(--separator-color); border-radius: var(--border-radius-medium);
   padding: var(--spacing-small) var(--spacing-medium);
 }
 input[type=search] { min-width: 260px; }
-.controls .count { margin-left: auto; font-size: 13px; color: var(--page-secondary-foreground-color); }
+.controls .count { margin-left: auto; font-size: var(--small-font-size); color: var(--page-secondary-foreground-color); }
 
 .tablewrap { overflow-x: auto; border: 1px solid var(--separator-color); border-radius: var(--border-radius-large); }
-table { border-collapse: collapse; width: 100%; font-size: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: var(--control-font-size); }
 th, td { padding: 7px var(--spacing-medium); text-align: left; white-space: nowrap; }
 th {
   position: sticky; top: 0; z-index: 1;
@@ -237,10 +242,10 @@ th[aria-sort]::after { content: " \25B4"; color: var(--primary-color); }
 th[aria-sort="descending"]::after { content: " \25BE"; }
 tbody tr:nth-child(even) { background: var(--odd-color); }
 tbody tr:hover { background: var(--odd-color); }
-td.unit { font-family: var(--font-family-monospace); font-size: 13px; white-space: normal; }
+td.unit { font-family: var(--font-family-monospace); font-size: var(--small-font-size); white-space: normal; }
 td.swatch-cell { width: 1px; padding-right: 0; }
 .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: middle; }
-.up { color: #b61825; font-weight: 600; }
+.up { color: var(--growth-color); font-weight: 600; }
 .down { color: var(--primary-color); }
 
 .empty { text-align: center; padding: 48px var(--spacing-large); color: var(--page-secondary-foreground-color); }
@@ -251,7 +256,7 @@ td.swatch-cell { width: 1px; padding-right: 0; }
   background: var(--page-background-color); color: var(--page-foreground-color);
   border: 1px solid var(--separator-color); border-radius: var(--border-radius-medium);
   box-shadow: var(--box-shadow); padding: var(--spacing-small) var(--spacing-medium);
-  font-size: 12.5px; max-width: 340px;
+  font-size: var(--label-font-size); max-width: 340px;
 }
 #tip .mono { display: block; word-break: break-all; }
 </style>
@@ -610,10 +615,15 @@ function histogram() {
   var L = 54;
   var peaks = state.rows.map(function (r) { return r.rss; }).sort(function (a, b) { return a - b; });
   var max = peaks[peaks.length - 1], bins = 48, counts = new Array(bins).fill(0);
-  peaks.forEach(function (v) { counts[Math.min(bins - 1, Math.floor(v / max * bins))]++; });
+  // From the lowest peak rounded down to a step rather than from zero: units of one suite peak close to each
+  // other, and an axis from zero packs them all into its last bins.
+  var step = axisStep("peak_kib", Math.max(1, max - peaks[0]) / 4);
+  var min = Math.floor(peaks[0] / step) * step, span = Math.max(1, max - min);
+  var bin = function (v) { return Math.min(bins - 1, Math.floor((v - min) / span * bins)); };
+  peaks.forEach(function (v) { counts[bin(v)]++; });
   var top = Math.max.apply(null, counts), sc = scale(top, Math.max(1, niceStep(top / 4)));
 
-  frame(svg, { left: L, scale: sc, write: String, from: "0", to: size(max), title: "peak resident memory" });
+  frame(svg, { left: L, scale: sc, write: String, from: size(min), to: size(max), title: "peak resident memory" });
 
   var bw = (W - L - R) / bins;
   counts.forEach(function (c, i) {
@@ -622,12 +632,12 @@ function histogram() {
     var rect = el("rect", { class: "bar", x: L + i * bw + 0.5, y: H - B - h,
                             width: Math.max(1, bw - 1), height: h, rx: 1 });
     attachTip(rect, "<b>" + plural(c, "unit") + "</b><br/>between " +
-                    size(max * i / bins) + " and " + size(max * (i + 1) / bins));
+                    size(min + span * i / bins) + " and " + size(min + span * (i + 1) / bins));
     svg.appendChild(rect);
   });
 
   [[0.5, "median"], [0.9, "ninth decile"]].forEach(function (m) {
-    var x = L + (W - L - R) * quantile(peaks, m[0]) / max;
+    var x = L + (W - L - R) * (quantile(peaks, m[0]) - min) / span;
     svg.appendChild(el("line", { class: "mark", x1: x, y1: T, x2: x, y2: H - B }));
     svg.appendChild(el("text", { x: x + 4, y: T + 10 }, m[1]));
   });
@@ -649,7 +659,8 @@ function scatter() {
   state.rows.forEach(function (r) {
     var x = L + (W - L - R) * (r.cpu / maxCpu);
     var y = yOf(r.rss, sc.hi);
-    var c = el("circle", { class: "dot", cx: x, cy: y, r: 3.4, fill: state.colors[r.module] });
+    // A style, since the fill of the .dot rule would win over an attribute.
+    var c = el("circle", { class: "dot", cx: x, cy: y, r: 3.4, style: "fill: " + state.colors[r.module] });
     attachTip(c, "<span class=\"mono\">" + esc(r.unit) + "</span>" +
                  size(r.rss) + " &middot; " + duration(r.cpu));
     svg.appendChild(c);
