@@ -383,10 +383,13 @@ footer a { color: var(--primary-color); }
 
 // The source a CMake object path came from. Objects live in
 // <build>/test/unit/CMakeFiles/<target>.dir/<path>.o, so everything before the .dir/ is build
-// layout and everything after it is what a reader recognises.
+// layout and everything after it is what a reader recognises. A multi-config generator adds the
+// configuration after the .dir/, which compile_cost.py strips as well, so both name the same modules.
+var CONFIGS = /^(Debug|Release|RelWithDebInfo|MinSizeRel)[/]/;
+
 function unitOf(output) {
   var i = output.indexOf(".dir/");
-  var name = i >= 0 ? output.slice(i + 5) : output.slice(output.lastIndexOf("/") + 1);
+  var name = i >= 0 ? output.slice(i + 5).replace(CONFIGS, "") : output.slice(output.lastIndexOf("/") + 1);
   return name.slice(-2) === ".o" ? name.slice(0, -2) : name;
 }
 
