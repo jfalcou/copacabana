@@ -36,10 +36,10 @@ VERBATIM = {"cmake/CPM.cmake"}
 
 ## What a preset group holds, so that a new project ships the handful it will use rather than the fleet's whole matrix.
 ## Written only when the flag is on: the publisher of the standalone branch has nothing to publish otherwise.
-FLAG_ONLY = { "standalone": [r"^\.github/workflows/standalone\.yml$"] }
+FLAG_ONLY = { "standalone": [r"^\.github/workflows/package-standalone\.yml$"] }
 
 PRESET_GROUPS = { "native": [ "gcc", "clang", "clang-macos", "msvc", "clangcl"
-                            , "gcc-sanitize", "gcc-coverage", "clang-sanitize", "clang-coverage"
+                            , "gcc-sanitize", "gcc-coverage", "clang-sanitize", "clang-coverage", "clang-compile-cost"
                             ]
                 , "cross":  ["gcc-aarch64", "gcc-aarch64-sve", "gcc-aarch64-sve2", "gcc-ppc64", "wasm", "rvv128"]
                 , "cuda":   ["nvcc", "clang-cuda"]

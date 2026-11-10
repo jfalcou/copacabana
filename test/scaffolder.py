@@ -40,7 +40,7 @@ def main(root: str = ".") -> int:
         out = run(sys.executable, "test/scaffolded-workflows.py", narrow, cwd=root)
         expect("its workflows call only what it has", out.returncode == 0, out.stdout[-400:])
 
-        for gone in (".github/matrices/windows.yml", ".github/workflows/standalone.yml"):
+        for gone in (".github/matrices/windows.yml", ".github/workflows/package-standalone.yml"):
             expect(f"what it left out is absent: {gone}", not pathlib.Path(narrow, gone).exists())
 
         ## Two rows survive out of ten: a matrix keeps its file while one preset holds, not its every row.

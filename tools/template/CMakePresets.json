@@ -50,6 +50,11 @@
       "hidden": true,
       "cacheVariables": { "SAMPLE_ENABLE_COVERAGE": "ON", "CMAKE_DEFAULT_BUILD_TYPE": "Debug" }
     },
+    {
+      "name": "compile-cost",
+      "hidden": true,
+      "cacheVariables": { "SAMPLE_COMPILE_COST": "ON" }
+    },
 
     { "name": "gcc"             , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/gcc.x86.cmake"          },
     { "name": "clang"           , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/clang.x86.cmake"        },
@@ -67,6 +72,11 @@
     { "name": "gcc-coverage"    , "inherits": ["gcc"  , "coverage"] },
     { "name": "clang-sanitize"  , "inherits": ["clang", "sanitize"] },
     { "name": "clang-coverage"  , "inherits": ["clang", "coverage"] },
+    {
+      "name": "clang-compile-cost",
+      "inherits": ["clang", "compile-cost"],
+      "displayName": "Clang, measuring what every unit costs to compile"
+    },
 
     { "name": "nvcc"            , "inherits": ["nvidia-base"] },
     {
@@ -90,6 +100,7 @@
     { "name": "gcc-coverage"    , "inherits": "base-build", "configurePreset": "gcc-coverage"     },
     { "name": "clang-sanitize"  , "inherits": "base-build", "configurePreset": "clang-sanitize"   },
     { "name": "clang-coverage"  , "inherits": "base-build", "configurePreset": "clang-coverage"   },
+    { "name": "clang-compile-cost", "inherits": "base-build", "configurePreset": "clang-compile-cost" },
     { "name": "nvcc"            , "inherits": "base-build", "configurePreset": "nvcc"             },
     { "name": "clang-cuda"      , "inherits": "base-build", "configurePreset": "clang-cuda"       },
     { "name": "gcc-aarch64"     , "inherits": "base-build", "configurePreset": "gcc-aarch64"      },
@@ -112,6 +123,7 @@
     { "name": "gcc-coverage"    , "inherits": "base-test", "configurePreset": "gcc-coverage"     },
     { "name": "clang-sanitize"  , "inherits": "base-test", "configurePreset": "clang-sanitize"   },
     { "name": "clang-coverage"  , "inherits": "base-test", "configurePreset": "clang-coverage"   },
+    { "name": "clang-compile-cost", "inherits": "base-test", "configurePreset": "clang-compile-cost" },
     { "name": "nvcc"            , "inherits": "base-test", "configurePreset": "nvcc"             },
     { "name": "clang-cuda"      , "inherits": "base-test", "configurePreset": "clang-cuda"       },
     { "name": "gcc-aarch64"     , "inherits": "base-test", "configurePreset": "gcc-aarch64"      },
