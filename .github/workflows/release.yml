@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Take a token of minato-sendo for minato
         id: token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.MINATO_APP_ID }}
           private-key: ${{ secrets.MINATO_APP_KEY }}
