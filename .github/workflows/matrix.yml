@@ -51,6 +51,7 @@ jobs:
       test-targets: ${{ steps.read.outputs.test-targets }}
       memcheck: ${{ steps.read.outputs.memcheck }}
       test-timeout: ${{ steps.read.outputs.test-timeout }}
+      parallel: ${{ steps.read.outputs.parallel }}
       timeout: ${{ steps.read.outputs.timeout }}
       directory: ${{ steps.read.outputs.directory }}
     steps:
@@ -89,6 +90,7 @@ jobs:
           print("test-targets=" + str(spec.get("test-targets", "")))
           print("memcheck=" + ("true" if spec.get("memcheck", False) else "false"))
           print("test-timeout=" + str(spec.get("test-timeout", 600)))
+          print("parallel=" + str(spec.get("parallel", 2)))
           print("timeout=" + str(spec.get("timeout", 120)))
           print("directory=" + str(spec.get("directory", ".")))
           EOF
@@ -124,6 +126,7 @@ jobs:
           SETUP_SCRIPT: ${{ matrix.compiler.setup }}
           TARGETS: ${{ needs.read.outputs.build-targets }}
           CMAKE_ARGS: ${{ matrix.compiler.args }}
+          PARALLEL: ${{ needs.read.outputs.parallel }}
         run: |
           if [ -n "$SETUP_SCRIPT" ]; then
             if [ ! -f "$SETUP_SCRIPT" ]; then
@@ -153,7 +156,7 @@ jobs:
             args+=(--target $TARGETS)
           fi
 
-          cmake "${args[@]}" --parallel 2
+          cmake "${args[@]}" --parallel "$PARALLEL"
 
       ## The row decides here and not in an if:, where an absent key reads as null, which GitHub compares equal to
       ## false. That expression turned this step off for every row that said nothing, from v7 to v8.
@@ -166,6 +169,7 @@ jobs:
           TARGETS: ${{ needs.read.outputs.test-targets }}
           RUN_TESTS: ${{ matrix.compiler.test }}
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
+          PARALLEL: ${{ needs.read.outputs.parallel }}
         run: |
           if [ "$RUN_TESTS" = "false" ]; then
             echo "This row says test: false, so nothing is run here."
@@ -179,7 +183,7 @@ jobs:
 
           ## --no-tests=error, because ctest exits 0 on an empty test set: a job that ran nothing would stay green.
           ## --timeout, so a test that never returns is named and fails rather than holding the job.
-          ctest "${args[@]}" -j 2 --output-on-failure --no-tests=error --timeout "$TEST_TIMEOUT"
+          ctest "${args[@]}" -j "$PARALLEL" --output-on-failure --no-tests=error --timeout "$TEST_TIMEOUT"
 
       ## MemCheck puts ctest in a mode the presets do not carry, hence the explicit test directory.
       - name: Run MemCheck
@@ -193,6 +197,7 @@ jobs:
           RUN_TESTS: ${{ matrix.compiler.test }}
           RUN_MEMCHECK: ${{ matrix.compiler.memcheck }}
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
+          PARALLEL: ${{ needs.read.outputs.parallel }}
         run: |
           if [ "$RUN_TESTS" = "false" ] || [ "$RUN_MEMCHECK" = "false" ]; then
             echo "This row opts out of memcheck."
@@ -210,6 +215,6 @@ jobs:
           MEMCHECK_OPTIONS="$MEMCHECK_OPTIONS --error-exitcode=1 --num-callers=50"
 
           ## valgrind multiplies a run time, hence four times what a plain test is allowed.
-          ctest "${args[@]}" -T MemCheck -j 2 --output-on-failure --no-tests=error \
+          ctest "${args[@]}" -T MemCheck -j "$PARALLEL" --output-on-failure --no-tests=error \
                 --timeout "$((TEST_TIMEOUT * 4))" \
                 --overwrite MemoryCheckCommandOptions="$MEMCHECK_OPTIONS"
