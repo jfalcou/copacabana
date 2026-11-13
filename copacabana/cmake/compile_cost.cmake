@@ -187,3 +187,62 @@ function(copa_setup_time_trace target)
 
   message(STATUS "[${PROJECT_NAME}] - Time trace of target '${target}' reported into ${TRACE_DIR}")
 endfunction()
+
+##======================================================================================================================
+## Hold the heaviest units in a Ninja pool, so that a build never compiles more of them at once than the pool allows
+##
+## copa_setup_heavy_pool( LIST <file>   # Targets, one per line, as compile_cost.py --heavy writes them
+##                        [POOL <name>] # Name of the Ninja pool, heavy by default
+##                      )
+##
+## The depth is <PROJECT>_HEAVY_POOL, a cache variable each machine or job sets, 0 by default, which declares no pool.
+## A target of the list that the configure never declares, a unit an option left out, is skipped.
+##======================================================================================================================
+function(copa_setup_heavy_pool)
+  set(oneValueArgs LIST POOL)
+  cmake_parse_arguments(OPT "" "${oneValueArgs}" "" ${ARGN})
+
+  copa_check_arguments()
+
+  if(NOT OPT_LIST)
+    message(FATAL_ERROR "[${PROJECT_NAME}] - copa_setup_heavy_pool: LIST is required")
+  endif()
+
+  if(NOT OPT_POOL)
+    set(OPT_POOL heavy)
+  endif()
+
+  string(TOUPPER "${PROJECT_NAME}" NAME)
+  ## cmake-lint reads the name of the cache variable before the project name expands in it
+  # cmake-lint: disable=C0103
+  set(${NAME}_HEAVY_POOL 0 CACHE STRING "How many of the heaviest units may compile at once, 0 to not pool them")
+
+  if(NOT ${NAME}_HEAVY_POOL GREATER 0)
+    return()
+  endif()
+
+  file(STRINGS "${OPT_LIST}" HEAVY REGEX "^[^#]")
+  set_property(GLOBAL APPEND PROPERTY JOB_POOLS ${OPT_POOL}=${${NAME}_HEAVY_POOL})
+  set_property(GLOBAL PROPERTY COPA_HEAVY_TARGETS_${NAME} "${HEAVY}")
+
+  # Do not call copa_apply_heavy_pool here: the units are declared after the options, by the test directory.
+  # The EVAL fixes the arguments now, where a deferred call would read them at the end of the directory.
+  cmake_language(
+    EVAL CODE
+    "cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] CALL copa_apply_heavy_pool [[${NAME}]] [[${OPT_POOL}]])")
+
+  list(LENGTH HEAVY COUNT)
+  message(STATUS "[${PROJECT_NAME}] - ${COUNT} heavy targets compile ${${NAME}_HEAVY_POOL} at a time")
+endfunction()
+
+##======================================================================================================================
+## The deferred half of copa_setup_heavy_pool: the targets of the list that the configure declared join the pool
+##======================================================================================================================
+function(copa_apply_heavy_pool name pool)
+  get_property(HEAVY GLOBAL PROPERTY COPA_HEAVY_TARGETS_${name})
+  foreach(target IN LISTS HEAVY)
+    if(TARGET ${target})
+      set_target_properties(${target} PROPERTIES JOB_POOL_COMPILE ${pool})
+    endif()
+  endforeach()
+endfunction()

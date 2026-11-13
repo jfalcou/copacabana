@@ -64,6 +64,9 @@ copa_add_option(EXAMPLE_COMPILE_COST "Measure what every unit costs to compile" 
 copa_add_option(EXAMPLE_TIME_TRACE "Break the compile cost down by template" OFF)
 copa_show_options()
 
+## The units of heavy-units.txt compile EXAMPLE_HEAVY_POOL at a time, the last one being declared by no option.
+copa_setup_heavy_pool(LIST ${PROJECT_SOURCE_DIR}/heavy-units.txt)
+
 add_library(example_test INTERFACE)
 
 ## The standard through compile features, which is how the installed library asks for it too: a raw -std= flag goes
