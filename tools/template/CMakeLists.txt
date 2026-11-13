@@ -29,12 +29,14 @@ copa_add_option(SAMPLE_ENABLE_SANITIZERS "Build tests with AddressSanitizer + Un
                 LABEL "Sanitizers")
 copa_add_option(SAMPLE_ENABLE_COVERAGE "Build tests with code coverage instrumentation" OFF LABEL "Coverage")
 copa_add_option(SAMPLE_COMPILE_COST "Measure what every test unit costs to compile" OFF LABEL "Compile cost")
+copa_add_option(SAMPLE_EXTERNAL_DEPENDENCIES "Take dependencies from the environment instead of fetching them" OFF
+                LABEL "External dependencies")
 
 if(SAMPLE_BUILD_TEST)
   include(${PROJECT_SOURCE_DIR}/cmake/compiler.cmake)
 
   ## Where a package declared in dependencies.cmake is fetched: the option exists here and not before.
-  ## CPMGetPackage(TTS)
+  ## sample_get_package(TTS)
 endif()
 
 ##======================================================================================================================
