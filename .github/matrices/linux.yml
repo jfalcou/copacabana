@@ -6,6 +6,7 @@
 ## The presets sit with the example, and CPM reads copacabana from the checkout rather than a release.
 directory: test/example
 image: v11
+container-options: --security-opt seccomp=unconfined
 configs: [Debug]
 ## valgrind and a sanitizer do not share a process, so the sanitizer rows opt out.
 memcheck: true
