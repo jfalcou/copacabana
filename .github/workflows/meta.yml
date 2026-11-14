@@ -41,6 +41,7 @@ jobs:
           - { name: "Workflows / CI Cycle"      , run: "python3 -m doctest tools/ci_cycle.py" }
           - { name: "CMake / Pre-commit Banner" , run: "python3 test/precommit-banner.py .", image: "v11" }
           - { name: "CMake / Ninja Target Hierarchy", run: "python3 test/target-hierarchy.py .", cmake: true }
+          - { name: "CMake / Heavy Pool"         , run: "python3 test/heavy-pool.py ."      , cmake: true }
           - { name: "CMake / Sources That Must Not Compile", run: "python3 test/failure-units.py .", image: "v11" }
           - { name: "CMake / Two Consumers in One Build", cmake: true,
               run: "cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$PWD" }

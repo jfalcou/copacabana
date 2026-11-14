@@ -195,6 +195,37 @@ def entry(units, links):
             "modules": modules}
 
 
+def heavy_targets(path, threshold_kib):
+    """The targets with a unit peaking at threshold_kib or more, sorted.
+
+    The target is the directory the object path names before `.dir/`, which is also the name a Ninja pool
+    is given through JOB_POOL_COMPILE.
+    """
+    peaks = {}
+    with open(path, newline="") as f:
+        for row in csv.reader(f):
+            if len(row) != FIELDS or "clang" not in row[0]:
+                continue
+            try:
+                kib = int(row[4])
+            except ValueError:
+                continue
+            i = row[1].find(".dir/")
+            if i < 0:
+                continue
+            target = os.path.basename(row[1][:i])
+            peaks[target] = max(peaks.get(target, 0), kib)
+    return sorted(t for t, kib in peaks.items() if kib >= threshold_kib)
+
+
+def write_heavy(path, targets, threshold_gib):
+    """The list copa_setup_heavy_pool reads, one target per line."""
+    with open(path, "w") as f:
+        f.write("# Targets peaking at %.1f GiB or more, written by compile_cost.py --heavy\n" % threshold_gib)
+        for target in targets:
+            f.write(target + "\n")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("current")
@@ -205,11 +236,16 @@ def main():
     ap.add_argument("--summary", help="write the summary to this file rather than to stdout")
     ap.add_argument("--strip", default="", help="path segment a multi-config generator adds, e.g. Debug/")
     ap.add_argument("--entry", help="write the totals and the per-module aggregates, as JSON, to this file")
+    ap.add_argument("--heavy", help="write the targets copa_setup_heavy_pool holds back to this file")
+    ap.add_argument("--heavy-gib", type=float, default=1.5, help="peak from which a target is heavy (default 1.5)")
     args = ap.parse_args()
 
     out = open(args.summary, "w") if args.summary else sys.stdout
 
     now, linked = read(args.current, args.strip)
+    if args.heavy:
+        write_heavy(args.heavy, heavy_targets(args.current, args.heavy_gib * 1024 * 1024), args.heavy_gib)
+
     if not now:
         print("No measurement in `%s`." % args.current, file=out)
         return 0
