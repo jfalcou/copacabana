@@ -21,6 +21,8 @@ CASES = [
     ("one label", {"runs-on": "cuda"}, "runs-on", "cuda"),
     ("a list of labels", {"runs-on": ["self-hosted", "cuda"]}, "runs-on", ["self-hosted", "cuda"]),
     ("the configurations", {}, "configs", ["Debug", "Release"]),
+    ("a matrix naming no parallelism", {}, "parallel", 2),
+    ("a parallelism", {"parallel": 8}, "parallel", 8),
 ]
 
 
