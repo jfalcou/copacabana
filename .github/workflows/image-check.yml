@@ -37,9 +37,18 @@ jobs:
           python3 tools/new-project.py scaffold/mylib --name mylib --brief "A scaffolded library" \
                   --remote https://github.com/someone/mylib
           mkdir -p scaffold/mylib/docker
-          printf 'set -e\necho ran > /etc/copa-setup-ran\n' > scaffold/mylib/docker/setup.sh
-          printf 'set -e\ntest -f /etc/copa-setup-ran\nmkdir -p "$COPA_HOME/test"\ncp test/unit/version.cpp "$COPA_HOME/test/"\ng++ -std=c++20 test/unit/version.cpp -o /tmp/smoke\n/tmp/smoke\n' \
-                 > scaffold/mylib/docker/finish.sh
+          cat > scaffold/mylib/docker/setup.sh <<'EOF'
+          set -e
+          echo ran > /etc/copa-setup-ran
+          EOF
+          cat > scaffold/mylib/docker/finish.sh <<'EOF'
+          set -e
+          test -f /etc/copa-setup-ran
+          mkdir -p "$COPA_HOME/test"
+          cp test/unit/version.cpp "$COPA_HOME/test/"
+          g++ -std=c++20 test/unit/version.cpp -o /tmp/smoke
+          /tmp/smoke
+          EOF
 
       - name: Build the image without pushing it
         uses: ./.github/actions/image
