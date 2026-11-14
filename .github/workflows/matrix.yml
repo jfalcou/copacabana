@@ -124,9 +124,9 @@ jobs:
           CONFIG: ${{ matrix.options }}
           WRAP: ${{ matrix.compiler.wrapper }}
           SETUP_SCRIPT: ${{ matrix.compiler.setup }}
-          TARGETS: ${{ needs.read.outputs.build-targets }}
+          TARGETS: ${{ matrix.compiler['build-targets'] || needs.read.outputs.build-targets }}
           CMAKE_ARGS: ${{ matrix.compiler.args }}
-          PARALLEL: ${{ needs.read.outputs.parallel }}
+          PARALLEL: ${{ matrix.compiler.parallel || needs.read.outputs.parallel }}
         run: |
           if [ -n "$SETUP_SCRIPT" ]; then
             if [ ! -f "$SETUP_SCRIPT" ]; then
@@ -166,10 +166,10 @@ jobs:
         env:
           PRESET: ${{ matrix.compiler.preset }}
           CONFIG: ${{ matrix.options }}
-          TARGETS: ${{ needs.read.outputs.test-targets }}
+          TARGETS: ${{ matrix.compiler['test-targets'] || needs.read.outputs.test-targets }}
           RUN_TESTS: ${{ matrix.compiler.test }}
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
-          PARALLEL: ${{ needs.read.outputs.parallel }}
+          PARALLEL: ${{ matrix.compiler.parallel || needs.read.outputs.parallel }}
         run: |
           if [ "$RUN_TESTS" = "false" ]; then
             echo "This row says test: false, so nothing is run here."
@@ -193,11 +193,11 @@ jobs:
         env:
           PRESET: ${{ matrix.compiler.preset }}
           CONFIG: ${{ matrix.options }}
-          TARGETS: ${{ needs.read.outputs.test-targets }}
+          TARGETS: ${{ matrix.compiler['test-targets'] || needs.read.outputs.test-targets }}
           RUN_TESTS: ${{ matrix.compiler.test }}
           RUN_MEMCHECK: ${{ matrix.compiler.memcheck }}
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
-          PARALLEL: ${{ needs.read.outputs.parallel }}
+          PARALLEL: ${{ matrix.compiler.parallel || needs.read.outputs.parallel }}
         run: |
           if [ "$RUN_TESTS" = "false" ] || [ "$RUN_MEMCHECK" = "false" ]; then
             echo "This row opts out of memcheck."
