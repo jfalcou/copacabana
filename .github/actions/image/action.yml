@@ -1,0 +1,125 @@
+##======================================================================================================================
+##  Copacabana - Common CMake Package Tools
+##  Copyright : Copacabana Project Contributors
+##  SPDX-License-Identifier: BSL-1.0
+##======================================================================================================================
+## Builds the Docker image of a project and publishes it on GHCR, tagged latest, with the day of the build, and with
+## its short commit. The image is the base image, the project installed from the checkout, and two optional scripts
+## of the project: setup, run as root before the sources arrive, and finish, run from the sources after the install,
+## with COPA_HOME naming the home of the user the image runs as.
+##
+##   on:
+##     push:
+##       branches: [main]
+##     workflow_dispatch:
+##   permissions:
+##     contents: read
+##     packages: write
+##   jobs:
+##     image:
+##       runs-on: ubuntu-latest
+##       steps:
+##         - uses: actions/checkout@v7
+##         - uses: jfalcou/copacabana/.github/actions/image@<sha> # vN
+##           with:
+##             project: mylib
+##             setup: docker/setup.sh
+##             finish: docker/finish.sh
+##
+##======================================================================================================================
+name: Image
+description: Build the Docker image of a project and publish it on GHCR
+
+inputs:
+  project:
+    description: 'Project name, lowercased: it names the user of the image and drives the CMake options'
+    required: true
+  image:
+    description: 'Image to publish, ghcr.io/<owner>/<project> when empty'
+    default: ''
+  base:
+    description: 'Image to start from'
+    default: 'ghcr.io/jfalcou/compilers:v11'
+  directory:
+    description: 'Root of the project in the checkout, the build context of the image'
+    default: '.'
+  setup:
+    description: 'Script of the project run as root before the sources arrive, relative to the directory'
+    default: ''
+  finish:
+    description: 'Script of the project run from the sources after the install, relative to the directory'
+    default: ''
+  cmake-args:
+    description: 'Extra arguments of the configure, beside the tests and the documentation turned off'
+    default: ''
+  push:
+    description: 'Whether the image is pushed, false for a build that only checks it'
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    ## A rolling image built from main has no release to name itself after, so it carries the day and the commit.
+    - name: Name this build
+      id: naming
+      shell: bash
+      env:
+        PROJECT: ${{ inputs.project }}
+        IMAGE: ${{ inputs.image }}
+      run: |
+        image="${IMAGE:-ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$PROJECT}"
+        {
+          echo "tags<<EOF"
+          echo "$image:latest"
+          echo "$image:$(date -u +%Y.%m.%d)"
+          echo "$image:${GITHUB_SHA:0:7}"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    ## The named build context holds the setup script alone, or nothing, so that its layer depends on it alone.
+    - name: Gather the setup script
+      id: setup
+      shell: bash
+      env:
+        SETUP: ${{ inputs.setup }}
+        DIRECTORY: ${{ inputs.directory }}
+      run: |
+        dir="$RUNNER_TEMP/copa-image-setup"
+        mkdir -p "$dir"
+        if [ -n "$SETUP" ]; then
+          if [ ! -f "$DIRECTORY/$SETUP" ]; then
+            echo "Setup script not found: $DIRECTORY/$SETUP"
+            exit 1
+          fi
+          cp "$DIRECTORY/$SETUP" "$dir/setup.sh"
+        fi
+        echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Buildx
+      uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+    - name: Log in to GHCR
+      if: inputs.push == 'true'
+      uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    ## The cache lives in the Actions cache: a cache tag in GHCR would be the newest image on the package page.
+    - name: Build and publish
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+      with:
+        context: ${{ inputs.directory }}
+        file: ${{ github.action_path }}/Dockerfile
+        build-contexts: setup=${{ steps.setup.outputs.dir }}
+        build-args: |
+          BASE=${{ inputs.base }}
+          PROJECT=${{ inputs.project }}
+          SOURCE=${{ github.server_url }}/${{ github.repository }}
+          FINISH=${{ inputs.finish }}
+          CMAKE_ARGS=${{ inputs.cmake-args }}
+        push: ${{ inputs.push == 'true' }}
+        tags: ${{ steps.naming.outputs.tags }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
