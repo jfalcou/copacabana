@@ -47,9 +47,13 @@ jobs:
               run: "cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$PWD" }
           - { name: "Package / System Installers", run: "python3 test/system-installers.py .", cmake: true }
           - { name: "Package / Install Layout"   , run: "python3 test/install-layout.py ."  , cmake: true }
+          ## spack develop installs this checkout through the recipe, where spack install takes the last release.
           - { name: "Package / Consumption"      , cmake: true, spack: true,
-              run: "spack install copacabana &&
-                    python3 test/package-consumption.py $(spack location -i copacabana)" }
+              run: "spack env create -d .consumption &&
+                    spack -e .consumption add copacabana@=main &&
+                    spack -e .consumption develop --path $PWD copacabana@=main &&
+                    spack -e .consumption install &&
+                    python3 test/package-consumption.py $(spack -e .consumption location -i copacabana)" }
     steps:
       - name: Checkout Code
         if: ${{ !matrix.check.tags }}
