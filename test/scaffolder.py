@@ -13,12 +13,14 @@ import tempfile
 
 from checks import cli, expect, report, run
 
+## The commit both pins of a scaffold name, fixed here so that the check reads no remote and no git: a CI container
+## refuses git on a checkout owned by another user, and the configures below take copacabana from the checkout anyway.
+PIN = "0123456789abcdef0123456789abcdef01234567"
 
-## The commit both pins of a scaffold name: the checkout's own, so that the check reads no remote.
+
 def scaffold(root, where, *options, remote="https://github.com/someone/mylib"):
-    head = run("git", "-C", str(root), "rev-parse", "HEAD").stdout.strip()
     return run(sys.executable, "tools/new-project.py", where, "--brief", "A scaffolded library",
-               "--remote", remote, "--copacabana-ref", head, *options, cwd=root)
+               "--remote", remote, "--copacabana-ref", PIN, *options, cwd=root)
 
 
 def pins(project):
@@ -68,8 +70,7 @@ def main(root: str = ".") -> int:
         documentation = pathlib.Path(narrow, ".github/workflows/documentation.yml").read_text(encoding="utf-8")
         expect("its documentation builds no coverage", "coverage: false" in documentation)
 
-        head = run("git", "-C", str(root), "rev-parse", "HEAD").stdout.strip()
-        expect("both pins of copacabana name one commit, the one asked for", pins(narrow) == {head}, pins(narrow))
+        expect("both pins of copacabana name one commit, the one asked for", pins(narrow) == {PIN}, pins(narrow))
 
         derived = str(pathlib.Path(tmp, "derived"))
         out = scaffold(root, derived, "--name", "derived", "--presets", "gcc-sanitize,clang-compile-cost")
