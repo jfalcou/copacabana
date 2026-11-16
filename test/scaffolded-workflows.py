@@ -35,7 +35,8 @@ def main(root: str) -> int:
 
     for workflow in sorted(directory.glob("*.yml")):
         text = workflow.read_text(encoding="utf-8")
-        declared = set(JOB.findall(text))
+        ## The keys of the triggers sit at the indent of the jobs, so the jobs are read after `jobs:` alone.
+        declared = set(JOB.findall(text.split("\njobs:\n", 1)[-1]))
 
         for names in NEEDS.findall(text):
             for name in (n.strip() for n in names.split(",") if n.strip()):

@@ -41,7 +41,8 @@ def report(title):
         with pathlib.Path(summary).open("a", encoding="utf-8") as out:
             out.write("\n".join(lines) + "\n")
 
-    return 1 if bad else 0
+    # A script that ran no check checked nothing, which passing would hide.
+    return 1 if bad or not _results else 0
 
 
 def run(*command, **kwargs):
