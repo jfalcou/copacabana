@@ -21,10 +21,21 @@ CASES = [
     ("one label", {"runs-on": "cuda"}, "runs-on", "cuda"),
     ("a list of labels", {"runs-on": ["self-hosted", "cuda"]}, "runs-on", ["self-hosted", "cuda"]),
     ("the configurations", {}, "configs", ["Debug", "Release"]),
-    ("a matrix naming no parallelism", {}, "parallel", 2),
-    ("a parallelism", {"parallel": 8}, "parallel", 8),
 ]
 
+
+## What the rows carry: the keys a row names, an empty one included, and the file's for the others.
+ONE = [{"preset": "gcc"}]
+ROW_CASES = [
+    ("a file naming no parallelism", {}, "parallel", 2),
+    ("the parallelism of the file", {"parallel": 8}, "parallel", 8),
+    ("a row naming its parallelism", {"parallel": 8, "rows": [{"preset": "gcc", "parallel": 4}]}, "parallel", 4),
+    ("the build targets of the file", {"build-targets": "unit.exe", "rows": ONE}, "build-targets", "unit.exe"),
+    ("a row naming its test targets", {"test-targets": "^unit", "rows": [{"preset": "gcc", "test-targets": "^doc"}]},
+     "test-targets", "^doc"),
+    ("a row clearing the test targets of the file",
+     {"test-targets": "^unit", "rows": [{"preset": "gcc", "test-targets": ""}]}, "test-targets", ""),
+]
 
 def reader(workflow):
     """The python the Read it step feeds the matrix file, dedented out of its heredoc."""
@@ -55,6 +66,11 @@ def main(root: str = ".") -> int:
             read_back = None
 
         expect(f"{what} reaches the job as {wanted!r}", read_back == wanted, written)
+
+    for what, spec, key, wanted in ROW_CASES:
+        written = outputs(script, spec).get("rows", "")
+        read_back = json.loads(written)[0].get(key) if written else None
+        expect(f"{what} reaches the row as {wanted!r}", read_back == wanted, written)
 
     return report("The matrix outputs")
 

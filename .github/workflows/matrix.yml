@@ -47,11 +47,8 @@ jobs:
       registry: ${{ steps.read.outputs.registry }}
       image: ${{ steps.read.outputs.image }}
       container-options: ${{ steps.read.outputs.container-options }}
-      build-targets: ${{ steps.read.outputs.build-targets }}
-      test-targets: ${{ steps.read.outputs.test-targets }}
       memcheck: ${{ steps.read.outputs.memcheck }}
       test-timeout: ${{ steps.read.outputs.test-timeout }}
-      parallel: ${{ steps.read.outputs.parallel }}
       timeout: ${{ steps.read.outputs.timeout }}
       directory: ${{ steps.read.outputs.directory }}
     steps:
@@ -80,17 +77,19 @@ jobs:
             if "preset" not in row:
               sys.exit(f"{sys.argv[1]}: a row names no preset: {row}")
 
+          ## A row keeps the targets and the parallelism it names, even empty, and takes the file's for the others.
+          for row in rows:
+            for key, default in (("build-targets", ""), ("test-targets", ""), ("parallel", 2)):
+              row.setdefault(key, spec.get(key, default))
+
           print("rows=" + json.dumps(rows))
           print("configs=" + json.dumps(spec.get("configs", ["Debug", "Release"])))
           print("runs-on=" + json.dumps(spec.get("runs-on", "ubuntu-latest")))
           print("registry=" + str(spec.get("registry", "ghcr.io/jfalcou/compilers")))
           print("image=" + str(spec.get("image", "")))
           print("container-options=" + str(spec.get("container-options", "")))
-          print("build-targets=" + str(spec.get("build-targets", "")))
-          print("test-targets=" + str(spec.get("test-targets", "")))
           print("memcheck=" + ("true" if spec.get("memcheck", False) else "false"))
           print("test-timeout=" + str(spec.get("test-timeout", 600)))
-          print("parallel=" + str(spec.get("parallel", 2)))
           print("timeout=" + str(spec.get("timeout", 120)))
           print("directory=" + str(spec.get("directory", ".")))
           EOF
@@ -124,9 +123,9 @@ jobs:
           CONFIG: ${{ matrix.options }}
           WRAP: ${{ matrix.compiler.wrapper }}
           SETUP_SCRIPT: ${{ matrix.compiler.setup }}
-          TARGETS: ${{ needs.read.outputs.build-targets }}
+          TARGETS: ${{ matrix.compiler['build-targets'] }}
           CMAKE_ARGS: ${{ matrix.compiler.args }}
-          PARALLEL: ${{ needs.read.outputs.parallel }}
+          PARALLEL: ${{ matrix.compiler.parallel }}
         run: |
           if [ -n "$SETUP_SCRIPT" ]; then
             if [ ! -f "$SETUP_SCRIPT" ]; then
@@ -166,10 +165,10 @@ jobs:
         env:
           PRESET: ${{ matrix.compiler.preset }}
           CONFIG: ${{ matrix.options }}
-          TARGETS: ${{ needs.read.outputs.test-targets }}
+          TARGETS: ${{ matrix.compiler['test-targets'] }}
           RUN_TESTS: ${{ matrix.compiler.test }}
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
-          PARALLEL: ${{ needs.read.outputs.parallel }}
+          PARALLEL: ${{ matrix.compiler.parallel }}
         run: |
           if [ "$RUN_TESTS" = "false" ]; then
             echo "This row says test: false, so nothing is run here."
@@ -193,11 +192,11 @@ jobs:
         env:
           PRESET: ${{ matrix.compiler.preset }}
           CONFIG: ${{ matrix.options }}
-          TARGETS: ${{ needs.read.outputs.test-targets }}
+          TARGETS: ${{ matrix.compiler['test-targets'] }}
           RUN_TESTS: ${{ matrix.compiler.test }}
           RUN_MEMCHECK: ${{ matrix.compiler.memcheck }}
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
-          PARALLEL: ${{ needs.read.outputs.parallel }}
+          PARALLEL: ${{ matrix.compiler.parallel }}
         run: |
           if [ "$RUN_TESTS" = "false" ] || [ "$RUN_MEMCHECK" = "false" ]; then
             echo "This row opts out of memcheck."
