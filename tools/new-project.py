@@ -34,10 +34,10 @@ TEMPLATE = Path(__file__).resolve().parent / "template"
 ## Copied byte for byte: vendored upstream code has no business carrying our names.
 VERBATIM = {"cmake/CPM.cmake"}
 
-## What a preset group holds, so that a new project ships the handful it will use rather than the fleet's whole matrix.
 ## Written only when the flag is on: the publisher of the standalone branch has nothing to publish otherwise.
 FLAG_ONLY = { "standalone": [r"^\.github/workflows/package-standalone\.yml$"] }
 
+## What a preset group holds, so that a new project ships the handful it will use rather than the fleet's whole matrix.
 PRESET_GROUPS = { "native": [ "gcc", "clang", "clang-macos", "msvc", "clangcl"
                             , "gcc-sanitize", "gcc-coverage", "clang-sanitize", "clang-coverage", "clang-compile-cost"
                             ]
@@ -45,6 +45,12 @@ PRESET_GROUPS = { "native": [ "gcc", "clang", "clang-macos", "msvc", "clangcl"
                 , "cuda":   ["nvcc", "clang-cuda"]
                 , "intel":  ["icpx", "icpx-sycl"]
                 }
+
+## The shared workflows a job of ci.yml calls from copacabana, and the presets each builds with: a job goes when one of
+## its presets was left out, as a job calling a workflow that was not written does.
+REMOTE_PRESETS = { "sanitizers.yml": {"gcc-sanitize", "clang-sanitize"}
+                 , "coverage.yml":   {"gcc-coverage"}
+                 }
 
 ## Only meaningful where the repository will actually live: GitHub Actions on GitHub, nothing on a plain git remote.
 FORGE_ONLY = { "github": ["\\.github/"]
@@ -81,9 +87,18 @@ def resolve_blocks(text: str, flags: dict[str, bool]) -> str:
 
 
 def select_presets(text: str, wanted: list[str]) -> str:
-    """The presets file with only the groups asked for, the hidden ones they inherit from always kept."""
+    """The presets file with only the groups asked for, and every preset they inherit from."""
     document = json.loads(text)
     keep = {name for group in wanted for name in PRESET_GROUPS.get(group, [group])}
+
+    by_name = {p["name"]: p for p in document.get("configurePresets", [])}
+    pending = list(keep)
+    while pending:
+        parents = by_name.get(pending.pop(), {}).get("inherits", [])
+        for parent in [parents] if isinstance(parents, str) else parents:
+            if parent not in keep:
+                keep.add(parent)
+                pending.append(parent)
 
     for section in ("configurePresets", "buildPresets", "testPresets"):
         if section not in document:
@@ -130,15 +145,18 @@ def prune_jobs(workflow: str, gone: set[str]) -> str:
     kept, dropped = [], set()
 
     for block in re.split(r"\n(?=  [A-Za-z0-9_-]+:\n)", workflow):
-        called = re.search(r"(?:uses:\s*\./\.github/workflows/|file:\s*\.github/matrices/)([A-Za-z0-9._-]+)", block)
-        if called and called.group(1) in gone:
+        called = re.findall(r"(?:uses:\s*(?:\.|jfalcou/copacabana)/\.github/workflows/|file:\s*\.github/matrices/)"
+                            r"([A-Za-z0-9._-]+)", block)
+        if set(called) & gone:
             name = re.match(r"\n?  ([A-Za-z0-9_-]+):", block)
             dropped.add(name.group(1) if name else "")
             continue
         kept.append(block)
 
     text = "\n".join(kept)
-    declared = set(re.findall(r"^  ([A-Za-z0-9_-]+):$", text, re.M)) - dropped
+    # The keys of the triggers sit at the same indent as the jobs, so the jobs are read after `jobs:` alone.
+    jobs = text.split("\njobs:\n", 1)[-1]
+    declared = set(re.findall(r"^  ([A-Za-z0-9_-]+):$", jobs, re.M)) - dropped
 
     def needs(match: re.Match) -> str:
         names = [n.strip() for n in match.group(1).split(",")]
@@ -148,10 +166,46 @@ def prune_jobs(workflow: str, gone: set[str]) -> str:
     return re.sub(r"needs:\s*\[([^\]]*)\]", needs, text)
 
 
+def pin_copacabana(text: str, ref: str) -> str:
+    """Both pins of copacabana on one commit: every `uses:` of a shared workflow, and the GIT_TAG of its fetch."""
+    text = re.sub(r"(jfalcou/copacabana/\S+)@main\b", rf"\1@{ref}", text)
+    return re.sub(r"(CPMAddPackage\(NAME COPACABANA [^)]*GIT_TAG )main\)", rf"\g<1>{ref})", text)
+
+
+def template_files() -> list[Path]:
+    """The files of the template git knows, untracked ones included and ignored ones left out, so that a build tree
+    under the template never reaches a project. Outside a checkout, every file under it."""
+    listed = subprocess.run(["git", "-C", str(TEMPLATE), "ls-files", "-z", "--cached", "--others",
+                             "--exclude-standard"], capture_output=True, text=True)
+    if listed.returncode == 0 and listed.stdout:
+        return sorted(p for p in (TEMPLATE / name for name in set(listed.stdout.split("\0")) if name) if p.is_file())
+    return sorted(p for p in TEMPLATE.rglob("*") if p.is_file())
+
+
 def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], presets: list[str], forge: str) -> int:
     if directory.exists() and any(directory.iterdir()):
         print(f"[copacabana] - {directory} exists and is not empty", file=sys.stderr)
         return 1
+
+    # Written beside the directory and renamed once complete, so that a failure leaves nothing a second run refuses.
+    partial = directory.parent / f".{directory.name}.partial"
+    shutil.rmtree(partial, ignore_errors=True)
+    try:
+        written = write(partial, fields, flags, presets, forge)
+    except BaseException:
+        shutil.rmtree(partial, ignore_errors=True)
+        raise
+
+    if directory.exists():
+        directory.rmdir()
+    partial.rename(directory)
+    reformat(directory)
+    return 0 if written else 1
+
+
+def write(directory: Path, fields: dict[str, str], flags: dict[str, bool], presets: list[str], forge: str) -> int:
+    """Write the project into directory, and give back how many files it holds."""
+    directory.mkdir(parents=True)
 
     dropped = [p for name, patterns in FORGE_ONLY.items() if name != forge for p in patterns]
     # A file that only makes sense with a flag on goes with the flag, whole: a conditional block would leave an
@@ -168,9 +222,10 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
              for candidate in (TEMPLATE / ".github" / folder).glob("*.yml")
              if (named := presets_of(candidate.read_text(encoding="utf-8"))) and not (named & alive)
            }
+    unmet = {name for name, needed in REMOTE_PRESETS.items() if not needed <= alive}
     written = 0
 
-    for source in sorted(p for p in TEMPLATE.rglob("*") if p.is_file()):
+    for source in template_files():
         relative = str(source.relative_to(TEMPLATE))
 
         if any(re.search(p, relative) for p in dropped):
@@ -199,19 +254,23 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
         elif re.search(r"\.github/(workflows|matrices)", relative.replace("\\", "/")):
             content = prune_matrix(substitute(content, fields), alive)
             if source.name == "ci.yml":
-                content = prune_jobs(content, gone)
+                content = prune_jobs(content, gone | unmet)
+            if source.name == "documentation.yml" and "coverage.yml" in unmet:
+                content = content.replace("coverage: true", "coverage: false")
         else:
             content = substitute(content, fields)
+
+        content = pin_copacabana(content, fields["copacabana"])
 
         # Dropping a conditional block leaves the blank line that followed it, which end-of-file-fixer then rewrites
         # on the first commit. Settle every file on exactly one trailing newline here, and none at all when it is
         # empty - a marker file like .nojekyll is meant to have no content.
         content = content.rstrip("\n")
         target.write_text(content + "\n" if content else "", encoding="utf-8")
+        shutil.copymode(source, target)
         written += 1
 
-    reformat(directory)
-    return 0 if written else 1
+    return written
 
 
 def reformat(directory: Path) -> None:
@@ -231,6 +290,18 @@ def reformat(directory: Path) -> None:
         subprocess.run(["cmake-format", "-i", *written], check=False, capture_output=True)
 
 
+def copacabana_head() -> str:
+    """The head of copacabana's main, or of the checkout this script runs from when the remote cannot be read."""
+    listed = subprocess.run(["git", "ls-remote", "https://github.com/jfalcou/copacabana", "refs/heads/main"],
+                            capture_output=True, text=True, timeout=60)
+    if listed.returncode == 0 and listed.stdout.split():
+        return listed.stdout.split()[0]
+    local = subprocess.run(["git", "-C", str(TEMPLATE), "rev-parse", "HEAD"], capture_output=True, text=True)
+    print("[copacabana] - the head of copacabana could not be read, the pins name this checkout's commit",
+          file=sys.stderr)
+    return local.stdout.strip()
+
+
 def forge_of(remote: str) -> str:
     host = urlparse(remote).netloc or remote
     return "github" if "github.com" in host else "gitlab" if "gitlab" in host else "none"
@@ -247,14 +318,24 @@ def settings(argv: list[str]) -> argparse.Namespace:
                         help=f"Comma-separated groups or names ({', '.join(PRESET_GROUPS)}, default native)")
     parser.add_argument("--standalone", action="store_true", default=None, help="Ship the standalone header target")
     parser.add_argument("--no-standalone", dest="standalone", action="store_false", help="Leave the standalone out")
-    args = parser.parse_args(argv)
+    parser.add_argument("--copacabana-ref",
+                        help="Commit of copacabana both pins name, the head of its main by default")
 
-    if args.config:
-        stored = json.loads(Path(args.config).read_text(encoding="utf-8"))
-        for key, value in stored.items():
-            key = key.replace("-", "_")
-            if getattr(args, key, None) in (None, False) or key == "presets":
-                setattr(args, key, ",".join(value) if isinstance(value, list) else value)
+    # The file only sets defaults, so that whatever the command line says wins.
+    config = parser.parse_known_args(argv)[0].config
+    if config:
+        known = {action.dest for action in parser._actions} - {"help", "config"}
+        defaults = {}
+        for key, value in json.loads(Path(config).read_text(encoding="utf-8")).items():
+            dest = key.replace("-", "_")
+            if dest not in known:
+                parser.error(f"{config}: unknown key {key!r}")
+            if dest == "standalone" and not isinstance(value, bool):
+                parser.error(f"{config}: standalone takes true or false, not {value!r}")
+            defaults[dest] = ",".join(value) if isinstance(value, list) else value
+        parser.set_defaults(**defaults)
+
+    args = parser.parse_args(argv)
 
     if not args.directory:
         parser.error("a directory is required, on the command line or as \"directory\" in the config")
@@ -279,25 +360,32 @@ def main(argv: list[str] | None = None) -> int:
         print("[copacabana] - --remote is required: the url the repository will live at", file=sys.stderr)
         return 1
 
-    remote = args.remote
+    ## The integration tests clone <remote>.git, and a runner holds no key for an ssh address.
+    remote = args.remote.rstrip("/").removesuffix(".git")
+    if urlparse(remote).scheme != "https":
+        print(f"[copacabana] - --remote takes an https url, not {args.remote}", file=sys.stderr)
+        return 1
+
     forge = forge_of(remote)
     presets = [p.strip() for p in (args.presets or "native").split(",") if p.strip()]
     standalone = True if args.standalone is None else args.standalone
 
-    ## A name that is not a group is a preset of its own, and select_presets keeps it: warning about those made the
-    ## script complain while doing the right thing.
-    known = set(PRESET_GROUPS) | {p for group in PRESET_GROUPS.values() for p in group}
+    known = set(PRESET_GROUPS) | preset_names((TEMPLATE / "CMakePresets.json").read_text(encoding="utf-8"))
     unknown = [p for p in presets if p not in known]
     if unknown:
         print(f"[copacabana] - unknown preset {', '.join(unknown)}", file=sys.stderr)
+        return 1
 
-    path = urlparse(remote).path.strip("/")
-    fields = { "project": name
-             , "PROJECT": name.upper()
-             , "owner":   path.rsplit("/", 1)[0] if "/" in path else name
-             , "remote":  remote
-             , "brief":   args.brief or "A C++20 library"
-             , "standalone-needs": "standalone-generation, " if standalone else ""
+    ref = args.copacabana_ref or copacabana_head()
+    if not re.fullmatch(r"[0-9a-f]{40}", ref):
+        print(f"[copacabana] - '{ref}' is not a full commit of copacabana: pass --copacabana-ref", file=sys.stderr)
+        return 1
+
+    fields = { "project":    name
+             , "PROJECT":    name.upper()
+             , "remote":     remote
+             , "brief":      args.brief or "A C++20 library"
+             , "copacabana": ref
              }
 
     if create(directory, fields, {"standalone": standalone}, presets, forge):
