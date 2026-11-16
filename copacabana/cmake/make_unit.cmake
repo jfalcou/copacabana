@@ -3,40 +3,50 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-function(copa_setup_test_targets)
-  string(TOLOWER ${PROJECT_NAME} NAME)
-  set(PROJECT_TEST_TARGET "${NAME}-test")
 
-  if(NOT TARGET ${PROJECT_TEST_TARGET})
-    add_custom_target(${PROJECT_TEST_TARGET} COMMENT "[${PROJECT_NAME}] - Building every test")
-  endif()
-
-  # Named whether or not this call is the one that creates it: a second directory calling in still needs to be told
-  # what the aggregate is called.
-  set(PROJECT_TEST_TARGET "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
+##======================================================================================================================
+## The aggregate of every test of the project, <lowercased project name>-test
+##======================================================================================================================
+function(copa_test_target out)
+  string(TOLOWER "${PROJECT_NAME}" name)
+  set(${out} "${name}-test" PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================
-## Resolve which aggregate a unit belongs to. Defaults to the project's test target, so callers that
-## say nothing keep gathering everything there; naming one keeps benchmarks or samples out of it.
+## Declare the aggregate of every test, named in PROJECT_TEST_TARGET for the callers that read it
+##======================================================================================================================
+function(copa_setup_test_targets)
+  copa_test_target(target)
+
+  if(NOT TARGET ${target})
+    add_custom_target(${target} COMMENT "[${PROJECT_NAME}] - Building every test")
+  endif()
+
+  set(PROJECT_TEST_TARGET "${target}" PARENT_SCOPE)
+endfunction()
+
+##======================================================================================================================
+## Resolve which aggregate a unit belongs to, the project's test target by default, created on first use. Naming
+## another keeps benchmarks or samples out of the tests.
 ##======================================================================================================================
 function(copa_aggregate_target requested out)
   if(requested STREQUAL "")
-    set(${out} "${PROJECT_TEST_TARGET}" PARENT_SCOPE)
-  else()
-    if(NOT TARGET ${requested})
-      add_custom_target(${requested} COMMENT "[${PROJECT_NAME}] - Building every unit gathered under ${requested}")
-    endif()
-    set(${out} "${requested}" PARENT_SCOPE)
+    copa_test_target(requested)
   endif()
+
+  if(NOT TARGET ${requested})
+    add_custom_target(${requested} COMMENT "[${PROJECT_NAME}] - Building every unit gathered under ${requested}")
+  endif()
+
+  set(${out} "${requested}" PARENT_SCOPE)
 endfunction()
 
 ##======================================================================================================================
 ## For any target of the form XXX.YYY.ZZZ.exe, generates all the intermediate XXX.YYY.exe and XXX.exe targets
 ##======================================================================================================================
 function(copa_add_target_parent target extension)
-  # Strip the extension first to look at the 'stem' logic
-  string(REPLACE ".${extension}" "" stem "${target}")
+  # Do not strip with string(REPLACE): it also removes ".exe" from a segment such as "execution".
+  string(REGEX REPLACE "\\.${extension}$" "" stem "${target}")
 
   if(stem MATCHES "\\.")
     # Strip the last part of the stem
@@ -53,11 +63,8 @@ function(copa_add_target_parent target extension)
       set_property(TARGET ${parent_target} PROPERTY FOLDER ${folder_suffix})
     endif()
 
-    # Link and recurse
-    if(NOT parent_target STREQUAL target)
-      add_dependencies(${parent_target} ${target})
-      copa_add_target_parent(${parent_target} ${extension})
-    endif()
+    add_dependencies(${parent_target} ${target})
+    copa_add_target_parent(${parent_target} ${extension})
   endif()
 endfunction()
 
@@ -82,7 +89,7 @@ function(copa_make_failure_unit)
   copa_check_arguments()
 
   if(NOT DEFINED OPT_ROOT)
-    set(OPT_ROOT "${CMAKE_SOURCE_DIR}/test")
+    set(OPT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
   endif()
 
   if(NOT DEFINED OPT_NAME)
@@ -99,7 +106,7 @@ function(copa_make_failure_unit)
   add_test(
     NAME ${OPT_NAME}
     COMMAND
-      ${CMAKE_COMMAND} "-DBUILD_DIR=${PROJECT_BINARY_DIR}" "-DTARGET=${OPT_NAME}" "-DSOURCE=${OPT_ROOT}/${OPT_FILE}"
+      ${CMAKE_COMMAND} "-DBUILD_DIR=${CMAKE_BINARY_DIR}" "-DTARGET=${OPT_NAME}" "-DSOURCE=${OPT_ROOT}/${OPT_FILE}"
       "-DCONFIG=$<CONFIG>" "-DCOMPILER=${CMAKE_CXX_COMPILER_ID}" -P
       "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/expect_failure.cmake")
 
@@ -124,7 +131,7 @@ function(copa_glob_failure_unit)
   copa_check_arguments()
 
   if(NOT DEFINED OPT_RELATIVE)
-    set(OPT_RELATIVE "${CMAKE_SOURCE_DIR}/test")
+    set(OPT_RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}")
   endif()
 
   if(NOT DEFINED OPT_PATTERN)
@@ -136,7 +143,7 @@ function(copa_glob_failure_unit)
     set(QUIET_ARG "QUIET")
   endif()
 
-  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
+  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE "${OPT_RELATIVE}" "${OPT_RELATIVE}/${OPT_PATTERN}")
   foreach(file ${FOUND_FILES})
     copa_make_failure_unit(
       ${QUIET_ARG}
@@ -159,7 +166,8 @@ function(copa_setup_test test location register)
   endif()
 
   if(DEFINED CMAKE_CROSSCOMPILING_CMD)
-    add_test(NAME ${test} WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}" COMMAND "${CMAKE_CROSSCOMPILING_CMD}"
+    # Do not quote the command: a command with arguments is a CMake list, which has to reach ctest as separate words.
+    add_test(NAME ${test} WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}" COMMAND ${CMAKE_CROSSCOMPILING_CMD}
                                                                                         $<TARGET_FILE:${test}>)
   else()
     add_test(NAME ${test} WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/${location}" COMMAND $<TARGET_FILE:${test}>)
@@ -167,7 +175,64 @@ function(copa_setup_test test location register)
 endfunction()
 
 ##======================================================================================================================
-## Process a list of source files to generate corresponding test target
+## Wire one unit: its parent targets, its aggregate, its test, its links, its precompiled header, and its properties
+##======================================================================================================================
+function(copa_configure_unit test)
+  set(options IMPLICIT)
+  set(oneValueArgs EXTENSION DESTINATION PCH TARGET)
+  set(multiValueArgs SOURCES LIBRARIES DEPENDENCIES PROPERTIES)
+  cmake_parse_arguments(UNIT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  add_executable(${test} ${UNIT_SOURCES})
+
+  copa_add_target_parent(${test} "${UNIT_EXTENSION}")
+  copa_aggregate_target("${UNIT_TARGET}" aggregate)
+  add_dependencies(${aggregate} ${test})
+
+  if(UNIT_DEPENDENCIES)
+    add_dependencies(${test} ${UNIT_DEPENDENCIES})
+  endif()
+
+  copa_test_target(tests)
+  set(register FALSE)
+  if(aggregate STREQUAL tests)
+    set(register TRUE)
+  endif()
+  copa_setup_test(${test} "${UNIT_DESTINATION}" ${register})
+
+  if(UNIT_LIBRARIES)
+    target_link_libraries(${test} PRIVATE ${UNIT_LIBRARIES})
+  endif()
+
+  if(UNIT_PCH)
+    target_precompile_headers(${test} REUSE_FROM ${UNIT_PCH})
+  endif()
+
+  if(NOT UNIT_IMPLICIT)
+    set_target_properties(${test} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE EXCLUDE_FROM_ALL TRUE)
+  endif()
+
+  if(UNIT_PROPERTIES)
+    ## cmake-lint cannot count the pairs a variable expands to
+    # cmake-lint: disable=E1120
+    set_target_properties(${test} PROPERTIES ${UNIT_PROPERTIES})
+  endif()
+endfunction()
+
+##======================================================================================================================
+## Where the sources of a unit are read from: an absolute ROOT, the current directory otherwise, where a relative ROOT
+## only labels the units
+##======================================================================================================================
+function(copa_unit_base root out)
+  set(base "")
+  if(IS_ABSOLUTE "${root}")
+    set(base "${root}/")
+  endif()
+  set(${out} "${base}" PARENT_SCOPE)
+endfunction()
+
+##======================================================================================================================
+## Process a list of source files to generate one test target each
 ##======================================================================================================================
 function(copa_make_unit)
   set(options QUIET)
@@ -184,6 +249,20 @@ function(copa_make_unit)
 
   copa_check_arguments()
 
+  if(NOT OPT_EXTENSION)
+    set(OPT_EXTENSION "exe")
+  endif()
+  if(NOT OPT_DESTINATION)
+    set(OPT_DESTINATION "unit")
+  endif()
+
+  set(IMPLICIT_ARG "")
+  if(OPT_IMPLICIT)
+    set(IMPLICIT_ARG "IMPLICIT")
+  endif()
+
+  copa_unit_base("${OPT_ROOT}" base)
+
   if(NOT OPT_QUIET)
     list(LENGTH OPT_FILES NB_TARGETS)
     message(STATUS "[${PROJECT_NAME}] - ${NB_TARGETS} targets generated for ${OPT_ROOT}")
@@ -193,48 +272,33 @@ function(copa_make_unit)
     copa_source_to_target("${OPT_EXTENSION}" "${file}" test)
 
     if(NOT TARGET ${test})
-      add_executable(${test} ${file})
-
-      copa_add_target_parent(${test} "${OPT_EXTENSION}")
-      copa_aggregate_target("${OPT_TARGET}" aggregate)
-      add_dependencies(${aggregate} ${test})
-
-      if(DEFINED OPT_DEPENDENCIES)
-        add_dependencies(${test} ${OPT_DEPENDENCIES})
-      endif()
-
-      set(IS_TEST FALSE)
-      if(aggregate STREQUAL "${PROJECT_TEST_TARGET}")
-        set(IS_TEST TRUE)
-      endif()
-      copa_setup_test(${test} "${OPT_DESTINATION}" ${IS_TEST})
-      target_link_libraries(${test} PRIVATE ${OPT_INTERFACE})
-
-      if(OPT_EXTERNALS)
-        target_link_libraries(${test} PRIVATE ${OPT_EXTERNALS})
-      endif()
-
-      if(DEFINED OPT_PCH)
-        target_precompile_headers(${test} REUSE_FROM ${OPT_PCH})
-        add_dependencies(${test} ${OPT_PCH})
-      endif()
-
-      if(NOT OPT_IMPLICIT)
-        set_target_properties(${test} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE EXCLUDE_FROM_ALL TRUE)
-      endif()
-
-      if(OPT_PROPERTIES)
-        ## cmake-lint cannot count the pairs a variable expands to
-        # cmake-lint: disable=E1120
-        set_target_properties(${test} PROPERTIES ${OPT_PROPERTIES})
-      endif()
+      copa_configure_unit(
+        ${test}
+        ${IMPLICIT_ARG}
+        SOURCES
+        "${base}${file}"
+        EXTENSION
+        "${OPT_EXTENSION}"
+        DESTINATION
+        "${OPT_DESTINATION}"
+        PCH
+        "${OPT_PCH}"
+        TARGET
+        "${OPT_TARGET}"
+        LIBRARIES
+        ${OPT_INTERFACE}
+        ${OPT_EXTERNALS}
+        DEPENDENCIES
+        ${OPT_DEPENDENCIES}
+        PROPERTIES
+        ${OPT_PROPERTIES})
     endif()
   endforeach()
 endfunction()
 
-##==================================================================================================
-## Generate tests from a GLOB
-##==================================================================================================
+##======================================================================================================================
+## Generate tests from a GLOB, the pattern read from RELATIVE, the current source directory by default
+##======================================================================================================================
 function(copa_glob_unit)
   set(options QUIET IMPLICIT)
   set(oneValueArgs
@@ -250,26 +314,18 @@ function(copa_glob_unit)
 
   copa_check_arguments()
 
-  if(NOT DEFINED OPT_INTERFACE)
-    set(OPT_INTERFACE "")
-  endif()
-  if(NOT DEFINED OPT_EXTERNALS)
-    set(OPT_EXTERNALS "")
-  endif()
-  if(NOT DEFINED OPT_PCH)
-    set(OPT_PCH "")
-  endif()
-  if(NOT DEFINED OPT_DESTINATION)
-    set(OPT_DESTINATION "unit")
-  endif()
-  if(NOT DEFINED OPT_EXTENSION)
-    set(OPT_EXTENSION "exe")
-  endif()
   if(NOT DEFINED OPT_RELATIVE)
-    set(OPT_RELATIVE "${CMAKE_SOURCE_DIR}/test")
+    set(OPT_RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}")
   endif()
   if(NOT DEFINED OPT_PATTERN)
     set(OPT_PATTERN "*.cpp")
+  endif()
+
+  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE "${OPT_RELATIVE}" "${OPT_RELATIVE}/${OPT_PATTERN}")
+
+  set(FLAGS "")
+  if(OPT_QUIET)
+    list(APPEND FLAGS "QUIET")
   endif()
 
   set(MAKE_IMPLICIT 0)
@@ -277,25 +333,18 @@ function(copa_glob_unit)
     set(MAKE_IMPLICIT 1)
   endif()
 
-  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE ${OPT_RELATIVE} ${OPT_PATTERN})
-
-  set(QUIET_ARG "")
-  if(OPT_QUIET)
-    set(QUIET_ARG "QUIET")
-  endif()
-
   copa_make_unit(
     INTERFACE "${OPT_INTERFACE}"
     EXTENSION "${OPT_EXTENSION}"
     DESTINATION "${OPT_DESTINATION}"
     EXTERNALS ${OPT_EXTERNALS}
-    DEPENDENCIES "${OPT_DEPENDENCIES}"
+    DEPENDENCIES ${OPT_DEPENDENCIES}
     PCH "${OPT_PCH}"
-    FILES "${FOUND_FILES}"
-    ROOT "${OPT_PATTERN}"
+    FILES ${FOUND_FILES}
+    ROOT "${OPT_RELATIVE}"
     IMPLICIT "${MAKE_IMPLICIT}"
     TARGET "${OPT_TARGET}"
-    PROPERTIES ${OPT_PROPERTIES} ${QUIET_ARG})
+    PROPERTIES ${OPT_PROPERTIES} ${FLAGS})
 endfunction()
 
 ##======================================================================================================================
@@ -315,46 +364,37 @@ function(copa_make_single_unit)
 
   copa_check_arguments()
 
-  if(NOT DEFINED OPT_EXTENSION)
+  if(NOT OPT_EXTENSION)
     set(OPT_EXTENSION "exe")
   endif()
-  if(NOT DEFINED OPT_DESTINATION)
+  if(NOT OPT_DESTINATION)
     set(OPT_DESTINATION "unit")
   endif()
+
+  copa_unit_base("${OPT_ROOT}" base)
+  list(TRANSFORM OPT_FILES PREPEND "${base}")
 
   copa_source_to_target("${OPT_EXTENSION}" "${OPT_NAME}" test)
 
   if(NOT TARGET ${test})
-    add_executable(${test} ${OPT_FILES})
-
-    copa_add_target_parent(${test} "${OPT_EXTENSION}")
-    copa_aggregate_target("${OPT_TARGET}" aggregate)
-    add_dependencies(${aggregate} ${test})
-
-    if(DEFINED OPT_DEPENDENCIES)
-      add_dependencies(${test} ${OPT_DEPENDENCIES})
-    endif()
-
-    set(IS_TEST FALSE)
-    if(aggregate STREQUAL "${PROJECT_TEST_TARGET}")
-      set(IS_TEST TRUE)
-    endif()
-    copa_setup_test(${test} "${OPT_DESTINATION}" ${IS_TEST})
-    target_link_libraries(${test} PRIVATE ${OPT_INTERFACE})
-
-    if(OPT_EXTERNALS)
-      target_link_libraries(${test} PRIVATE ${OPT_EXTERNALS})
-    endif()
-
-    if(DEFINED OPT_PCH)
-      target_precompile_headers(${test} REUSE_FROM ${OPT_PCH})
-      add_dependencies(${test} ${OPT_PCH})
-    endif()
-
-    if(OPT_PROPERTIES)
-      ## cmake-lint cannot count the pairs a variable expands to
-      # cmake-lint: disable=E1120
-      set_target_properties(${test} PROPERTIES ${OPT_PROPERTIES})
-    endif()
+    copa_configure_unit(
+      ${test}
+      SOURCES
+      ${OPT_FILES}
+      EXTENSION
+      "${OPT_EXTENSION}"
+      DESTINATION
+      "${OPT_DESTINATION}"
+      PCH
+      "${OPT_PCH}"
+      TARGET
+      "${OPT_TARGET}"
+      LIBRARIES
+      ${OPT_INTERFACE}
+      ${OPT_EXTERNALS}
+      DEPENDENCIES
+      ${OPT_DEPENDENCIES}
+      PROPERTIES
+      ${OPT_PROPERTIES})
   endif()
 endfunction()

@@ -93,7 +93,7 @@ function(copa_setup_compile_cost target)
   add_custom_target(
     ${OPT_PREFIX}-compile-cost
     COMMAND ${CMAKE_COMMAND} -E rm -f "${COST_CSV}"
-    COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --config $<CONFIG> --target ${OPT_DEPENDS} --clean-first
+    COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config $<CONFIG> --target ${OPT_DEPENDS} --clean-first
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
     COMMENT "[${PROJECT_NAME}] - Measuring what ${OPT_DEPENDS} costs to compile"
     VERBATIM)
@@ -178,7 +178,7 @@ function(copa_setup_time_trace target)
     COMMAND ${CMAKE_COMMAND} -DTIME_TRACE_SCAN=${OPT_SCAN} -P
             "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/reset_time_trace.cmake"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${TRACE_DIR}"
-    COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --config $<CONFIG> --target ${OPT_DEPENDS}
+    COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config $<CONFIG> --target ${OPT_DEPENDS}
     COMMAND ${ANALYZER} --all "${OPT_SCAN}" "${TRACE_DIR}/capture.bin"
     COMMAND ${ANALYZER} --analyze "${TRACE_DIR}/capture.bin"
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
