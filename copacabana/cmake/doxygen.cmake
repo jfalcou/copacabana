@@ -22,14 +22,24 @@ macro(copa_doxygen_tagfiles)
     string(REGEX REPLACE "/$" "" TAG_SITE "${TAG_SITE}")
     set(TAG_FILE "${DOXYGEN_GENERATED}/${TAG_NAME}.tag")
 
-    file(DOWNLOAD "${TAG_SITE}/${TAG_NAME}.tag" "${TAG_FILE}" STATUS TAG_STATUS)
+    ## Do not download onto TAG_FILE itself: a failed download empties it, and doxygen reads an empty tag file
+    ## without a word, where the copy of an earlier configure still links.
+    file(DOWNLOAD "${TAG_SITE}/${TAG_NAME}.tag" "${TAG_FILE}.part" STATUS TAG_STATUS INACTIVITY_TIMEOUT 30)
     list(GET TAG_STATUS 0 TAG_CODE)
-    if(NOT TAG_CODE EQUAL 0)
+    if(TAG_CODE EQUAL 0)
+      file(RENAME "${TAG_FILE}.part" "${TAG_FILE}")
+    else()
+      file(REMOVE "${TAG_FILE}.part")
       message(WARNING "[${PROJECT_NAME}] - ${TAG_NAME}.tag could not be fetched (${TAG_STATUS}), "
-                      "the ${TAG_NAME}:: links will be dead")
+                      "the ${TAG_NAME}:: links use the copy of an earlier configure, or are dead without one")
     endif()
 
-    string(APPEND DOXYGEN_TAGS " ${TAG_FILE}=${TAG_SITE}")
+    if(EXISTS "${TAG_FILE}")
+      file(SIZE "${TAG_FILE}" TAG_SIZE)
+      if(TAG_SIZE GREATER 0)
+        string(APPEND DOXYGEN_TAGS " ${TAG_FILE}=${TAG_SITE}")
+      endif()
+    endif()
   endforeach()
   string(STRIP "${DOXYGEN_TAGS}" DOXYGEN_TAGS)
 endmacro()
@@ -228,12 +238,15 @@ const GODBOLT_OPTIONS   = \"${OPT_GODBOLT_OPTIONS}\"\n")
 
     add_custom_target(
       ${OPT_TARGET}
+      ## Through cmake -E env and not a VAR=value prefix: VERBATIM quotes a value holding a space whole, which a shell
+      ## then reads as the name of a command, and cmd.exe takes no such prefix at all.
       COMMAND
-        DOXYGEN_OUPUT=${OPT_DESTINATION} DOXYGEN_PROJECT_NAME=${PROJECT_NAME} DOXYGEN_PROJECT_VERSION=${PROJECT_VERSION}
-        DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset AWESOME_ASSETS=${AWESOME_CSS_DIR}
-        DOXYGEN_PROJECT_LOWER=${PROJECT_LOWER} DOXYGEN_PROJECT_UPPER=${PROJECT_UPPER} DOXYGEN_COLOR_HUE=${OPT_COLOR_HUE}
-        DOXYGEN_COLOR_SAT=${DOXYGEN_COLOR_SAT} DOXYGEN_COLOR_GAMMA=${OPT_COLOR_GAMMA}
-        DOXYGEN_STRIP=${PROJECT_SOURCE_DIR} DOXYGEN_GENERATED=${DOXYGEN_GENERATED} "DOXYGEN_TAGS=${DOXYGEN_TAGS}"
+        ${CMAKE_COMMAND} -E env "DOXYGEN_OUPUT=${OPT_DESTINATION}" "DOXYGEN_PROJECT_NAME=${PROJECT_NAME}"
+        "DOXYGEN_PROJECT_VERSION=${PROJECT_VERSION}" "DOXYGEN_ASSETS=${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset"
+        "AWESOME_ASSETS=${AWESOME_CSS_DIR}" "DOXYGEN_PROJECT_LOWER=${PROJECT_LOWER}"
+        "DOXYGEN_PROJECT_UPPER=${PROJECT_UPPER}" "DOXYGEN_COLOR_HUE=${OPT_COLOR_HUE}"
+        "DOXYGEN_COLOR_SAT=${DOXYGEN_COLOR_SAT}" "DOXYGEN_COLOR_GAMMA=${OPT_COLOR_GAMMA}"
+        "DOXYGEN_STRIP=${PROJECT_SOURCE_DIR}" "DOXYGEN_GENERATED=${DOXYGEN_GENERATED}" "DOXYGEN_TAGS=${DOXYGEN_TAGS}"
         ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG}
       WORKING_DIRECTORY ${OPT_SOURCE}
       COMMENT "[${PROJECT_NAME}] - Generating API documentation with Doxygen"
