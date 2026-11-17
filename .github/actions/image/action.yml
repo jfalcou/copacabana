@@ -59,18 +59,22 @@ inputs:
 runs:
   using: composite
   steps:
-    ## A rolling image built from main has no release to name itself after, so it carries the day and the commit.
+    ## A rolling image built from main has no release to name itself after, so it carries the day and the commit, and
+    ## only a build of the default branch moves latest.
     - name: Name this build
       id: naming
       shell: bash
       env:
         PROJECT: ${{ inputs.project }}
         IMAGE: ${{ inputs.image }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       run: |
         image="${IMAGE:-ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$PROJECT}"
         {
           echo "tags<<EOF"
-          echo "$image:latest"
+          if [ "$GITHUB_REF" = "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "$image:latest"
+          fi
           echo "$image:$(date -u +%Y.%m.%d)"
           echo "$image:${GITHUB_SHA:0:7}"
           echo "EOF"
