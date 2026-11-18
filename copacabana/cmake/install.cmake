@@ -59,7 +59,13 @@ function(copa_setup_install)
   set(MAIN_DEST "${CMAKE_INSTALL_LIBDIR}/${OPT_LIBRARY}")
   set(CONFIG_DEST "${OPT_DESTINATION}")
   set(INSTALL_DEST "${CMAKE_INSTALL_INCLUDEDIR}")
-  set(DOC_DEST "${CMAKE_INSTALL_DOCDIR}")
+
+  ## Do not take CMAKE_INSTALL_DOCDIR in a nested project: it inherits the value of the outer one, which GNUInstallDirs
+  ## keeps, and its files would install into the documentation of the outer project.
+  set(DOC_DEST "${CMAKE_INSTALL_DATAROOTDIR}/doc/${PROJECT_NAME}")
+  if(PROJECT_IS_TOP_LEVEL)
+    set(DOC_DEST "${CMAKE_INSTALL_DOCDIR}")
+  endif()
 
   add_library(${EXT_NAME} INTERFACE)
   target_include_directories(${EXT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -112,8 +118,8 @@ function(copa_setup_install)
   write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake"
                                    VERSION "${PROJECT_VERSION}" COMPATIBILITY "${OPT_COMPATIBILITY}" ${ARCH_FLAG})
 
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config.cmake" DESTINATION "${CONFIG_DEST}")
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake" DESTINATION "${CONFIG_DEST}")
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config.cmake"
+                "${CMAKE_CURRENT_BINARY_DIR}/${OPT_LIBRARY}-config-version.cmake" DESTINATION "${CONFIG_DEST}")
   install(EXPORT ${TARGETS_NAME} NAMESPACE "${OPT_NAMESPACE}::" DESTINATION "${CONFIG_DEST}")
 
 endfunction()

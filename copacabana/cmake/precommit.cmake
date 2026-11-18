@@ -13,9 +13,15 @@ function(copa_setup_precommit_hooks)
 
   copa_check_arguments()
 
+  ## Do not go on in a nested project: it is a dependency, and the banner and the target belong to the project being
+  ## worked on.
+  if(NOT PROJECT_IS_TOP_LEVEL)
+    return()
+  endif()
+
   ## A tree with no .git is a tarball, which is how the package managers build: there is no hook to install there and
   ## nothing to say about it.
-  if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  if(EXISTS "${PROJECT_SOURCE_DIR}/.git")
     find_program(PRE_COMMIT_CMD NAMES pre-commit)
 
     ## Named whether or not the target gets created, the advice below spelling it out either way.
@@ -26,12 +32,20 @@ function(copa_setup_precommit_hooks)
       add_custom_target(
         "${HOOK_TARGET}"
         COMMAND ${PRE_COMMIT_CMD} install
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Installing pre-commit git hooks to ${CMAKE_SOURCE_DIR}/.git/hooks"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Installing the pre-commit git hooks of ${PROJECT_SOURCE_DIR}"
         VERBATIM)
     endif()
 
-    if(EXISTS "${CMAKE_SOURCE_DIR}/.git/hooks/pre-commit")
+    ## Do not look under .git/hooks: in a worktree .git is a file, and the hooks are in the main checkout, or in the
+    ## directory core.hooksPath names.
+    execute_process(
+      COMMAND git rev-parse --path-format=absolute --git-path hooks/pre-commit
+      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+      OUTPUT_VARIABLE HOOK_FILE
+      OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+
+    if(EXISTS "${HOOK_FILE}")
       set(PRE_COMMIT_HOOKS_INSTALLED TRUE)
     else()
       set(PRE_COMMIT_HOOKS_INSTALLED FALSE)
