@@ -32,6 +32,24 @@ def main(root: str = ".") -> int:
         out = run("pre-commit", "run", "--all-files", "--show-diff-on-failure", "--color=always", cwd=where)
         expect("its own hooks pass on it", out.returncode == 0, out.stdout[-600:])
 
+        # A long name lengthens the CMake lines, which the first run lays out when the scaffolder could not.
+        long = "a_library_with_a_much_longer_name"
+        where = str(pathlib.Path(tmp, long))
+        out = run(sys.executable, "tools/new-project.py", where, "--name", long, "--brief", "A library",
+                  "--remote", f"https://github.com/someone/{long}", "--presets", "gcc,clang", "--no-standalone",
+                  cwd=root)
+        expect("the scaffolder writes a project with a long name", out.returncode == 0, out.stderr[-300:])
+
+        run("git", "init", "--quiet", ".", cwd=where)
+        run("git", "add", "--all", cwd=where)
+        run("git", "-c", "user.email=ci@example.org", "-c", "user.name=CI", "commit", "--quiet", "-m", "init",
+            cwd=where)
+        run("pre-commit", "run", "--all-files", cwd=where)
+        # Staged, since pre-commit stashes what is not and would check the files as scaffolded again.
+        run("git", "add", "--all", cwd=where)
+        out = run("pre-commit", "run", "--all-files", "--show-diff-on-failure", "--color=always", cwd=where)
+        expect("its hooks pass on it once a first run laid it out", out.returncode == 0, out.stdout[-600:])
+
     return report("What the scaffolded hooks say")
 
 

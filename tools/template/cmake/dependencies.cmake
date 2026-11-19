@@ -22,7 +22,7 @@ endmacro()
 
 if(SAMPLE_EXTERNAL_DEPENDENCIES)
   if(NOT COPACABANA_SOURCE_DIR)
-    message(FATAL_ERROR "[SAMPLE] - SAMPLE_EXTERNAL_DEPENDENCIES needs COPACABANA_SOURCE_DIR")
+    message(FATAL_ERROR "[${PROJECT_NAME}] - dependencies from the environment need COPACABANA_SOURCE_DIR")
   endif()
   return()
 endif()

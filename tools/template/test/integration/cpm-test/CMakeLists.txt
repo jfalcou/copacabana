@@ -10,7 +10,7 @@ enable_testing()
 message(STATUS "Testing CPM for branch ${GIT_BRANCH}")
 
 # Setup CPM
-include(cpm.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../../cmake/CPM.cmake)
 
 # Add dependencies
 CPMAddPackage(

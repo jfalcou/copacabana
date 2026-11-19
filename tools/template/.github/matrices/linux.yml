@@ -10,6 +10,7 @@ runs-on: ubuntu-latest
 rows:
   - { name: "gcc"          , preset: "gcc"             , image: "v11" }
   - { name: "clang"        , preset: "clang"           , image: "v11" }
+  - { name: "gcc16"        , preset: "gcc"             , image: "v11", setup: "./.github/scripts/g++-16.sh" }
   - { name: "aarch64"      , preset: "gcc-aarch64"     , image: "v11" }
   - { name: "aarch64 sve"  , preset: "gcc-aarch64-sve" , image: "v11" }
   - { name: "aarch64 sve2" , preset: "gcc-aarch64-sve2", image: "v11" }

@@ -6,6 +6,8 @@ nothing declares and a workflow into a call to a file that was never written.
 
   python3 test/scaffolder.py <copacabana source directory>
 """
+import json
+import os
 import pathlib
 import re
 import sys
@@ -59,9 +61,18 @@ def main(root: str = ".") -> int:
         for gone in (".github/matrices/windows.yml", ".github/workflows/package-standalone.yml"):
             expect(f"what it left out is absent: {gone}", not pathlib.Path(narrow, gone).exists())
 
-        ## Two rows survive out of ten: a matrix keeps its file while one preset holds, not its every row.
-        rows = pathlib.Path(narrow, ".github/matrices/linux.yml").read_text(encoding="utf-8").count("- {")
-        expect("the linux matrix keeps the two rows asked for", rows == 2, rows)
+        ## Three rows survive out of eleven, gcc16 building with the gcc preset: a matrix keeps its file while one
+        ## preset holds, not its every row.
+        linux = pathlib.Path(narrow, ".github/matrices/linux.yml").read_text(encoding="utf-8")
+        expect("the linux matrix keeps the three rows of its two presets", linux.count("- {") == 3, linux[-400:])
+        expect("the setup script of the gcc16 row is written with it",
+               pathlib.Path(narrow, ".github/scripts/g++-16.sh").is_file())
+
+        presets = json.loads(pathlib.Path(narrow, "CMakePresets.json").read_text(encoding="utf-8"))
+        compilers = {p["name"]: p for p in presets["configurePresets"] if p["name"] in ("gcc", "clang")}
+        expect("the gcc and clang presets name their compiler rather than a toolchain file",
+               all("toolchainFile" not in p and p.get("cacheVariables", {}).get("CMAKE_CXX_COMPILER")
+                   for p in compilers.values()) and len(compilers) == 2, compilers)
 
         ## The shared sanitizer and coverage workflows build with presets the narrow project left out.
         ci = pathlib.Path(narrow, ".github/workflows/ci.yml").read_text(encoding="utf-8")
@@ -82,6 +93,27 @@ def main(root: str = ".") -> int:
         out = scaffold(root, str(typo), "--name", "typo", "--presets", "gcc,gc")
         expect("an unknown preset stops the scaffold and leaves no directory",
                out.returncode != 0 and not typo.exists(), out.stderr[-300:])
+
+        ## A project hosted elsewhere than GitHub keeps the runner its wasm toolchain names, and drops the one of a
+        ## preset it left out.
+        runner = pathlib.Path(tmp, "runner").resolve()
+        out = scaffold(root, str(runner), "--name", "runner", "--presets", "clang,wasm",
+                       remote="https://gitlab.example.org/team/runner")
+        toolchains = runner / "test/toolchain"
+        command = re.search(r"CMAKE_CROSSCOMPILING_CMD \$\{CMAKE_CURRENT_LIST_DIR\}/(\S+)\)",
+                            (toolchains / "clang.wasm.cmake").read_text(encoding="utf-8"))
+        script = toolchains / command.group(1) if command else toolchains / "missing"
+        expect("the wasm toolchain runs its tests through a script that is written, executable",
+               out.returncode == 0 and script.is_file() and os.access(script, os.X_OK), (out.stderr[-300:], script))
+        expect("the runner of a preset left out is not written", not (toolchains / "run_rvv128.sh").exists())
+        expect("nothing of GitHub's is written", not (runner / ".github").exists())
+
+        cpm_test = runner / "test/integration/cpm-test"
+        included = re.search(r"include\(\$\{CMAKE_CURRENT_LIST_DIR\}/(\S+)\)",
+                             (cpm_test / "CMakeLists.txt").read_text(encoding="utf-8"))
+        expect("the CPM test includes the CPM of the project, its one copy",
+               included is not None and (cpm_test / included.group(1)).resolve() == runner / "cmake/CPM.cmake"
+               and not (cpm_test / "cpm.cmake").exists(), included)
 
         dotgit = str(pathlib.Path(tmp, "dotgit"))
         scaffold(root, dotgit, "--name", "dotgit", remote="https://github.com/someone/dotgit.git/")

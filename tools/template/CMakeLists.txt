@@ -40,7 +40,8 @@ if(SAMPLE_BUILD_TEST)
 endif()
 
 ##======================================================================================================================
-## Summary Display, which SAMPLE_QUIET silences on its own; QUIET_OPTION is for the calls below
+## Summary Display, which the QUIET option of the project silences on its own. QUIET_OPTION is for the calls
+## below.
 ##======================================================================================================================
 copa_show_options()
 
