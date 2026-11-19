@@ -46,6 +46,7 @@ jobs:
           - { name: "CMake / Unit Targets"       , run: "python3 test/unit-targets.py ."    , cmake: true }
           - { name: "CMake / Nested Builds"      , run: "python3 test/nested-builds.py ."   , cmake: true }
           - { name: "CMake / Sources That Must Not Compile", run: "python3 test/failure-units.py .", image: "v11" }
+          - { name: "CMake / Minimum Version"    , run: "python3 test/minimum-version.py .", image: "v11" }
           - { name: "CMake / Two Consumers in One Build", cmake: true,
               run: "cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$PWD" }
           - { name: "Package / System Installers", run: "python3 test/system-installers.py .", cmake: true }

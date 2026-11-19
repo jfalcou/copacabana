@@ -66,13 +66,19 @@ def main(source):
             seen = where(prefix)
             expect(f"{name}: the config lands in {expected}", seen == expected, seen)
 
-            # The version file only claims to work on any architecture when the package says it does.
+            # The version file only claims to work on any architecture when the package says it does: read on a
+            # pointer width no build has, it turns the consumer down when it checks the width.
             version = next(pathlib.Path(prefix).rglob("example-config-version.cmake"), None)
             if version:
-                claims = "CMAKE_SIZEOF_VOID_P" not in version.read_text(encoding="utf-8")
-                wants = extra != "ARCH_INDEPENDENT NO"
-                expect(f"{name}: the version file {'ignores' if wants else 'checks'} the pointer width",
-                       claims == wants)
+                probe = tmp / f"{name}-probe.cmake"
+                probe.write_text(f'cmake_minimum_required(VERSION 3.24)\nset(CMAKE_SIZEOF_VOID_P 2)\n'
+                                 f'include("{version.as_posix()}")\n'
+                                 'message("unsuitable:${PACKAGE_VERSION_UNSUITABLE}")\n', encoding="utf-8")
+                out = run("cmake", "-P", str(probe))
+                checks = "unsuitable:TRUE" in out.stdout + out.stderr
+                wants = extra == "ARCH_INDEPENDENT NO"
+                expect(f"{name}: the version file {'checks' if wants else 'ignores'} the pointer width",
+                       checks == wants)
 
         # What all of it is for: a consumer asking for the package by name finds it.
         prefix = tmp / "nothing said-prefix"

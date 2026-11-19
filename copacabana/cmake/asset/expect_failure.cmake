@@ -22,8 +22,6 @@
 ##======================================================================================================================
 cmake_minimum_required(VERSION 3.22)
 
-set(SKIPPED 77)
-
 foreach(var BUILD_DIR TARGET SOURCE)
   if(NOT DEFINED ${var})
     message(FATAL_ERROR "expect_failure: ${var} is required")
@@ -58,9 +56,11 @@ foreach(line IN LISTS DECLARED)
   endif()
 endforeach()
 
+## Do not exit with a skip code through cmake_language(EXIT): it needs CMake 3.29, past the floor of 3.24. The test
+## reads this line through SKIP_REGULAR_EXPRESSION.
 if(NOT EXPECTED)
-  message(STATUS "${SOURCE} names no diagnostic for ${IN_USE}")
-  cmake_language(EXIT ${SKIPPED})
+  message(STATUS "expect_failure: skipped, ${SOURCE} names no diagnostic for ${IN_USE}")
+  return()
 endif()
 
 set(BUILD_ARGS --build "${BUILD_DIR}" --target "${TARGET}")
