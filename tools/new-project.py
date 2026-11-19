@@ -172,6 +172,10 @@ def pin_copacabana(text: str, ref: str) -> str:
     return re.sub(r"(CPMAddPackage\(NAME COPACABANA [^)]*GIT_TAG )main\)", rf"\g<1>{ref})", text)
 
 
+def is_script(path: Path) -> bool:
+    return path.suffix == ".sh"
+
+
 def template_files() -> list[Path]:
     """The files of the template git knows, untracked ones included and ignored ones left out, so that a build tree
     under the template never reaches a project. Outside a checkout, every file under it."""
@@ -223,17 +227,27 @@ def write(directory: Path, fields: dict[str, str], flags: dict[str, bool], prese
              if (named := presets_of(candidate.read_text(encoding="utf-8"))) and not (named & alive)
            }
     unmet = {name for name, needed in REMOTE_PRESETS.items() if not needed <= alive}
-    written = 0
+    written, text_written = 0, None
 
-    for source in template_files():
+    # A script goes with the file that names it, the runner of a toolchain with its toolchain file and the setup of a
+    # matrix row with its row, so the scripts come last.
+    for source in sorted(template_files(), key=is_script):
         relative = str(source.relative_to(TEMPLATE))
 
         if any(re.search(p, relative) for p in dropped):
             continue
 
+        if is_script(source):
+            if text_written is None:
+                text_written = "\n".join(p.read_text(encoding="utf-8", errors="ignore")
+                                         for p in directory.rglob("*") if p.is_file())
+            if source.name not in text_written:
+                continue
+
         # A preset the caller left out takes its toolchain file with it, rather than leaving a cross-compile
         # description behind for a target nothing in the project can be built for.
-        if "test/toolchain/" in relative.replace("\\", "/") and source.name not in kept_toolchains:
+        if not is_script(source) and "test/toolchain/" in relative.replace("\\", "/") \
+           and source.name not in kept_toolchains:
             continue
 
         if source.name in gone and re.search(r"\.github/(workflows|matrices)", relative.replace("\\", "/")):
@@ -284,7 +298,7 @@ def reformat(directory: Path) -> None:
         return
 
     written = [str(p) for p in directory.rglob("*.cmake")] + [str(p) for p in directory.rglob("CMakeLists.txt")]
-    written = [p for p in written if "CPM.cmake" not in p and "cpm.cmake" not in p]
+    written = [p for p in written if "CPM.cmake" not in p]
 
     if written:
         subprocess.run(["cmake-format", "-i", *written], check=False, capture_output=True)

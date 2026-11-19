@@ -56,8 +56,8 @@
       "cacheVariables": { "SAMPLE_COMPILE_COST": "ON" }
     },
 
-    { "name": "gcc"             , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/gcc.x86.cmake"          },
-    { "name": "clang"           , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/clang.x86.cmake"        },
+    { "name": "gcc"             , "inherits": ["unix-base"], "cacheVariables": { "CMAKE_CXX_COMPILER": "g++" }                 },
+    { "name": "clang"           , "inherits": ["unix-base"], "cacheVariables": { "CMAKE_CXX_COMPILER": "clang++" }             },
     { "name": "gcc-aarch64"     , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/gcc.aarch64.cmake"      },
     { "name": "gcc-aarch64-sve" , "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/gcc.aarch64.sve.cmake"  },
     { "name": "gcc-aarch64-sve2", "inherits": ["unix-base"], "toolchainFile": "${sourceDir}/test/toolchain/gcc.aarch64.sve2.cmake" },

@@ -9,6 +9,5 @@ set(CMAKE_SYSTEM_PROCESSOR riscv64)
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 
-set(CMAKE_CXX_FLAGS
-    "-O3 -march=rv64gcv -std=c++20 -mrvv-vector-bits=128 --static --target=riscv64-unknown-linux-gnu ${SAMPLE_OPTIONS}")
-set(CMAKE_CROSSCOMPILING_CMD ${PROJECT_SOURCE_DIR}/test/toolchain/run_rvv128.sh)
+set(CMAKE_CXX_FLAGS "-O3 -march=rv64gcv -std=c++20 -mrvv-vector-bits=128 --static --target=riscv64-unknown-linux-gnu")
+set(CMAKE_CROSSCOMPILING_CMD ${CMAKE_CURRENT_LIST_DIR}/run_rvv128.sh)

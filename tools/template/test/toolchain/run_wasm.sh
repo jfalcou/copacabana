@@ -1,7 +1,8 @@
+#!/bin/sh
 ##======================================================================================================================
 ##  SAMPLE - @brief@
 ##  Copyright : SAMPLE Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
+## Runs a test the wasm preset built.
+exec node "$@"
