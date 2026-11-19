@@ -71,7 +71,7 @@ jobs:
 
       - name: Setup CMake and Ninja
         if: matrix.check.cmake
-        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
+        uses: lukka/get-cmake@16e8153a8b4918849d92aad131befe67a3705daa # v4.5.0
 
       ## The container the builds use carries neither pip nor a venv, so a row needing pre-commit runs outside it,
       ## on the Python and the pinned release of the shared gate.
