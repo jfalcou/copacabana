@@ -12,7 +12,8 @@ global.HTMLElement = class {};
 global.document = { createElement: () => ({}), head: { appendChild() {} } };
 global.customElements = { define() {} };
 
-const { base64utf8, fragmentSource, escapeHtml, removeANSIEscapeCodes } = require("../copacabana/cmake/asset/godbolt.js");
+const { base64utf8, fragmentSource, escapeHtml, removeANSIEscapeCodes, librariesOf, SendToGodbolt } =
+  require("../copacabana/cmake/asset/godbolt.js");
 
 // Node's Buffer is an independent implementation of the same encoding, so it answers what the
 // expected string is without restating how the asset computes it.
@@ -81,4 +82,16 @@ test("escapeHtml turns a compiler's output into something a page can hold", () =
 test("removeANSIEscapeCodes strips the colours a compiler adds", () => {
   assert.equal(removeANSIEscapeCodes("\u001b[31merror\u001b[0m: no"), "error: no");
   assert.equal(removeANSIEscapeCodes("plain"), "plain");
+});
+
+test("a library takes trunk, or the version after an @", () => {
+  assert.deepEqual(librariesOf("mylib:nanobench@4311"),
+                   [{ id: "mylib", version: "trunk" }, { id: "nanobench", version: "4311" }]);
+});
+
+test("the request loads no library the list leaves out", () => {
+  SendToGodbolt.library = "";
+  assert.deepEqual(SendToGodbolt.getLibs(), []);
+  SendToGodbolt.library = "mylib";
+  assert.deepEqual(SendToGodbolt.getLibs().map((library) => library.id), ["mylib"]);
 });

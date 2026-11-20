@@ -15,6 +15,7 @@ Change Log
   * A row of a matrix file sets `build-targets`, `test-targets`, and `parallel` for itself, and an empty value clears the value of the file (https://github.com/jfalcou/copacabana/pull/169)
   * The compile cost page shows the CPU time per unit, opens on the latest measurement, names its modules without the configuration folder, and reads a change under 5 % or 16 MiB as noise (https://github.com/jfalcou/copacabana/pull/161)
   * `release.yml` sends a published release to minato, which moves the pins of the libraries (https://github.com/jfalcou/copacabana/pull/159)
+  * `GODBOLT_LIBRARIES` accepts `<name>@<version>`, such as `nanobench@4311`, and a name without a version still loads `trunk` (https://github.com/jfalcou/copacabana/pull/182)
 
 ### Bug Fixes
   * The unit functions work in a project nested in another one, and on odd names (https://github.com/jfalcou/copacabana/pull/172)
@@ -30,6 +31,7 @@ Change Log
   * A project nested in another one installs its `DOC` files under its own name, and gets no target and no banner for the pre-commit hooks (https://github.com/jfalcou/copacabana/pull/175)
   * `copa_setup_precommit_hooks` reads the hook at the path `git rev-parse --git-path hooks/pre-commit` gives, the hook of the main checkout in a worktree, or of the directory `core.hooksPath` names (https://github.com/jfalcou/copacabana/pull/175)
   * The Linux matrix runs its container with `--security-opt seccomp=unconfined`, since TSan and MSan aborted on `ubuntu-26.04`, unable to disable ASLR (https://github.com/jfalcou/copacabana/pull/164)
+  * The Compiler Explorer button loads only the libraries listed in `GODBOLT_LIBRARIES`, and no longer adds a fixed one to every request (https://github.com/jfalcou/copacabana/pull/182)
 
 ### Template
   * The template carries the nightly run, the dispatches, the minato ignore, `compile-cost.yml` with its presets, and `package-standalone.yml`, and `.cmake-format.py` declares every `copa_` signature (https://github.com/jfalcou/copacabana/pull/160)
@@ -43,6 +45,7 @@ Change Log
   * The `gcc` and `clang` presets set their compiler through `cacheVariables`, and a `gcc16` row of the Linux matrix builds the `gcc` preset with GCC 16 (https://github.com/jfalcou/copacabana/pull/177)
   * The wasm and rvv128 presets ship the scripts their toolchains run the tests through, beside the toolchain files (https://github.com/jfalcou/copacabana/pull/177)
   * A long project name passes the hooks of the project once its first `pre-commit run` laid out the CMake, and the CPM test includes the CPM of the project (https://github.com/jfalcou/copacabana/pull/177)
+  * The template lists only its own library in `GODBOLT_LIBRARIES` (https://github.com/jfalcou/copacabana/pull/182)
 
 ### Infrastructure
   * `Package / Consumption` installs the checkout of the pull request through `spack develop`, where it installed the released `copacabana@8` (https://github.com/jfalcou/copacabana/pull/170)
