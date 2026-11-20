@@ -110,10 +110,9 @@ function(copa_make_failure_unit)
       "-DCONFIG=$<CONFIG>" "-DCOMPILER=${CMAKE_CXX_COMPILER_ID}" -P
       "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/expect_failure.cmake")
 
-  ## SKIP_REGULAR_EXPRESSION: a source naming only diagnostics of another compiler has nothing to check here, and
-  ## saying so beats passing. RESOURCE_LOCK: each of these tests drives a build of the tree they all share, and two
-  ## builds at once fight over the same files - MSBuild says so on ZERO_CHECK.tlog, ninja quietly interleaves.
+  ## A source naming only the diagnostics of another compiler has nothing to check here, so ctest reports it skipped.
   set_tests_properties(${OPT_NAME} PROPERTIES SKIP_REGULAR_EXPRESSION "expect_failure: skipped, ")
+  ## The tests all build one shared tree, and two builds at once clash: MSBuild on ZERO_CHECK.tlog, ninja silently.
   set_tests_properties(${OPT_NAME} PROPERTIES RESOURCE_LOCK "copa-build-tree")
 
   if(NOT OPT_QUIET)
