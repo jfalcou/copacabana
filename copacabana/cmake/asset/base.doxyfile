@@ -22,11 +22,11 @@
 ## anything a project has to put there - its repository URL, and see #75 - has to be substituted beforehand.
 HTML_HEADER            = $(DOXYGEN_GENERATED)/base.html
 HTML_FOOTER            = $(DOXYGEN_ASSETS)/footer.html
-HTML_EXTRA_STYLESHEET  = $(AWESOME_ASSETS)/doxygen-awesome.css $(AWESOME_ASSETS)/doxygen-awesome-sidebar-only.css
-HTML_EXTRA_STYLESHEET += $(DOXYGEN_ASSETS)/custom.css
+HTML_EXTRA_STYLESHEET  = "$(AWESOME_ASSETS)/doxygen-awesome.css" "$(AWESOME_ASSETS)/doxygen-awesome-sidebar-only.css"
+HTML_EXTRA_STYLESHEET += "$(DOXYGEN_ASSETS)/custom.css"
 ## Written by copa_setup_doxygen from the same numbers that tint doxygen's own widgets, and outside the html output
 ## so that doxygen is not asked to copy it onto itself.
-HTML_EXTRA_STYLESHEET += $(DOXYGEN_GENERATED)/color.css
+HTML_EXTRA_STYLESHEET += "$(DOXYGEN_GENERATED)/color.css"
 GENERATE_TREEVIEW      = YES
 DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
@@ -51,9 +51,9 @@ GENERATE_TAGFILE       = $(DOXYGEN_OUPUT)/$(DOXYGEN_PROJECT_LOWER).tag
 ## Downloaded by copa_setup_doxygen from what TAGFILES names, empty when it names nothing.
 TAGFILES               = $(DOXYGEN_TAGS)
 PREDEFINED             = $(DOXYGEN_PROJECT_UPPER)_DOXYGEN_INVOKED
-INPUT_FILTER           = "python3 $(DOXYGEN_ASSETS)/filter.py --prefix $(DOXYGEN_PROJECT_LOWER)"
-STRIP_FROM_PATH        = $(DOXYGEN_STRIP)/src $(DOXYGEN_STRIP)/include
-STRIP_FROM_INC_PATH    = $(DOXYGEN_STRIP)/include
+INPUT_FILTER           = "python3 \"$(DOXYGEN_ASSETS)/filter.py\" --prefix $(DOXYGEN_PROJECT_LOWER)"
+STRIP_FROM_PATH        = "$(DOXYGEN_STRIP)/src" "$(DOXYGEN_STRIP)/include"
+STRIP_FROM_INC_PATH    = "$(DOXYGEN_STRIP)/include"
 RECURSIVE              = YES
 
 ## What a reference page shows: the interface, not the files it happens to live in nor the graphs of who includes whom.
@@ -111,16 +111,16 @@ ALIASES               += tab{1}="- <b class=\"tab-title\">\1</b>"
 ALIASES               += "godbolt_todo{1}=@attention An example for this function is still to be written, as `\1`."
 
 ## The scripts the shared header loads. A project appends its own after the @INCLUDE line.
-HTML_EXTRA_FILES       = $(DOXYGEN_ASSETS)/godbolt.js
-HTML_EXTRA_FILES      += $(DOXYGEN_ASSETS)/copacabana.js
-HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-fragment-copy-button.js
-HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-paragraph-link.js
-HTML_EXTRA_FILES      += $(AWESOME_ASSETS)/doxygen-awesome-tabs.js
-HTML_EXTRA_FILES      += $(DOXYGEN_GENERATED)/godbolt-config.js
+HTML_EXTRA_FILES       = "$(DOXYGEN_ASSETS)/godbolt.js"
+HTML_EXTRA_FILES      += "$(DOXYGEN_ASSETS)/copacabana.js"
+HTML_EXTRA_FILES      += "$(AWESOME_ASSETS)/doxygen-awesome-fragment-copy-button.js"
+HTML_EXTRA_FILES      += "$(AWESOME_ASSETS)/doxygen-awesome-paragraph-link.js"
+HTML_EXTRA_FILES      += "$(AWESOME_ASSETS)/doxygen-awesome-tabs.js"
+HTML_EXTRA_FILES      += "$(DOXYGEN_GENERATED)/godbolt-config.js"
 
 ## The compile cost reader, configured by copa_setup_doxygen with the project's name. It reads a CSV a run attaches,
 ## and goes nowhere else.
-HTML_EXTRA_FILES      += $(DOXYGEN_GENERATED)/compile-cost.html
+HTML_EXTRA_FILES      += "$(DOXYGEN_GENERATED)/compile-cost.html"
 
 ## Settled here rather than left to drift: the fleet had these two both ways round with nobody having chosen.
 EXPAND_ONLY_PREDEF     = YES
