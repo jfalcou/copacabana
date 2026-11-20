@@ -32,6 +32,8 @@ Change Log
   * `copa_setup_precommit_hooks` reads the hook at the path `git rev-parse --git-path hooks/pre-commit` gives, the hook of the main checkout in a worktree, or of the directory `core.hooksPath` names (https://github.com/jfalcou/copacabana/pull/175)
   * The Linux matrix runs its container with `--security-opt seccomp=unconfined`, since TSan and MSan aborted on `ubuntu-26.04`, unable to disable ASLR (https://github.com/jfalcou/copacabana/pull/164)
   * The Compiler Explorer button loads only the libraries listed in `GODBOLT_LIBRARIES`, and no longer adds a fixed one to every request (https://github.com/jfalcou/copacabana/pull/182)
+  * The standalone header keeps the license of its main header alone, where it kept every comment above the first include of that header (https://github.com/jfalcou/copacabana/pull/183)
+  * A string, raw string, or character literal holding `//` or `/*` reaches the standalone header whole (https://github.com/jfalcou/copacabana/pull/183)
 
 ### Template
   * The template carries the nightly run, the dispatches, the minato ignore, `compile-cost.yml` with its presets, and `package-standalone.yml`, and `.cmake-format.py` declares every `copa_` signature (https://github.com/jfalcou/copacabana/pull/160)
@@ -50,6 +52,7 @@ Change Log
 ### Infrastructure
   * `Package / Consumption` installs the checkout of the pull request through `spack develop`, where it installed the released `copacabana@8` (https://github.com/jfalcou/copacabana/pull/170)
   * `CMake / Minimum Version` runs the checks that drive CMake under CMake 3.24.3, the minimum the modules declare (https://github.com/jfalcou/copacabana/pull/178)
+  * `Package / Standalone Header` checks the header `embed.py` writes, on a tree of two headers (https://github.com/jfalcou/copacabana/pull/183)
   * Point the README at v9.0.0 (https://github.com/jfalcou/copacabana/pull/158)
   * Bump actions/create-github-app-token from 2 to 3 (https://github.com/jfalcou/copacabana/pull/163)
   * Bump lukka/get-cmake from 4.4.5 to 4.5.0 (https://github.com/jfalcou/copacabana/pull/176)
