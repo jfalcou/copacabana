@@ -51,6 +51,7 @@ jobs:
               run: "cmake -S test/guard -B build/guard -DCOPACABANA_SOURCE_DIR=$PWD" }
           - { name: "Package / System Installers", run: "python3 test/system-installers.py .", cmake: true }
           - { name: "Package / Install Layout"   , run: "python3 test/install-layout.py ."  , cmake: true }
+          - { name: "Package / Standalone Header", run: "python3 test/standalone.py ." }
           ## spack develop installs this checkout through the recipe, where spack install takes the last release.
           - { name: "Package / Consumption"      , cmake: true, spack: true,
               run: "spack env create -d .consumption &&

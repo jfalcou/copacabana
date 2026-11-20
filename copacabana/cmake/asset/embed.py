@@ -29,17 +29,18 @@ r_pp_if = re.compile(r'^\s*#\s*if.*$')
 r_pp_endif = re.compile(r'^\s*#\s*endif.*$')
 r_pp_define = re.compile(r'^\s*#\s*define\s+(.*)\s*$')
 r_pp_pragma_once = re.compile(r'^\s*#\s*pragma\s+once\s*$')
-r_C_one_line_comment = re.compile(r'^(.*?)\s*//.*$')
-r_C_one_line_block_comment = re.compile(r'^(.*)/\*.*\*/(.*)$')
-r_C_block_begin_comment = re.compile(r'(.*)/\*.*')
-r_C_block_end_comment = re.compile(r'.*\*/(.*)')
+r_pp_any = re.compile(r'^\s*#')
+r_raw_prefix = re.compile(r'(?:u8|[uUL])?R$')
+r_word_end = re.compile(r'\w$')
 
 # globals
 will_escape = False
 guard_stack = []
 included_files = []
 keep_guard = True
+keep_comments = True
 in_C_block_comments = False
+raw_string_end = None
 
 """
 Parse options. Here is the list of supported options:
@@ -86,43 +87,85 @@ def get_path_for(f, opts):
     sys.exit(1)
 
 """
+The line without its comments, its string, raw string and character literals kept whole, and the state of a block
+comment or a raw string carried to the next line
+"""
+def strip_comments(line):
+    global in_C_block_comments
+    global raw_string_end
+
+    out, i, n = [], 0, len(line)
+    while i < n:
+        if raw_string_end is not None:
+            end = line.find(raw_string_end, i)
+            if end < 0:
+                out.append(line[i:])
+                break
+            out.append(line[i:end + len(raw_string_end)])
+            i = end + len(raw_string_end)
+            raw_string_end = None
+        elif in_C_block_comments:
+            end = line.find('*/', i)
+            if end < 0:
+                break
+            in_C_block_comments = False
+            i = end + 2
+        elif line.startswith('//', i):
+            break
+        elif line.startswith('/*', i):
+            in_C_block_comments = True
+            i += 2
+        elif line[i] == '"':
+            prefix = r_raw_prefix.search(line, 0, i)
+            opening = line.find('(', i)
+            if prefix and opening > 0 and not r_word_end.search(line, 0, prefix.start()):
+                raw_string_end = ')' + line[i + 1:opening] + '"'
+                out.append(line[i:opening + 1])
+                i = opening + 1
+            else:
+                i = literal_end(line, i, '"', out)
+        # Do not read a quote after a digit or a letter as a character literal: 1'000 separates digits.
+        elif line[i] == "'" and not (i > 0 and (line[i - 1].isalnum() or line[i - 1] == '_')):
+            i = literal_end(line, i, "'", out)
+        else:
+            out.append(line[i])
+            i += 1
+    return ''.join(out)
+
+"""
+Copy the literal opening at i, escapes included, and give back where it ends
+"""
+def literal_end(line, i, quote, out):
+    j = i + 1
+    while j < len(line) and line[j] != quote:
+        j += 2 if line[j] == '\\' else 1
+    out.append(line[i:j + 1])
+    return j + 1
+
+"""
 Preprocess a single line
 """
 def pp_line(line, output, opts):
     global will_escape
     global keep_guard
-    global in_C_block_comments
+    global keep_comments
 
     is_escaped = will_escape
     will_escape = False
     if r_empty_line.match(line):
         # skip empty lines
         return
-    # we do not want to remove comments before the first guard as
-    # its content may be a license or whatever else important
-    if not keep_guard:
-        # C comments (one line) '//'
-        m = r_C_one_line_comment.match(line)
-        if m:
-            line = m.group(1)
-        # C (block) comments (one line) '/* */'
-        m = r_C_one_line_block_comment.match(line)
-        if m:
-            line = m.group(1) + m.group(2)
-        # C (block) comments '/*'
-        m = r_C_block_begin_comment.match(line)
-        if m:
-            in_C_block_comments = True
-            line = m.group(1)
-        # C (block) comments '*/'
-        m = r_C_block_end_comment.match(line)
-        if m:
-            in_C_block_comments = False
-            line = m.group(1)
-            return pp_line(line, output, opts)
-        # in C (block) comments
-        if in_C_block_comments:
-            return
+    # the comments above the first preprocessor line of the main file are its license, and stay
+    if keep_comments and r_pp_any.match(line):
+        keep_comments = False
+    if not keep_comments:
+        code = strip_comments(line.rstrip('\n'))
+        if code != line.rstrip('\n'):
+            # Do not drop a line that held a comment alone after a continued line: its end closes the macro, as the
+            # /**/ that ends a multi-line #define.
+            if not code.strip() and not is_escaped:
+                return
+            line = code.rstrip() + '\n'
     # #include
     m = r_pp_include.match(line)
     if m and opts.r_include.match(m.group(1)):
