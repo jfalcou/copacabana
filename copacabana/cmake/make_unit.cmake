@@ -110,10 +110,10 @@ function(copa_make_failure_unit)
       "-DCONFIG=$<CONFIG>" "-DCOMPILER=${CMAKE_CXX_COMPILER_ID}" -P
       "${COPACABANA_SOURCE_DIR}/copacabana/cmake/asset/expect_failure.cmake")
 
-  ## SKIP_RETURN_CODE: a source naming only diagnostics of another compiler has nothing to check here, and saying so
-  ## beats passing. RESOURCE_LOCK: each of these tests drives a build of the tree they all share, and two builds at
-  ## once fight over the same files - MSBuild says so on ZERO_CHECK.tlog, ninja quietly interleaves.
-  set_tests_properties(${OPT_NAME} PROPERTIES SKIP_RETURN_CODE 77 RESOURCE_LOCK "copa-build-tree")
+  ## A source naming only the diagnostics of another compiler has nothing to check here, so ctest reports it skipped.
+  set_tests_properties(${OPT_NAME} PROPERTIES SKIP_REGULAR_EXPRESSION "expect_failure: skipped, ")
+  ## The tests all build one shared tree, and two builds at once clash: MSBuild on ZERO_CHECK.tlog, ninja silently.
+  set_tests_properties(${OPT_NAME} PROPERTIES RESOURCE_LOCK "copa-build-tree")
 
   if(NOT OPT_QUIET)
     message(STATUS "[${PROJECT_NAME}] - ${OPT_FILE} is expected not to compile")
@@ -143,7 +143,10 @@ function(copa_glob_failure_unit)
     set(QUIET_ARG "QUIET")
   endif()
 
-  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE "${OPT_RELATIVE}" "${OPT_RELATIVE}/${OPT_PATTERN}")
+  if(NOT IS_ABSOLUTE "${OPT_PATTERN}")
+    set(OPT_PATTERN "${OPT_RELATIVE}/${OPT_PATTERN}")
+  endif()
+  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE "${OPT_RELATIVE}" "${OPT_PATTERN}")
   foreach(file ${FOUND_FILES})
     copa_make_failure_unit(
       ${QUIET_ARG}
@@ -321,7 +324,10 @@ function(copa_glob_unit)
     set(OPT_PATTERN "*.cpp")
   endif()
 
-  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE "${OPT_RELATIVE}" "${OPT_RELATIVE}/${OPT_PATTERN}")
+  if(NOT IS_ABSOLUTE "${OPT_PATTERN}")
+    set(OPT_PATTERN "${OPT_RELATIVE}/${OPT_PATTERN}")
+  endif()
+  file(GLOB_RECURSE FOUND_FILES CONFIGURE_DEPENDS RELATIVE "${OPT_RELATIVE}" "${OPT_PATTERN}")
 
   set(FLAGS "")
   if(OPT_QUIET)

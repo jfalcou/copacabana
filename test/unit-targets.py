@@ -10,7 +10,8 @@
 
 The inner project sits under the outer one, as a library fetched by CPM does, so that a default resolved against the
 top-level directory rather than the current one shows. Its sources are named to catch an extension stripped inside a
-segment, a unit declared without an extension, and an emulator command given as a list.
+segment, a unit declared without an extension, an emulator command given as a list, and a glob given an absolute
+pattern.
 """
 import pathlib
 import tempfile
@@ -31,6 +32,8 @@ copa_glob_unit(QUIET PATTERN "unit/*.cpp")
 copa_make_unit(QUIET FILES "solo/alone.cpp")
 copa_make_single_unit(NAME "single/joined.cpp" FILES "single/joined.cpp")
 copa_glob_failure_unit(QUIET)
+copa_glob_unit(QUIET PATTERN "${{CMAKE_CURRENT_SOURCE_DIR}}/given/*.cpp")
+copa_glob_failure_unit(QUIET PATTERN "${{CMAKE_CURRENT_SOURCE_DIR}}/refused/*.cpp")
 get_target_property(single single.joined.exe EXCLUDE_FROM_ALL)
 message(STATUS "single:${{single}}")
 """
@@ -40,6 +43,8 @@ SOURCES = { "unit/execution/run.cpp": "int main() {}\n"
           , "solo/alone.cpp":          "int main() {}\n"
           , "single/joined.cpp":       "int main() {}\n"
           , "failure/broken.cpp":      "// build error: 'nope' was not declared\nint main() { nope(); }\n"
+          , "given/whole.cpp":         "int main() {}\n"
+          , "refused/whole.cpp":       "// build error: 'nope' was not declared\nint main() { nope(); }\n"
           }
 
 
@@ -64,7 +69,8 @@ def main(root: str = ".") -> int:
         listed = run("ninja", "-C", str(build), "-t", "targets").stdout
         names = {line.split(":", 1)[0] for line in listed.splitlines()}
         for target in ("unit.execution.run.exe", "unit.execution.exe", "unit.exe", "unit.plain.exe",
-                       "solo.alone.exe", "solo.exe", "single.joined.exe", "failure.broken.exe", "inner-test"):
+                       "solo.alone.exe", "solo.exe", "single.joined.exe", "failure.broken.exe", "inner-test",
+                       "given.whole.exe", "refused.whole.exe"):
             expect(f"ninja knows {target}", target in names)
         expect("no target lost its extension", not any(n.endswith(".") for n in names))
 

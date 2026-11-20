@@ -52,6 +52,11 @@ def main(source):
             expect("a source failing for another reason is turned down", not passed)
             expect("and turned down for failing elsewhere", passed or "not for what it says" in log)
 
+            # A source naming only another compiler's diagnostics has nothing to check here, and is skipped.
+            watched.write_text(original.replace("// build error:", "// build error-othercc:"), encoding="utf-8")
+            passed, log = ctest(build)
+            expect("a source naming another compiler alone is skipped", passed and "Skipped" in log, log[-400:])
+
             # A source naming nothing cannot be checked, and saying so beats passing.
             watched.write_text(re.sub(r"^// build error:.*\n", "", original, flags=re.M), encoding="utf-8")
             passed, log = ctest(build)
