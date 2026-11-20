@@ -3,10 +3,10 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-## Builds the Docker image of a project and publishes it on GHCR, tagged latest, with the day of the build, and with
-## its short commit. The image is the base image, the project installed from the checkout, and two optional scripts
-## of the project: setup, run as root before the sources arrive, and finish, run from the sources after the install,
-## with COPA_HOME naming the home of the user the image runs as.
+## Builds the Docker image of a project and publishes it on GHCR, tagged with its short commit, and on the default
+## branch with the day of the build and latest. The image is the base image, the project installed from the checkout,
+## and two optional scripts of the project: setup, run as root before the sources arrive, and finish, run from the
+## sources after the install, with COPA_HOME naming the home of the user the image runs as.
 ##
 ##   on:
 ##     push:
@@ -55,12 +55,15 @@ inputs:
   push:
     description: 'Whether the image is pushed, false for a build that only checks it'
     default: 'true'
+  keep-on-runner:
+    description: 'Whether the image is also kept in the Docker of the runner, for a later step of the job to open'
+    default: 'false'
 
 runs:
   using: composite
   steps:
-    ## A rolling image built from main has no release to name itself after, so it carries the day and the commit, and
-    ## only a build of the default branch moves latest.
+    ## A rolling image has no release to name itself after, so it carries its commit. Do not tag the day outside the
+    ## default branch: a build of another branch would replace the image of the day that users pull.
     - name: Name this build
       id: naming
       shell: bash
@@ -74,8 +77,8 @@ runs:
           echo "tags<<EOF"
           if [ "$GITHUB_REF" = "refs/heads/$DEFAULT_BRANCH" ]; then
             echo "$image:latest"
+            echo "$image:$(date -u +%Y.%m.%d)"
           fi
-          echo "$image:$(date -u +%Y.%m.%d)"
           echo "$image:${GITHUB_SHA:0:7}"
           echo "EOF"
         } >> "$GITHUB_OUTPUT"
@@ -124,6 +127,7 @@ runs:
           FINISH=${{ inputs.finish }}
           CMAKE_ARGS=${{ inputs.cmake-args }}
         push: ${{ inputs.push == 'true' }}
+        load: ${{ inputs.keep-on-runner == 'true' }}
         tags: ${{ steps.naming.outputs.tags }}
         cache-from: type=gha
         cache-to: type=gha,mode=max

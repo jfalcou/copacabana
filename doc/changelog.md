@@ -6,10 +6,11 @@ Change Log
 ## Changes
 
 ### New Features
-  * The composite action `jfalcou/copacabana/.github/actions/image` builds the Docker image of a project and publishes it on GHCR (https://github.com/jfalcou/copacabana/pull/167, https://github.com/jfalcou/copacabana/pull/174)
+  * The composite action `jfalcou/copacabana/.github/actions/image` builds the Docker image of a project and publishes it on GHCR (https://github.com/jfalcou/copacabana/pull/167, https://github.com/jfalcou/copacabana/pull/174, https://github.com/jfalcou/copacabana/pull/184)
     - The image starts from a base image, runs a setup script of the project before its sources arrive, installs the project, and runs a finish script from the sources.
     - The sources and the setup script are mounted for their step, so no pushed layer holds them, `.git` included.
-    - Every build is tagged with its day and its short commit, and a build of the default branch also with `latest`.
+    - Every build is tagged with its short commit, and a build of the default branch also with its day and `latest`.
+    - `keep-on-runner: true` also keeps the image in the Docker of the runner, under its tags, so that a later step of the same job runs or opens it without pulling it from GHCR, a build with `push: false` included.
   * `copa_setup_heavy_pool` holds the targets of a list in a Ninja pool of depth `<PROJECT>_HEAVY_POOL`, and `compile_cost.py --heavy` writes that list from a compile cost measurement (https://github.com/jfalcou/copacabana/pull/168)
   * A matrix file takes `parallel`, the jobs of the build and of ctest, 2 by default (https://github.com/jfalcou/copacabana/pull/166)
   * A row of a matrix file sets `build-targets`, `test-targets`, and `parallel` for itself, and an empty value clears the value of the file (https://github.com/jfalcou/copacabana/pull/169)
@@ -52,6 +53,7 @@ Change Log
 ### Infrastructure
   * `Package / Consumption` installs the checkout of the pull request through `spack develop`, where it installed the released `copacabana@8` (https://github.com/jfalcou/copacabana/pull/170)
   * `CMake / Minimum Version` runs the checks that drive CMake under CMake 3.24.3, the minimum the modules declare (https://github.com/jfalcou/copacabana/pull/178)
+  * `Workflows / Image` reads the layers the image action adds, and fails on a source, the setup script, or a `.git` left in one (https://github.com/jfalcou/copacabana/pull/184)
   * `Package / Standalone Header` checks the header `embed.py` writes, on a tree of two headers (https://github.com/jfalcou/copacabana/pull/183)
   * Point the README at v9.0.0 (https://github.com/jfalcou/copacabana/pull/158)
   * Bump actions/create-github-app-token from 2 to 3 (https://github.com/jfalcou/copacabana/pull/163)

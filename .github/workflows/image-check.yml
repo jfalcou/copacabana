@@ -4,7 +4,8 @@
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
 ## The image action, run on a scaffolded project without pushing: a setup script, the install, and a finish script
-## that copies a source into the home of the user and compiles it against the installed headers.
+## that writes into the sources, copies one into the home of the user, and compiles it against the installed headers.
+## The layers the action adds are then read for what the mounts keep out of them.
 ##======================================================================================================================
 name: Image Check
 on:
@@ -14,6 +15,7 @@ on:
     paths:
       - '.github/actions/image/**'
       - '.github/workflows/image-check.yml'
+      - 'test/image-layers.py'
 
 concurrency:
   group: copacabana-image-check-${{ github.ref }}
@@ -36,6 +38,7 @@ jobs:
         run: |
           python3 tools/new-project.py scaffold/mylib --name mylib --brief "A scaffolded library" \
                   --remote https://github.com/someone/mylib
+          git -C scaffold/mylib init --quiet
           mkdir -p scaffold/mylib/docker
           cat > scaffold/mylib/docker/setup.sh <<'EOF'
           set -e
@@ -44,6 +47,7 @@ jobs:
           cat > scaffold/mylib/docker/finish.sh <<'EOF'
           set -e
           test -f /etc/copa-setup-ran
+          touch .copa-finish-ran
           mkdir -p "$COPA_HOME/test"
           cp test/unit/version.cpp "$COPA_HOME/test/"
           g++ -std=c++20 test/unit/version.cpp -o /tmp/smoke
@@ -58,3 +62,10 @@ jobs:
           setup: docker/setup.sh
           finish: docker/finish.sh
           push: 'false'
+          keep-on-runner: 'true'
+
+      - name: Read the layers the action adds
+        shell: bash
+        run: |
+          docker save "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/mylib:${GITHUB_SHA:0:7}" -o "$RUNNER_TEMP/image.tar"
+          python3 test/image-layers.py "$RUNNER_TEMP/image.tar" mylib
