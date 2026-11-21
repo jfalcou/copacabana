@@ -6,6 +6,7 @@ Change Log
 ## Changes
 
 ### New Features
+  * The `package-standalone.yml` of the template also runs on `workflow_dispatch`, which regenerates the standalone header without a commit
   * The composite action `jfalcou/copacabana/.github/actions/image` builds the Docker image of a project and publishes it on GHCR (https://github.com/jfalcou/copacabana/pull/167, https://github.com/jfalcou/copacabana/pull/174, https://github.com/jfalcou/copacabana/pull/184)
     - The image starts from a base image, runs a setup script of the project before its sources arrive, installs the project, and runs a finish script from the sources.
     - The sources and the setup script are mounted for their step, so no pushed layer holds them, `.git` included.
