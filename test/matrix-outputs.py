@@ -25,12 +25,11 @@ CASES = [
 
 
 ## What the rows carry: the keys a row names, an empty one included, and the file's for the others.
-ONE = [{"preset": "gcc"}]
 ROW_CASES = [
     ("a file naming no parallelism", {}, "parallel", 2),
     ("the parallelism of the file", {"parallel": 8}, "parallel", 8),
     ("a row naming its parallelism", {"parallel": 8, "rows": [{"preset": "gcc", "parallel": 4}]}, "parallel", 4),
-    ("the build targets of the file", {"build-targets": "unit.exe", "rows": ONE}, "build-targets", "unit.exe"),
+    ("the build targets of the file", {"build-targets": "unit.exe"}, "build-targets", "unit.exe"),
     ("a row naming its test targets", {"test-targets": "^unit", "rows": [{"preset": "gcc", "test-targets": "^doc"}]},
      "test-targets", "^doc"),
     ("a row clearing the test targets of the file",
