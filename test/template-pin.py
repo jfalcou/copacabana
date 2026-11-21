@@ -4,14 +4,15 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-"""Check that what the template calls exists here, and that both of its pins say the same thing.
+"""Check the copacabana pins of the template and REMOTE_PRESETS of the scaffolder.
 
-A scaffolded project follows main, so the file it names has to be on main: a workflow renamed or moved breaks every
-project the scaffolder ever wrote, and nothing in this repository builds them. The second pin is the GIT_TAG that
-brings in the cmake functions, which has to follow the workflows rather than drift behind them.
+- every `uses: jfalcou/copacabana/<path>@<ref>` of the template names a file of this checkout
+- every `uses:` and the GIT_TAG of cmake/dependencies.cmake carry one ref
+- REMOTE_PRESETS equals the presets built by each shared workflow it lists
 
   python3 test/template-pin.py <copacabana source directory>
 """
+import importlib.util
 import pathlib
 import re
 
@@ -19,6 +20,7 @@ from checks import cli, expect, report
 
 CALL = re.compile(r"uses:\s*jfalcou/copacabana/(\.github/[A-Za-z0-9._/-]+)@(\S+)")
 GIT_TAG = re.compile(r"GIT_TAG\s+(\S+)")
+BUILT_WITH = re.compile(r"""(?:preset:\s*["']?|--preset\s+)([A-Za-z0-9._-]+)""")
 
 
 def main(root: str = ".") -> int:
@@ -45,6 +47,14 @@ def main(root: str = ".") -> int:
     version = found.group(1).rstrip(")") if found else None
     expect("dependencies.cmake brings in the cmake functions from the same one",
            refs and version == next(iter(refs)), version)
+
+    spec = importlib.util.spec_from_file_location("new_project", root / "tools" / "new-project.py")
+    scaffolder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(scaffolder)
+    for workflow, presets in scaffolder.REMOTE_PRESETS.items():
+        text = (root / ".github" / "workflows" / workflow).read_text(encoding="utf-8")
+        built = {p for p in BUILT_WITH.findall(text) if not p.startswith("$")}
+        expect(f"REMOTE_PRESETS lists the presets {workflow} builds", built == presets, sorted(built))
 
     return report("The template's pins")
 

@@ -15,7 +15,7 @@ include(FetchContent)
 # Retrieve SAMPLE from relative git directory
 FetchContent_Declare(sample GIT_REPOSITORY "@remote@.git" GIT_TAG ${GIT_BRANCH})
 
-## FetchContent has no per-package OPTIONS: what sample reads is pinned here.
+## FetchContent has no per-package OPTIONS, so the options of the project are set here.
 set(SAMPLE_BUILD_TEST OFF CACHE BOOL "" FORCE)
 
 # make available

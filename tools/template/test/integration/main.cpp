@@ -19,7 +19,8 @@
 
 int main()
 {
-  std::cout << "sample " << sample::version << "\n";
+  std::cout << "sample ";
+  std::cout << sample::version << "\n";
 
   return sample::version.empty() ? 1 : 0;
 }

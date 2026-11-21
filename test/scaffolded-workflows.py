@@ -4,12 +4,15 @@
 ##  Copyright : Copacabana Project Contributors
 ##  SPDX-License-Identifier: BSL-1.0
 ##======================================================================================================================
-"""Check that the workflows of a scaffolded project hold together.
+"""Check the references between the workflows, matrices, and presets of a scaffolded project.
 
-Dropping something the caller did not ask for leaves references behind: a job that names one the conditional blocks
-removed, or a call to a workflow whose presets were all left out. GitHub refuses such a file before a single job
-starts, and reports it as a run with no jobs and no logs, so it is worth catching here instead.
+- every `needs:` names a job of its workflow, and every `uses:` of copacabana a workflow of this checkout
+- every `preset:`, and every preset a called shared workflow builds, is in CMakePresets.json
+- every matrix file read exists, and holds a row
+
+A broken `needs:` or `uses:` fails the run before any job starts, and an undeclared preset fails the configure.
 """
+import json
 import pathlib
 import re
 
@@ -17,19 +20,29 @@ from checks import cli, expect, report
 
 JOB = re.compile(r"^  ([A-Za-z0-9_-]+):$", re.M)
 NEEDS = re.compile(r"needs:\s*\[([^\]]*)\]")
-CALLS = re.compile(r"uses:\s*\./\.github/workflows/([A-Za-z0-9._-]+)")
+CALLS = re.compile(r"uses:\s*jfalcou/copacabana/\.github/workflows/([A-Za-z0-9._-]+)@")
 READS = re.compile(r"file:\s*\.github/matrices/([A-Za-z0-9._-]+)")
 ROW = re.compile(r"^\s*- \{.*preset:", re.M)
+PRESET = re.compile(r"""preset:\s*["']?([A-Za-z0-9._-]+)""")
+
+SHARED = pathlib.Path(__file__).resolve().parent.parent / ".github" / "workflows"
+
+## Presets built by each shared workflow, to be declared in the CMakePresets.json of the caller.
+BUILDS_WITH = { "sanitizers.yml": {"gcc-sanitize", "clang-sanitize"}
+              , "coverage.yml":   {"gcc-coverage"}
+              }
 
 
 def main(root: str) -> int:
     directory = pathlib.Path(root) / ".github" / "workflows"
     matrices = pathlib.Path(root) / ".github" / "matrices"
-    present = {path.name for path in directory.glob("*.yml")}
     readable = {path.name for path in matrices.glob("*.yml")}
+    declared_presets = {p["name"] for p in json.loads((pathlib.Path(root) / "CMakePresets.json").read_text(
+                        encoding="utf-8"))["configurePresets"]}
+    present = {path.name for path in directory.glob("*.yml")}
     print(f"{len(present)} workflows and {len(readable)} matrices read\n")
 
-    # A matrix file is read by copacabana's matrix.yml, which refuses one with no row to build
+    # matrix.yml of copacabana fails on a matrix file without a row
     for matrix in sorted(matrices.glob("*.yml")):
         expect(f"{matrix.name} holds a row naming a preset", ROW.search(matrix.read_text(encoding="utf-8")))
 
@@ -43,7 +56,17 @@ def main(root: str) -> int:
                 expect(f"{workflow.name} needs {name}, which a job declares", name in declared)
 
         for called in CALLS.findall(text):
-            expect(f"{workflow.name} calls {called}, which was written", called in present)
+            expect(f"{workflow.name} calls {called}, a workflow of copacabana", (SHARED / called).is_file())
+            for preset in sorted(BUILDS_WITH.get(called, set())):
+                expect(f"{preset}, built by {called} from {workflow.name}, is declared",
+                       preset in declared_presets)
+
+        if "coverage: true" in text:
+            expect(f"{workflow.name} sets coverage: true, and gcc-coverage is declared",
+                   "gcc-coverage" in declared_presets)
+
+        for preset in sorted(set(PRESET.findall(text))):
+            expect(f"{preset}, set in {workflow.name}, is declared", preset in declared_presets)
 
         for read in READS.findall(text):
             expect(f"{workflow.name} reads {read}, which was written", read in readable)

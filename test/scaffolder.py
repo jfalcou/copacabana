@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""What the scaffolder writes, checked by scaffolding twice and building what comes out.
+"""Run tools/new-project.py and check the files it writes.
 
-The second project asks for less, neither the standalone nor a Windows preset, which is what turns a job into a name
-nothing declares and a workflow into a call to a file that was never written.
+The default scaffold is configured and built. The pruning is checked on one scaffold per case:
+
+- `gcc,clang` without the standalone
+- a derived preset, an unknown preset, `cuda`
+- `clang,wasm` on a GitLab remote, a remote ending in .git
+- a 51-character name, `.` as directory
 
   python3 test/scaffolder.py <copacabana source directory>
 """
@@ -65,14 +69,19 @@ def main(root: str = ".") -> int:
         ## preset holds, not its every row.
         linux = pathlib.Path(narrow, ".github/matrices/linux.yml").read_text(encoding="utf-8")
         expect("the linux matrix keeps the three rows of its two presets", linux.count("- {") == 3, linux[-400:])
-        expect("the setup script of the gcc16 row is written with it",
-               pathlib.Path(narrow, ".github/scripts/g++-16.sh").is_file())
+        expect("the gcc16 row sets g++-16 as the compiler of the gcc preset",
+               'args: "-DCMAKE_CXX_COMPILER=g++-16"' in linux, linux[-400:])
 
         presets = json.loads(pathlib.Path(narrow, "CMakePresets.json").read_text(encoding="utf-8"))
         compilers = {p["name"]: p for p in presets["configurePresets"] if p["name"] in ("gcc", "clang")}
         expect("the gcc and clang presets name their compiler rather than a toolchain file",
                all("toolchainFile" not in p and p.get("cacheVariables", {}).get("CMAKE_CXX_COMPILER")
                    for p in compilers.values()) and len(compilers) == 2, compilers)
+
+        ci_text = pathlib.Path(narrow, ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        expect("the banners of the removed jobs are removed, and the banner of the matrix job stays",
+               "## Sanitizers" not in ci_text and "## Coverage report" not in ci_text
+               and re.search(r"## Unit Tests.*\n.*\n  linux-tests:", ci_text), ci_text[-600:])
 
         ## The shared sanitizer and coverage workflows build with presets the narrow project left out.
         ci = pathlib.Path(narrow, ".github/workflows/ci.yml").read_text(encoding="utf-8")
@@ -88,6 +97,12 @@ def main(root: str = ".") -> int:
         listed = run("cmake", "--list-presets", cwd=derived)
         expect("a derived preset keeps the presets it inherits from",
                out.returncode == 0 and listed.returncode == 0, (out.stderr + listed.stderr)[-300:])
+
+        ## No matrix file is written for cuda alone.
+        cuda = str(pathlib.Path(tmp, "cuda"))
+        scaffold(root, cuda, "--name", "cuda", "--presets", "cuda")
+        out = run(sys.executable, "test/scaffolded-workflows.py", cuda, cwd=root)
+        expect("scaffolded-workflows.py passes on a project without a matrix", out.returncode == 0, out.stdout[-400:])
 
         typo = pathlib.Path(tmp, "typo")
         out = scaffold(root, str(typo), "--name", "typo", "--presets", "gcc,gc")
@@ -120,6 +135,22 @@ def main(root: str = ".") -> int:
         fetch = pathlib.Path(dotgit, "test/integration/fetch-test/CMakeLists.txt").read_text(encoding="utf-8")
         expect("a remote ending in .git is cloned once with it",
                "dotgit.git.git" not in fetch and "dotgit.git" in fetch)
+
+        longer = "a" * 51
+        out = scaffold(root, str(pathlib.Path(tmp, longer)), "--name", longer)
+        expect("the scaffolder exits with an error on a name of 51 characters, and writes nothing", out.returncode != 0
+               and not pathlib.Path(tmp, longer).exists(), out.stderr[-300:])
+
+        ## Run from inside the empty target directory, with `.` as directory.
+        here = pathlib.Path(tmp, "here")
+        here.mkdir()
+        before = os.stat(here).st_ino
+        out = run(sys.executable, str(root / "tools/new-project.py"), ".", "--brief", "A scaffolded library",
+                  "--remote", "https://github.com/someone/here", "--copacabana-ref", PIN, cwd=here)
+        expect("the project is written into the current directory, whose inode is unchanged",
+               out.returncode == 0 and (here / "CMakeLists.txt").is_file() and os.stat(here).st_ino == before,
+               out.stderr[-300:])
+        expect("no partial directory is left behind", not list(pathlib.Path(tmp).glob(".*partial")))
 
     return report("What the scaffolder writes")
 
