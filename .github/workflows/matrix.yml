@@ -109,6 +109,9 @@ jobs:
       matrix:
         compiler: ${{ fromJSON(needs.read.outputs.rows) }}
         options: ${{ fromJSON(needs.read.outputs.configs) }}
+    ## Read once, so that the check of the build step holds for the tests and the memcheck.
+    env:
+      PARALLEL: ${{ matrix.compiler.parallel }}
 
     steps:
       - name: Fetch current branch
@@ -125,7 +128,6 @@ jobs:
           SETUP_SCRIPT: ${{ matrix.compiler.setup }}
           TARGETS: ${{ matrix.compiler['build-targets'] }}
           CMAKE_ARGS: ${{ matrix.compiler.args }}
-          PARALLEL: ${{ matrix.compiler.parallel }}
         run: |
           if [ -n "$SETUP_SCRIPT" ]; then
             if [ ! -f "$SETUP_SCRIPT" ]; then
@@ -155,7 +157,8 @@ jobs:
             args+=(--target $TARGETS)
           fi
 
-          cmake "${args[@]}" --parallel "$PARALLEL"
+          # An empty --parallel or -j gives no error.
+          cmake "${args[@]}" --parallel "${PARALLEL:?no value read from the parallel key of the row}"
 
       ## The row decides here and not in an if:, where an absent key reads as null, which GitHub compares equal to
       ## false. That expression turned this step off for every row that said nothing, from v7 to v8.
@@ -168,7 +171,6 @@ jobs:
           TARGETS: ${{ matrix.compiler['test-targets'] }}
           RUN_TESTS: ${{ matrix.compiler.test }}
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
-          PARALLEL: ${{ matrix.compiler.parallel }}
         run: |
           if [ "$RUN_TESTS" = "false" ]; then
             echo "This row says test: false, so nothing is run here."
@@ -196,7 +198,6 @@ jobs:
           RUN_TESTS: ${{ matrix.compiler.test }}
           RUN_MEMCHECK: ${{ matrix.compiler.memcheck }}
           TEST_TIMEOUT: ${{ needs.read.outputs.test-timeout }}
-          PARALLEL: ${{ matrix.compiler.parallel }}
         run: |
           if [ "$RUN_TESTS" = "false" ] || [ "$RUN_MEMCHECK" = "false" ]; then
             echo "This row opts out of memcheck."
