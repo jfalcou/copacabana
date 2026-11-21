@@ -1,8 +1,7 @@
-# CPM is vendored upstream code, in both copies, and our style has no business rewriting it
+# CPM is vendored upstream code, excluded from the formatting hooks
 exclude: |
     (?x)^(
         cmake/CPM\.cmake|
-        test/integration/cpm-test/cpm\.cmake|
         doc/.*
     )$
 

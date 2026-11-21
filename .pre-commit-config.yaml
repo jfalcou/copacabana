@@ -3,8 +3,7 @@
 exclude: |
     (?x)^(
         test/example/cmake/CPM\.cmake|
-        tools/template/cmake/CPM\.cmake|
-        tools/template/test/integration/cpm-test/cpm\.cmake
+        tools/template/cmake/CPM\.cmake
     )$
 
 repos:

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Whether the hooks a scaffolded project ships pass on what was scaffolded.
+"""Run the pre-commit hooks of a scaffold on that scaffold, and on one with a 50-character name.
 
-They need the Python the shared gate runs under: the container the builds use carries neither pip nor a venv, so this
-is precommit.yml's own setup, same Python, same pinned release, pointed at a tree the scaffolder just wrote.
+Runs under the Python and the pinned pre-commit of precommit.yml, since the build container has neither pip nor venv.
 
   python3 test/scaffolded-hooks.py <copacabana source directory>
 """
@@ -32,8 +31,9 @@ def main(root: str = ".") -> int:
         out = run("pre-commit", "run", "--all-files", "--show-diff-on-failure", "--color=always", cwd=where)
         expect("its own hooks pass on it", out.returncode == 0, out.stdout[-600:])
 
-        # A long name lengthens the CMake lines, which the first run lays out when the scaffolder could not.
-        long = "a_library_with_a_much_longer_name"
+        # With a 50-character name, CMake lines exceed 120 columns until cmake-format wraps them, at the scaffold if
+        # installed, else at the first pre-commit run.
+        long = "a_library_with_a_name_of_fifty_characters_in_total"
         where = str(pathlib.Path(tmp, long))
         out = run(sys.executable, "tools/new-project.py", where, "--name", long, "--brief", "A library",
                   "--remote", f"https://github.com/someone/{long}", "--presets", "gcc,clang", "--no-standalone",

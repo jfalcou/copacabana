@@ -62,6 +62,8 @@ FORGE_ONLY = { "github": ["\\.github/"]
 ## tree, so it cannot rot unnoticed. Making one from it is a rename rather than a substitution.
 SAMPLE = "sample"
 
+NAME_LENGTH = 50
+
 
 def substitute(text: str, fields: dict[str, str]) -> str:
     text = text.replace(SAMPLE.upper(), fields["PROJECT"]).replace(SAMPLE, fields["project"])
@@ -144,16 +146,17 @@ def prune_jobs(workflow: str, gone: set[str]) -> str:
     """
     kept, dropped = [], set()
 
-    for block in re.split(r"\n(?=  [A-Za-z0-9_-]+:\n)", workflow):
+    # Split at the blank line before a banner or a job: a banner belongs to the job under it.
+    for block in re.split(r"\n\n(?=  (?:##|[A-Za-z0-9_-]+:\n))", workflow):
         called = re.findall(r"(?:uses:\s*(?:\.|jfalcou/copacabana)/\.github/workflows/|file:\s*\.github/matrices/)"
                             r"([A-Za-z0-9._-]+)", block)
         if set(called) & gone:
-            name = re.match(r"\n?  ([A-Za-z0-9_-]+):", block)
+            name = re.search(r"^  ([A-Za-z0-9_-]+):$", block, re.M)
             dropped.add(name.group(1) if name else "")
             continue
         kept.append(block)
 
-    text = "\n".join(kept)
+    text = "\n\n".join(kept)
     # The keys of the triggers sit at the same indent as the jobs, so the jobs are read after `jobs:` alone.
     jobs = text.split("\njobs:\n", 1)[-1]
     declared = set(re.findall(r"^  ([A-Za-z0-9_-]+):$", jobs, re.M)) - dropped
@@ -200,9 +203,13 @@ def create(directory: Path, fields: dict[str, str], flags: dict[str, bool], pres
         shutil.rmtree(partial, ignore_errors=True)
         raise
 
+    # Do not replace an existing directory: the cwd of a shell inside it would become a deleted directory.
     if directory.exists():
-        directory.rmdir()
-    partial.rename(directory)
+        for entry in partial.iterdir():
+            entry.rename(directory / entry.name)
+        partial.rmdir()
+    else:
+        partial.rename(directory)
     reformat(directory)
     return 0 if written else 1
 
@@ -306,13 +313,17 @@ def reformat(directory: Path) -> None:
 
 def copacabana_head() -> str:
     """The head of copacabana's main, or of the checkout this script runs from when the remote cannot be read."""
-    listed = subprocess.run(["git", "ls-remote", "https://github.com/jfalcou/copacabana", "refs/heads/main"],
-                            capture_output=True, text=True, timeout=60)
-    if listed.returncode == 0 and listed.stdout.split():
-        return listed.stdout.split()[0]
+    try:
+        listed = subprocess.run(["git", "ls-remote", "https://github.com/jfalcou/copacabana", "refs/heads/main"],
+                                capture_output=True, text=True, timeout=60)
+        if listed.returncode == 0 and listed.stdout.split():
+            return listed.stdout.split()[0]
+    except subprocess.TimeoutExpired:
+        pass
     local = subprocess.run(["git", "-C", str(TEMPLATE), "rev-parse", "HEAD"], capture_output=True, text=True)
-    print("[copacabana] - the head of copacabana could not be read, the pins name this checkout's commit",
-          file=sys.stderr)
+    if local.returncode == 0 and local.stdout.strip():
+        print("[copacabana] - the head of copacabana could not be read: pinned on the commit of this checkout",
+              file=sys.stderr)
     return local.stdout.strip()
 
 
@@ -360,12 +371,18 @@ def settings(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = settings(argv if argv is not None else sys.argv[1:])
 
-    directory = Path(args.directory)
+    directory = Path(args.directory).resolve()
     name = (args.name or directory.name).strip()
 
     ## The name reaches a namespace, a CMake target and an option prefix, so it has to be an identifier everywhere.
     if not re.fullmatch(r"[a-z][a-z0-9_]*", name):
         print(f"[copacabana] - '{name}' is not a usable name: lowercase, starting with a letter", file=sys.stderr)
+        return 1
+
+    ## Above 50 characters, a line with the name twice, such as `<name>::<name>`, can exceed the 120 columns of the
+    ## hooks, and cmake-format cannot split a token.
+    if len(name) > NAME_LENGTH:
+        print(f"[copacabana] - '{name}' is longer than {NAME_LENGTH} characters", file=sys.stderr)
         return 1
 
     ## No default: where a repository will live is not something this script can know, and a guess would put
@@ -391,6 +408,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     ref = args.copacabana_ref or copacabana_head()
+    if not ref:
+        print("[copacabana] - the head of copacabana could not be read: pass --copacabana-ref", file=sys.stderr)
+        return 1
     if not re.fullmatch(r"[0-9a-f]{40}", ref):
         print(f"[copacabana] - '{ref}' is not a full commit of copacabana: pass --copacabana-ref", file=sys.stderr)
         return 1
